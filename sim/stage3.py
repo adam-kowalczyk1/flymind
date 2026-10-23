@@ -25,7 +25,8 @@ F_SECURE = 0.3     # N — minimalny nacisk szczęki (2·μ·F > m·g z zapasem;
 SERVO_SPEED = 4.7  # rad/s, ramię (STS3215, ok.)
 WINDUP = 0.02      # rad, maks. odjazd celu serwa bazy od zmierzonej pozycji
 T_TRIAL = 5.0
-Q_OPEN = 1.2       # rad, rozwarcie szczęk w oczekiwaniu (szczelina ~10 cm na kulkę 5 cm)
+Q_OPEN = 1.0       # rad, rozwarcie szczęk w oczekiwaniu (szczelina ~8,5 cm na kulkę 5 cm); 1,2 dawało
+                   # 2× dłuższe domykanie przy tym samym bezpiecznym tempie dojazdu
 WARMUP = 1.0       # s, robot patrzy na kulkę trzymaną na szczycie równi i obraca się do niej
 PADS = ("jaw_fixed", "jaw_moving")
 
@@ -61,7 +62,7 @@ def base_cmd(m, d, yaw):
     d.ctrl[0] = np.clip(c, *m.actuator_ctrlrange[0])
 
 
-def run_trial(seed, controller, record=False, on_step=None):
+def run_trial(seed, controller, record=False, on_step=None, q_open=None):
     rng = np.random.default_rng(seed)
     ramp = rng.uniform(9, 14)
     m, d = scene.load(ramp_deg=ramp)
@@ -70,7 +71,7 @@ def run_trial(seed, controller, record=False, on_step=None):
     q_lift[1] -= 0.25
     mujoco.mj_resetData(m, d)
     d.qpos[:5] = q_catch
-    d.qpos[5] = Q_OPEN
+    d.qpos[5] = Q_OPEN if q_open is None else q_open
     d.ctrl[:5] = q_catch
     bj = m.joint("ball").qposadr[0]
     d.qpos[bj + 1] = rng.uniform(-0.06, 0.06)               # przesunięcie boczne startu
@@ -106,7 +107,7 @@ def run_trial(seed, controller, record=False, on_step=None):
         th = bearing(d) + np.radians(rng.normal(0, 1.0))     # szum „oka” 1°
         touch = d.sensordata[:3].copy()
         c0 = time.perf_counter()
-        yaw, tau, spk = controller.control_step(th, touch, active=True, jaw_vel=d.qvel[5])
+        yaw, tau, spk = controller.control_step(th, touch, active=True, jaw_vel=d.qvel[5], jaw_q=d.qpos[5])
         cpu += time.perf_counter() - c0
         base_cmd(m, d, yaw)
         d.ctrl[5] = np.clip(-tau / scene.GRIP_TORQUE, -1, 1)  # zamykanie = ujemny PWM

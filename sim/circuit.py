@@ -45,13 +45,14 @@ P = dict(
     resist_kmax=5.0,   # aferenty szczęk o czułości < resist_kmax zasilają opór
     syn_resist_dn=1000, syn_resist_assist=0,
     calibrate=True,    # auto-trym DNa02 przy tworzeniu (patrz calibrate)
-    vel_gain=205.0,     # mV na rad/s prędkości zamykania szczęki → RR_resist (tłumienie)
+    vel_gain=257.0,     # mV na rad/s prędkości zamykania szczęki → RR_resist (tłumienie w strefie domknięcia)
+    vel_gain_far=25.0, q_near=0.88, near_w=0.15,   # tłumienie poza strefą; strefa q < q_near (rad)
     syn_palm_assist=10, syn_jaw_resist=1000, syn_assist_mn=1000, syn_resist_mn=1000, syn_latch=1000,
     gain_dna02=2.5, gain_lc10a=0.5,    # wzmocnienie wejścia DNa02 (kompensuje kompresję ln jednej silnej synapsy)
     tau_rate=100.0,    # ms, filtr częstości DN
     tau_twitch=dict(fast=10.0, int=20.0, slow=60.0),   # ms, skurcz: szybkie włókna krótko, wolne długo
-    syn_resist_slow=10, syn_moving_hold=30, hold_offset=19.5, syn_hold_resist=1000,
-    k_muscle=0.48,      # N·m na jednostkę siły MN (pośredni MN przy 50 Hz ≈ 0,37 N·m)
+    syn_resist_slow=10, syn_moving_hold=30, hold_offset=20.6, syn_hold_resist=1000,
+    k_muscle=0.50,      # N·m na jednostkę siły MN (pośredni MN przy 50 Hz ≈ 0,37 N·m)
 )
 
 
@@ -230,10 +231,12 @@ class FlyController:
         self.rate = np.zeros(self.N)      # spike/s, filtr wykładniczy
         self.twitch = np.zeros(self.N)
 
-    def inputs(self, theta, forces, active, jaw_vel=0.0):
+    def inputs(self, theta, forces, active, jaw_vel=0.0, jaw_q=None):
         """theta: azymut celu [rad], + = w lewo (None = brak celu); forces: (stała, ruchoma, dłoń) [N];
         active: stan „polowanie” (True) / „spoczynek” (False); jaw_vel: prędkość szczęki [rad/s],
-        − = zamykanie (odpowiednik aferentów prędkości narządu strunowego FeCO → tłumienie)."""
+        − = zamykanie (odpowiednik aferentów prędkości narządu strunowego FeCO → tłumienie);
+        jaw_q: kąt szczęki [rad] (aferenty położenia FeCO). Tłumienie jest silne dopiero w strefie
+        domknięcia q < q_near (szybki dojazd, hamowanie przed kulką); None = wszędzie silne."""
         g, p = self.groups, self.p
         I = self.bias.copy()
         if theta is not None:
@@ -245,14 +248,16 @@ class FlyController:
             I[ids] += p["sens_gain"] * self.sens_k[ids] * max(f, 0.0)
         I[g["RR_assist"]] += p["state_bias"] if active else -20.0
         I[g["RR_hold"]] += p["state_bias"] - p["hold_offset"] if active else -20.0
-        I[g["RR_resist"]] += (0.0 if active else p["state_bias"]) + p["vel_gain"] * max(-jaw_vel, 0.0)
+        near = 1.0 if jaw_q is None else float(np.clip((p["q_near"] - jaw_q) / p["near_w"], 0.0, 1.0))
+        damp = p["vel_gain_far"] + (p["vel_gain"] - p["vel_gain_far"]) * near
+        I[g["RR_resist"]] += (0.0 if active else p["state_bias"]) + damp * max(-jaw_vel, 0.0)
         I[g["MN_ext"]] += p["bias_ext"]               # toniczne napięcie prostownika
         return I
 
-    def control_step(self, theta, forces, active=True, n=10, jaw_vel=0.0):
+    def control_step(self, theta, forces, active=True, n=10, jaw_vel=0.0, jaw_q=None):
         """10 kroków SNN po 1 ms. Zwraca (prędkość obrotu bazy [rad/s, + = w lewo],
         moment szczęki [N·m, + = zamykanie], spike'i [n, N])."""
-        I = self.inputs(theta, forces, active, jaw_vel)
+        I = self.inputs(theta, forces, active, jaw_vel, jaw_q)
         spikes = np.zeros((n, self.N), bool)
         a_r = np.exp(-1.0 / self.p["tau_rate"])
         a_t = self.a_twitch

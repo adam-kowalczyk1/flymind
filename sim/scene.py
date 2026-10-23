@@ -92,7 +92,9 @@ def build_xml(ramp_deg=12.0):
     _sub(jaw, "geom", name="jaw_moving", size="0.003 0.024 0.008", pos="-0.0077 -0.0526 0.0188", **pad)
     _sub(jaw, "site", name="cs_moving", type="box", size="0.0045 0.025 0.009",
          pos="-0.0077 -0.0526 0.0188", rgba="1 0 0 0.2")
-    # punkt celowania: środek otwartej paszczy (rozwarcie 1,2 rad: ściany x = −0,0085 i ≈ +0,093)
+    # punkt celowania: środek paszczy przy rozwarciu 1,2 rad (ściany x = −0,0085 i ≈ +0,093); przy
+    # obecnym rozwarciu 1,0 środek leży przy x ≈ 0,035, czyli celujemy ~0,7 cm w stronę ruchomej szczęki
+    # (strojenie robione z tym punktem — nie przesuwać bez ponownego strojenia)
     _sub(grip, "site", name="aim", pos=f"0.042 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 1 1 1")
     # punkt środka chwytu (kulka oparta o dłoń i stałą szczękę po domknięciu)
     _sub(grip, "site", name="grasp", pos=f"0.0155 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 0 1 1")

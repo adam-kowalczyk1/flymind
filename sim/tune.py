@@ -10,8 +10,8 @@ from circuit import FlyController
 from stage3 import run_trial
 
 TUNE_SEEDS = range(100, 120)
-SPACE = dict(k_muscle=(0.4, 0.7), sens_gain=(15, 28), vel_gain=(120, 260), syn_resist_slow=[10, 30, 100],
-             hold_offset=(10, 25), state_bias=(3.8, 4.4))
+SPACE = dict(q_open=(0.85, 1.25), vel_gain=(120, 300), vel_gain_far=(20, 205), q_near=(0.7, 1.1),
+             hold_offset=(15, 30), k_muscle=(0.4, 0.6))
 
 
 def sample(rng):
@@ -19,7 +19,10 @@ def sample(rng):
 
 
 def evaluate(P):
-    rs = [run_trial(s, FlyController(seed=s, params=P)) for s in TUNE_SEEDS]
+    P = dict(P)
+    q_open = P.pop("q_open", None)
+    rs = [run_trial(s, FlyController(seed=s, params=P), q_open=q_open) for s in TUNE_SEEDS]
+    P["q_open"] = q_open
     rt = [r["reaction_ms"] for r in rs if r["success"]]
     return dict(params=P, success=sum(r["success"] for r in rs), crushed=sum(r["crushed"] for r in rs),
                 reaction=float(np.mean(rt)) if rt else 1e9,
@@ -33,7 +36,8 @@ if __name__ == "__main__":
     configs = [{}] + [sample(rng) for _ in range(n - 1)]
     with Pool(8) as pool:
         res = pool.map(evaluate, configs)
-    res.sort(key=lambda r: (-r["success"], r["crushed"], r["reaction"]))
+    # najpierw brak zgnieceń, potem sukcesy, potem krótsza reakcja
+    res.sort(key=lambda r: (r["crushed"] > 0, -r["success"], r["reaction"]))
     json.dump(res, open(out, "w"), indent=1)
     for r in res[:8]:
         print(r["success"], r["crushed"], r["lifted"], round(r["peak"], 2), round(r["reaction"]), {k: round(v, 2) for k, v in r["params"].items()})
