@@ -216,8 +216,8 @@ def plot(table, ko):
     a = ax[0, 2]
     for lab, get, col, mk in series:
         a.plot(X, [get(k)["aim_err_deg"] for k in SIZES], color=col, lw=2, marker=mk, ms=8, label=lab)
-    a.axhline(5.3, color=INK2, ls="--", lw=1)
-    a.text(X[0] - 0.3, 5.5, "tolerancja paszczy ±5,3°", color=INK2, fontsize=9, ha="left", va="bottom")
+    a.axhline(3.6, color=INK2, ls="--", lw=1)
+    a.text(X[0] - 0.3, 3.8, "tolerancja paszczy ±3,6° (rozwarcie 1,0 rad)", color=INK2, fontsize=9, ha="left", va="bottom")
     _logx(a, n)
     a.set_ylim(bottom=0)
     a.set_ylabel("|błąd celowania| tuż przed paszczą [°]")
