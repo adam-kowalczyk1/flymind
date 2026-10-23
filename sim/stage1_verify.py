@@ -12,6 +12,7 @@ import numpy as np
 import scene
 
 SERVO_SPEED = 4.7   # rad/s — STS3215 bez obciążenia ok. 0,222 s/60° @7,4 V (karta katalogowa, ok.)
+GRIP_PWM = 0.15     # 0,5 N·m; pełny PWM (3,35 N·m) dawał 72 N i wyciskał miękką kulkę ze szczęk
 
 
 def geom_pairs(m, d):
@@ -31,7 +32,7 @@ def main(T=10.0):
     d.qpos[:5] = q_catch
     d.qpos[5] = 1.0
     d.ctrl[:5] = q_catch
-    d.ctrl[5] = 1.0
+    d.ctrl[5] = 0.0                        # PWM 0: szczęka stoi (tarcie stawu)
     mujoco.mj_forward(m, d)
 
     n_sub = round(scene.CONTROL_DT / m.opt.timestep)
@@ -46,16 +47,17 @@ def main(T=10.0):
         if phase == "czekam" and touch.sum() > 0.05:
             phase, phase_t["kontakt"] = "zamykam", t
         if phase == "zamykam":
-            target[5] = 0.0                  # skryptowo: pełne zamknięcie (SNN dopiero w Etapie 3)
+            target[5] = -GRIP_PWM            # skryptowo: stały PWM zamykania (SNN dopiero w Etapie 3)
             if touch[0] > 0.05 and touch[1] > 0.05:
                 phase_t.setdefault("obie_szczeki", t)
-            if t - phase_t["kontakt"] > 0.4:
+            if "obie_szczeki" in phase_t and t - phase_t["obie_szczeki"] > 0.3:
                 phase, phase_t["unoszenie"] = "unoszę", t
         if phase == "unoszę":
             target[:5] = q_lift
-        # ograniczenie prędkości serw
-        d.ctrl[:] = d.ctrl + np.clip(target - d.ctrl, -SERVO_SPEED * scene.CONTROL_DT,
-                                     SERVO_SPEED * scene.CONTROL_DT)
+        # ograniczenie prędkości serw pozycyjnych ramienia; chwytak (PWM) bez ograniczenia
+        d.ctrl[:5] = d.ctrl[:5] + np.clip(target[:5] - d.ctrl[:5], -SERVO_SPEED * scene.CONTROL_DT,
+                                          SERVO_SPEED * scene.CONTROL_DT)
+        d.ctrl[5] = target[5]
         for _ in range(n_sub):
             mujoco.mj_step(m, d)
         seen |= geom_pairs(m, d)
