@@ -2,7 +2,7 @@
  0–1 s   spoczynek (stan aktywny, brak celu)            → linia bazowa
  1–3 s   cel przesuwa się z +40° (lewo) do −40° (prawo)  → huśtawka DNa02 L/R
  3–4 s   cisza                                          → powrót do linii bazowej (brak eksplozji)
- 4–5 s   stan PASYWNY, nacisk szczęk 0,5 N przez 200 ms → odruch oporu (zginacz hamowany)
+ 4–5 s   stan PASYWNY, nacisk szczęk 0,5 N przez 200 ms → odruch oporu (prostownik ↑, szczęka nie zamyka)
  5–6 s   stan AKTYWNY, ten sam nacisk                   → wspomaganie (zginacz + zatrzask) = odwrócenie
  6–8 s   aktywny, chwyt zatrzaśnięty, siła szczęk 0→6 N → ujemne sprzężenie; derekrutacja szybki→wolny
  8–9 s   cisza (stan pasywny)
@@ -96,7 +96,10 @@ def main():
     res = {
         "DNa02 L>R gdy cel po lewej (1.0–1.6 s)": rate(g["DNa02_L"], 1.0, 1.6) - rate(g["DNa02_R"], 1.0, 1.6),
         "DNa02 R>L gdy cel po prawej (2.4–3.0 s)": rate(g["DNa02_R"], 2.4, 3.0) - rate(g["DNa02_L"], 2.4, 3.0),
-        "pasywny: zginacz po dotyku (4.3–4.6 s) − przed (4.0–4.3 s)": rate(flex, 4.3, 4.6) - rate(flex, 4.0, 4.3),
+        "pasywny: prostownik po dotyku (4.3–4.6 s) − przed (4.0–4.3 s)": rate(g["MN_ext"], 4.3, 4.6) - rate(g["MN_ext"], 4.0, 4.3),
+        "pasywny: zginacz+ltm po dotyku − przed": rate(flex, 4.3, 4.6) - rate(flex, 4.0, 4.3),
+        "pasywny: średni moment szczęki po dotyku [N·m]": torque[430:460].mean(),
+        "aktywny: średni moment szczęki po dotyku [N·m]": torque[530:580].mean(),
         "aktywny: zginacz po dotyku (5.3–5.8 s) − przed (5.0–5.3 s)": rate(flex, 5.3, 5.8) - rate(flex, 5.0, 5.3),
         "moment zginacza przy 0,5 N − przy 6 N": torque[605:620].mean() - torque[785:800].mean(),
     }
@@ -114,8 +117,13 @@ def main():
         "powrót do linii bazowej po bodźcu (< 2× + 1 Hz)": recov < 2 * base + 1,
         "huśtawka DNa02 zgodna ze stroną celu": res["DNa02 L>R gdy cel po lewej (1.0–1.6 s)"] > 5
         and res["DNa02 R>L gdy cel po prawej (2.4–3.0 s)"] > 5,
-        "odwrócenie odruchu: pasywny → zginacz hamowany": res["pasywny: zginacz po dotyku (4.3–4.6 s) − przed (4.0–4.3 s)"] < 0,
-        "odwrócenie odruchu: aktywny → zginacz pobudzony": res["aktywny: zginacz po dotyku (5.3–5.8 s) − przed (5.0–5.3 s)"] > 5,
+        # W stanie pasywnym zginacze są już przed dotykiem wyciszone (0 Hz), więc „hamowanie zginacza”
+        # (kryterium z wersji 1) jest niemierzalne; kryterium funkcjonalne: prostownik rośnie, a
+        # wypadkowy moment nie zamyka szczęki — w stanie aktywnym ten sam dotyk ją zamyka.
+        "odwrócenie odruchu: pasywny → prostownik ↑ i moment ≤ 0": res["pasywny: prostownik po dotyku (4.3–4.6 s) − przed (4.0–4.3 s)"] > 0
+        and res["pasywny: średni moment szczęki po dotyku [N·m]"] <= 0,
+        "odwrócenie odruchu: aktywny → zginacz pobudzony, moment > 0": res["aktywny: zginacz po dotyku (5.3–5.8 s) − przed (5.0–5.3 s)"] > 5
+        and res["aktywny: średni moment szczęki po dotyku [N·m]"] > 0,
         "ujemne sprzężenie siły: moment spada ze wzrostem siły": res["moment zginacza przy 0,5 N − przy 6 N"] > 0,
         "zasada wielkości (rekrutacja): wolne < pośrednie < szybkie": first["slow"] < first["int"] < first["fast"],
         "zasada wielkości (derekrutacja): szybkie gasną pierwsze": last["fast"] < last["int"] < last["slow"],

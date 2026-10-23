@@ -32,7 +32,9 @@ def _sub(parent, tag, **attrs):
     return ET.SubElement(parent, tag, {k: str(v) for k, v in attrs.items()})
 
 
-def build_xml(ramp_deg=12.0):
+def build_xml(ramp_deg=12.0, real_friction=True):
+    """real_friction: tarcie wg materiałów (kulka 0,3, pady gumowe 1,2, dłoń PLA 0,35, stół 0,8 —
+    MuJoCo bierze maksimum pary). False: wszystkie kontakty kulki μ = 1,0 (priority=1)."""
     tree = ET.parse(UPSTREAM)
     root = tree.getroot()
     root.find("compiler").set("meshdir", MESHDIR)
@@ -66,7 +68,8 @@ def build_xml(ramp_deg=12.0):
                 pos=f"{0.45 + 0.85*L*np.cos(a)} 0 {0.85*L*np.sin(a) + BALL_R/np.cos(a) + 0.001}")
     _sub(ball, "freejoint", name="ball")
     _sub(ball, "geom", name="ball", type="sphere", size=BALL_R, mass=BALL_MASS, rgba=".1 .7 .2 1",
-         condim=6, friction="1.0 0.005 0.0002", solref="0.01 1", priority=1)   # miękka piankowa
+         condim=6, solref="0.01 1",                                    # miękka piankowa
+         **(dict(friction="0.3 0.005 0.0002") if real_friction else dict(friction="1.0 0.005 0.0002", priority=1)))
     # priority=1: wszystkie kontakty kulki używają JEJ tarcia (μ = 1,0) — tarcie padów/dłoni nie gra
     # roli. Próba z μ kulki 0,35 (dłoń śliska, pady gumowe) pogorszyła chwyt (kulka wyciskana z „V”).
 
@@ -84,7 +87,8 @@ def build_xml(ramp_deg=12.0):
     _sub(grip, "site", name="cs_fixed", type="box", size="0.0045 0.009 0.025",
          pos="-0.0115 0 -0.076", rgba="1 0 0 0.2")
     # „dłoń” w głębi paszczy
-    _sub(grip, "geom", name="palm", size="0.016 0.010 0.003", pos="0.006 0 -0.046", **pad)
+    _sub(grip, "geom", name="palm", size="0.016 0.010 0.003", pos="0.006 0 -0.046",
+         **dict(pad, friction="0.35 0.005 0.0001") if real_friction else pad)
     _sub(grip, "site", name="cs_palm", type="box", size="0.017 0.011 0.0045",
          pos="0.006 0 -0.046", rgba="1 0 0 0.2")
     # ruchoma szczęka: przy q=0 wewnętrzna ściana x = +0,0095 w układzie `gripper`;
@@ -93,7 +97,7 @@ def build_xml(ramp_deg=12.0):
     _sub(jaw, "site", name="cs_moving", type="box", size="0.0045 0.025 0.009",
          pos="-0.0077 -0.0526 0.0188", rgba="1 0 0 0.2")
     # punkt celowania: środek paszczy przy rozwarciu 1,2 rad (ściany x = −0,0085 i ≈ +0,093); przy
-    # obecnym rozwarciu 1,0 środek leży przy x ≈ 0,035, czyli celujemy ~0,7 cm w stronę ruchomej szczęki
+    # obecnym rozwarciu 0,93 środek leży przy x ≈ 0,032, czyli celujemy ~1 cm w stronę ruchomej szczęki
     # (strojenie robione z tym punktem — nie przesuwać bez ponownego strojenia)
     _sub(grip, "site", name="aim", pos=f"0.042 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 1 1 1")
     # punkt środka chwytu (kulka oparta o dłoń i stałą szczękę po domknięciu)
@@ -113,8 +117,8 @@ def build_xml(ramp_deg=12.0):
     return ET.tostring(root, encoding="unicode")
 
 
-def load(ramp_deg=12.0):
-    m = mujoco.MjModel.from_xml_string(build_xml(ramp_deg))
+def load(ramp_deg=12.0, real_friction=True):
+    m = mujoco.MjModel.from_xml_string(build_xml(ramp_deg, real_friction))
     return m, mujoco.MjData(m)
 
 

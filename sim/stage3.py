@@ -24,8 +24,10 @@ F_CRUSH = 5.0      # N — próg zgniecenia miękkiej piłki (nasza stała)
 F_SECURE = 0.3     # N — minimalny nacisk szczęki (2·μ·F > m·g z zapasem; μ=1,2, m=50 g)
 SERVO_SPEED = 4.7  # rad/s, ramię (STS3215, ok.)
 WINDUP = 0.02      # rad, maks. odjazd celu serwa bazy od zmierzonej pozycji
+BASE_LEAK = None   # s, wygasanie przesunięcia celu serwa bazy (None = brak)
+REAL_FRICTION = True   # tarcie wg materiałów (scene.build_xml); μ = 1 wszędzie dawało klin przy dłoni
 T_TRIAL = 5.0
-Q_OPEN = 1.0       # rad, rozwarcie szczęk w oczekiwaniu (szczelina ~8,5 cm na kulkę 5 cm); 1,2 dawało
+Q_OPEN = 0.93      # rad, rozwarcie szczęk w oczekiwaniu (szczelina ~8 cm na kulkę 5 cm); 1,2 dawało
                    # 2× dłuższe domykanie przy tym samym bezpiecznym tempie dojazdu
 WARMUP = 1.0       # s, robot patrzy na kulkę trzymaną na szczycie równi i obraca się do niej
 PADS = ("jaw_fixed", "jaw_moving")
@@ -54,18 +56,22 @@ def bearing(d):
 
 
 def base_cmd(m, d, yaw):
-    """Prędkość obrotu bazy → cel serwa pozycyjnego: cel całkuje −ω·dt (dodatni kąt shoulder_pan
-    obraca w prawo), z ograniczeniem odjazdu celu od pozycji do ±WINDUP, żeby zablokowane ramię
-    nie nakręcało celu (wcześniej: windup → 3,35 N·m na kulkę)."""
+    """Prędkość obrotu bazy → cel serwa pozycyjnego: cel = pozycja + przesunięcie, które całkuje −ω·dt
+    (dodatni kąt shoulder_pan obraca w prawo), ograniczone do ±WINDUP i (opcjonalnie) wygasające ze
+    stałą BASE_LEAK. Bez wygasania przesunięcie zostaje na granicy windupu po skręcie i serwo przy
+    ω ≈ 0 dociska stałą szczękę do kulki."""
     w = np.clip(yaw, -SERVO_SPEED, SERVO_SPEED)
-    c = np.clip(d.ctrl[0] - w * scene.CONTROL_DT, d.qpos[0] - WINDUP, d.qpos[0] + WINDUP)
-    d.ctrl[0] = np.clip(c, *m.actuator_ctrlrange[0])
+    off = d.ctrl[0] - d.qpos[0]
+    if BASE_LEAK:
+        off *= np.exp(-scene.CONTROL_DT / BASE_LEAK)
+    off = np.clip(off - w * scene.CONTROL_DT, -WINDUP, WINDUP)
+    d.ctrl[0] = np.clip(d.qpos[0] + off, *m.actuator_ctrlrange[0])
 
 
-def run_trial(seed, controller, record=False, on_step=None, q_open=None):
+def run_trial(seed, controller, record=False, on_step=None, q_open=None, real_friction=REAL_FRICTION):
     rng = np.random.default_rng(seed)
     ramp = rng.uniform(9, 14)
-    m, d = scene.load(ramp_deg=ramp)
+    m, d = scene.load(ramp_deg=ramp, real_friction=real_friction)
     q_catch, _ = scene.ik_catch_pose(m, d, r=0.28)
     q_lift = q_catch.copy()
     q_lift[1] -= 0.25

@@ -1,4 +1,4 @@
-"""Obwód sterownika: neurony i synapsy z MaleCNS v1.0 (sim/circuit_malecns.json) + 16 neuronów
+"""Obwód sterownika: neurony i synapsy z MaleCNS v1.0 (sim/circuit_malecns.json) + 20 neuronów
 modelowych odwrócenia odruchu (nie z konektomu) + kodery wejść i dekodery wyjść.
 
 Moduł odruchu (model, liczby synaps nasze):
@@ -8,7 +8,13 @@ Moduł odruchu (model, liczby synaps nasze):
   RR_resist (6, GABA): nacisk ruchomej szczęki i prędkość zamykania → mocno wyłącza szybkie i pośrednie MN,
                        słabiej wolne (odruch oporu / ogranicznik siły) oraz DNa02 (dotyk wstrzymuje
                        skręt); w stanie pasywnym czulszy.
-  RR_hold (4, ACh):    zatrzask „trzymam”: koincydencja nacisku OBU szczęk (ujemny prąd stanu, jeden
+  RR_gate (2, ACh):    po jednym neuronie na szczękę (stała, ruchoma); nasyca się (refrakcja), więc
+                       silny nacisk jednej szczęki daje najwyżej „jedną jednostkę” wejścia.
+  RR_and (2, ACh):     ujemny prąd stanu — odpala dopiero przy OBU aktywnych bramkach → RR_hold.
+                       (Liniowa suma kanałów w jednej grupie nie dawała AND: 1,6 N na jednej szczęce
+                       wystarczało i zatrzask włączał tryb trzymania przed ściśnięciem kulki.)
+  RR_hold (4, ACh):    zatrzask „trzymam” (zwykły prąd stanu, samopodtrzymanie bez adaptacji; wcześniej
+                       bramka i pamięć były w jednej grupie i ujemny prąd gasił zatrzask po 20 ms bez dotyku)
                        kanał nie wystarcza) → trwałe pobudzenie RR_resist,
                        więc po uderzeniu trzymają już tylko wolne MN (zasada wielkości).
 
@@ -30,6 +36,8 @@ SIZE_CLASS = {"slow": (1.0, 0.1), "int": (0.43, 1.0), "fast": (0.21, 10.0)}
 
 N_RR = 6           # neuronów w grupach RR_assist i RR_resist (nasza liczba)
 N_HOLD = 4         # neuronów RR_hold
+N_GATE = 2         # neuronów RR_gate (po jednym na szczękę)
+N_AND = 2          # neuronów RR_and
 
 # --- nasze stałe (strojone w symulacji, nie z literatury) ---
 P = dict(
@@ -45,14 +53,14 @@ P = dict(
     resist_kmax=5.0,   # aferenty szczęk o czułości < resist_kmax zasilają opór
     syn_resist_dn=1000, syn_resist_assist=0,
     calibrate=True,    # auto-trym DNa02 przy tworzeniu (patrz calibrate)
-    vel_gain=257.0,     # mV na rad/s prędkości zamykania szczęki → RR_resist (tłumienie w strefie domknięcia)
-    vel_gain_far=25.0, q_near=0.88, near_w=0.15,   # tłumienie poza strefą; strefa q < q_near (rad)
-    syn_palm_assist=10, syn_jaw_resist=1000, syn_assist_mn=1000, syn_resist_mn=1000, syn_latch=1000,
+    vel_gain=189.0,     # mV na rad/s prędkości zamykania szczęki → RR_resist (tłumienie w strefie domknięcia)
+    vel_gain_far=15.0, q_near=0.97, near_w=0.15,   # tłumienie poza strefą; strefa q < q_near (rad)
+    syn_palm_assist=10, syn_jaw_resist=300, syn_assist_mn=1000, syn_resist_mn=1000, syn_latch=1000,
     gain_dna02=2.5, gain_lc10a=0.5,    # wzmocnienie wejścia DNa02 (kompensuje kompresję ln jednej silnej synapsy)
     tau_rate=100.0,    # ms, filtr częstości DN
     tau_twitch=dict(fast=10.0, int=20.0, slow=60.0),   # ms, skurcz: szybkie włókna krótko, wolne długo
-    syn_resist_slow=10, syn_moving_hold=30, hold_offset=20.6, syn_hold_resist=1000,
-    k_muscle=0.50,      # N·m na jednostkę siły MN (pośredni MN przy 50 Hz ≈ 0,37 N·m)
+    syn_resist_slow=10, hold_offset=22.8, syn_gate_hold=1000, syn_aff_gate=1000, gain_gate=8.0, syn_hold_resist=1000,
+    k_muscle=0.40,      # N·m na jednostkę siły MN (pośredni MN przy 50 Hz ≈ 0,37 N·m)
 )
 
 
@@ -61,7 +69,8 @@ def full_circuit():
     c = json.load(open(os.path.join(HERE, "circuit_malecns.json")))
     neurons = c["neurons"]
     # neurony modelowe odwrócenia odruchu (nie z konektomu)
-    for name, nt in [("RR_assist", "ACh")] * N_RR + [("RR_resist", "GABA")] * N_RR + [("RR_hold", "ACh")] * N_HOLD:
+    for name, nt in [("RR_assist", "ACh")] * N_RR + [("RR_resist", "GABA")] * N_RR + [("RR_hold", "ACh")] * N_HOLD \
+            + [("RR_gate", "ACh")] * N_GATE + [("RR_and", "ACh")] * N_AND:
         neurons.append(dict(bodyId=-len(neurons), type=name, side="L", circuit="model", nt=nt))
     # czujniki szczęk → neurony czuciowe: przydział po kolei na pełnej liście (nasz wybór); zapisany
     # w neuronie, żeby ablacja nie przetasowała kanałów
@@ -96,7 +105,7 @@ def make_groups(neurons):
 
 POPULATIONS = ["LC10a_L", "LC10a_R", "AOTU019_L", "AOTU019_R", "AOTU025_L", "AOTU025_R", "DNa02_L", "DNa02_R",
                "SENS_fixed", "SENS_moving", "SENS_palm", "IN_ACh", "IN_GABA", "IN_Glu",
-               "RR_assist", "RR_resist", "RR_hold", "MN_ext", "MN_flex", "MN_ltm"]
+               "RR_assist", "RR_resist", "RR_hold", "RR_gate", "RR_and", "MN_ext", "MN_flex", "MN_ltm"]
 
 
 class FlyController:
@@ -131,6 +140,8 @@ class FlyController:
         # LC10a: rekurencja LC10a→LC10a (~13 tys. synaps/stronę) przy wzmocnieniu 1 dawała salwy
         # (σ skrętu 2 rad/s); niższa rezystancja wejściowa + silniejszy bodziec wzrokowy
         gain[g["LC10a_L"]] = gain[g["LC10a_R"]] = self.p["gain_lc10a"]
+        # bramki AND: wysoka rezystancja wejściowa → nasycenie już przy lekkim dotyku
+        gain[g["RR_gate"]] = self.p["gain_gate"]
         # pola recepcyjne LC10a: równomierna mapa retinotopowa w polu −15°…165° po swojej stronie
         # (Ribeiro 2018). Losowe położenia dawały stały przechył L/R zależny od ziarna (~5°).
         pref = np.zeros(N)
@@ -164,14 +175,18 @@ class FlyController:
         for k in ("DNa02_L", "DNa02_R"):
             nsyn[np.ix_(g[k], g["RR_resist"])] = self.p["syn_resist_dn"]
         nsyn[np.ix_(g["RR_assist"], g["RR_resist"])] = self.p["syn_resist_assist"]
-        # stan „trzymam”: koincydencja nacisku obu szczęk zatrzaskuje RR_hold → RR_resist
-        nsyn[np.ix_(g["RR_hold"], g["SENS_moving"])] = self.p["syn_moving_hold"]
-        nsyn[np.ix_(g["RR_hold"], g["SENS_fixed"])] = self.p["syn_moving_hold"]
+        # stan „trzymam”: koincydencja nacisku obu szczęk (RR_gate) zatrzaskuje RR_hold → RR_resist
+        gate_fix, gate_mov = g["RR_gate"][:1], g["RR_gate"][1:]
+        nsyn[np.ix_(gate_fix, g["SENS_fixed"])] = self.p["syn_aff_gate"]
+        nsyn[np.ix_(gate_mov, g["SENS_moving"])] = self.p["syn_aff_gate"]
+        nsyn[np.ix_(g["RR_and"], g["RR_gate"])] = self.p["syn_gate_hold"]
+        nsyn[np.ix_(g["RR_hold"], g["RR_and"])] = self.p["syn_gate_hold"]
         nsyn[np.ix_(g["RR_hold"], g["RR_hold"])] = self.p["syn_latch"]
         nsyn[np.ix_(g["RR_resist"], g["RR_hold"])] = self.p["syn_hold_resist"]
         np.fill_diagonal(nsyn, 0)
         b_a = np.full(N, ConnectomeSNN.B_A)
         b_a[g["RR_assist"]] = b_a[g["RR_hold"]] = 0.0   # zatrzaski: bez adaptacji (trwała aktywność)
+        b_a[g["RR_gate"]] = b_a[g["RR_and"]] = 0.0      # bramki: bez adaptacji, żeby się nasycały
 
         bias = np.zeros(N)
         for k in ("AOTU019_L", "AOTU019_R", "AOTU025_L", "AOTU025_R"):
@@ -247,7 +262,9 @@ class FlyController:
             ids = g["SENS_" + ch]
             I[ids] += p["sens_gain"] * self.sens_k[ids] * max(f, 0.0)
         I[g["RR_assist"]] += p["state_bias"] if active else -20.0
-        I[g["RR_hold"]] += p["state_bias"] - p["hold_offset"] if active else -20.0
+        I[g["RR_gate"]] += 0.0 if active else -20.0
+        I[g["RR_and"]] += p["state_bias"] - p["hold_offset"] if active else -20.0
+        I[g["RR_hold"]] += p["state_bias"] if active else -20.0
         near = 1.0 if jaw_q is None else float(np.clip((p["q_near"] - jaw_q) / p["near_w"], 0.0, 1.0))
         damp = p["vel_gain_far"] + (p["vel_gain"] - p["vel_gain_far"]) * near
         I[g["RR_resist"]] += (0.0 if active else p["state_bias"]) + damp * max(-jaw_vel, 0.0)
