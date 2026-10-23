@@ -99,6 +99,7 @@ def run_trial(seed, controller, record=False, on_step=None):
     secure_ctrl, lifting, t_lift = 0, False, None
     log = dict(t=[], force=[], touch=[], yaw=[], torque=[], theta=[], spikes=[], ball=[], q_grip=[], tau_pan=[])
     first_contact = None
+    az_err = None
     hist = []
     cpu = 0.0
     for k in range(round(T_TRIAL / scene.CONTROL_DT)):
@@ -123,6 +124,8 @@ def run_trial(seed, controller, record=False, on_step=None):
             if first_contact is None and any({c.geom1, c.geom2} & grip_gids and ball_gid in (c.geom1, c.geom2)
                                              for c in d.contact[:d.ncon]):
                 first_contact = d.time
+        if az_err is None and np.hypot(*d.body("ball").xpos[:2]) < 0.34:
+            az_err = float(np.degrees(bearing(d)))   # błąd celowania tuż przed paszczą
         if on_step:
             on_step(m, d)
         if record:
@@ -158,7 +161,7 @@ def run_trial(seed, controller, record=False, on_step=None):
                hold_force=float(F[-200:].mean()) if holding else 0.0,
                contact=first_contact, reaction_ms=None if (t_secure is None or first_contact is None)
                else 1000 * (t_secure - first_contact), cpu_ms_per_cycle=1000 * cpu / (k + 1),
-               miss=first_contact is None, t_lift=t_lift)
+               miss=first_contact is None, t_lift=t_lift, az_err_deg=az_err)
     if record:
         out["log"] = {k: np.array(v) for k, v in log.items()}
         out["F"] = F

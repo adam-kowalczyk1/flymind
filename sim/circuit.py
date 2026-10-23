@@ -62,12 +62,17 @@ def full_circuit():
     # neurony modelowe odwrócenia odruchu (nie z konektomu)
     for name, nt in [("RR_assist", "ACh")] * N_RR + [("RR_resist", "GABA")] * N_RR + [("RR_hold", "ACh")] * N_HOLD:
         neurons.append(dict(bodyId=-len(neurons), type=name, side="L", circuit="model", nt=nt))
+    # czujniki szczęk → neurony czuciowe: przydział po kolei na pełnej liście (nasz wybór); zapisany
+    # w neuronie, żeby ablacja nie przetasowała kanałów
+    sens = [n for n in neurons if n["circuit"] == "grip" and n.get("subclass") in ("campaniform sensilla", "leg")]
+    for ch, part in zip(("fixed", "moving", "palm"), np.array_split(np.arange(len(sens)), 3)):
+        for j in part:
+            sens[j]["sens_ch"] = ch
     return neurons, c["edges"]
 
 
 def make_groups(neurons):
     g = {k: [] for k in POPULATIONS}
-    sens = []
     for i, n in enumerate(neurons):
         t = n["type"]
         if n["circuit"] == "track":
@@ -80,15 +85,11 @@ def make_groups(neurons):
             key = "MN_ltm"
         elif n["circuit"] == "model":
             key = t
-        elif n.get("subclass") in ("campaniform sensilla", "leg"):
-            sens.append(i)
-            continue
+        elif "sens_ch" in n:
+            key = "SENS_" + n["sens_ch"]
         else:
             key = "IN_" + n["nt"]
         g[key].append(i)
-    # czujniki szczęk → neurony czuciowe: przydział po kolei (nasz wybór)
-    for ch, part in zip(("fixed", "moving", "palm"), np.array_split(np.array(sens), 3)):
-        g["SENS_" + ch] = list(part)
     return {k: np.array(v, dtype=int) for k, v in g.items()}
 
 
@@ -98,10 +99,13 @@ POPULATIONS = ["LC10a_L", "LC10a_R", "AOTU019_L", "AOTU019_R", "AOTU025_L", "AOT
 
 
 class FlyController:
-    def __init__(self, seed=0, params=None, keep=None):
+    def __init__(self, seed=0, params=None, keep=None, compensate=False):
         """keep: maska (bool) na pełnej liście neuronów — ablacja. Usunięte neurony znikają z sieci
         (mniejsza macierz W, więc i mniejszy koszt CPU); pozostałe zachowują cechy z pełnego obwodu
-        (klasa MN, pole recepcyjne, próg czucia)."""
+        (klasa MN, pole recepcyjne, próg czucia).
+        compensate: kompensacja homeostatyczna — ocalałe neurony populacji przejmują jej synapsy
+        (wagi wyjściowe × n_pełne/n_zostało; skalowanie synaptyczne), a ocalałe MN przejmują włókna
+        mięśniowe usuniętych z tej samej puli (reinerwacja kolateralna)."""
         self.p = dict(P, **(params or {}))
         neurons, edges = full_circuit()
         N = len(neurons)
@@ -191,6 +195,14 @@ class FlyController:
         net.nsyn = nsyn[np.ix_(k, k)]
         net.b_a = b_a[k]
         self.net = net.build()
+        if compensate:
+            full_g = g
+            for pop, ids in self.groups.items():
+                if len(ids):
+                    f = len(full_g[pop]) / len(ids)
+                    self.net.W[:, ids] *= f
+                    if pop.startswith("MN_"):
+                        self.force_per_spike[ids] *= f
         self.trim = 0.0
         self.reset()
         if self.p["calibrate"]:
