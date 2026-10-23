@@ -23,6 +23,7 @@ BALL_R = 0.025        # kulka 5 cm (miękka piłka gumowa/piankowa)
 BALL_MASS = 0.050     # 50 g
 TIMESTEP = 0.001      # fizyka 1 ms = krok SNN; pętla sterowania 10 ms
 CONTROL_DT = 0.010
+GRIP_TORQUE = 3.35    # N·m — forcerange serwa z modelu producenta
 
 SENSORS = ["cs_fixed", "cs_moving", "cs_palm"]   # touch [N] na wewnętrznych powierzchniach
 
@@ -65,7 +66,9 @@ def build_xml(ramp_deg=12.0):
                 pos=f"{0.45 + 0.85*L*np.cos(a)} 0 {0.85*L*np.sin(a) + BALL_R/np.cos(a) + 0.001}")
     _sub(ball, "freejoint", name="ball")
     _sub(ball, "geom", name="ball", type="sphere", size=BALL_R, mass=BALL_MASS, rgba=".1 .7 .2 1",
-         condim=6, friction="1.0 0.005 0.0002", solref="0.004 1", priority=1)
+         condim=6, friction="1.0 0.005 0.0002", solref="0.01 1", priority=1)   # miękka piankowa
+    # priority=1: wszystkie kontakty kulki używają JEJ tarcia (μ = 1,0) — tarcie padów/dłoni nie gra
+    # roli. Próba z μ kulki 0,35 (dłoń śliska, pady gumowe) pogorszyła chwyt (kulka wyciskana z „V”).
 
     # --- chwytak: meshe szczęk tylko wizualne, kolizja pudełkami ---
     for g in root.iter("geom"):
@@ -89,8 +92,18 @@ def build_xml(ramp_deg=12.0):
     _sub(jaw, "geom", name="jaw_moving", size="0.003 0.024 0.008", pos="-0.0077 -0.0526 0.0188", **pad)
     _sub(jaw, "site", name="cs_moving", type="box", size="0.0045 0.025 0.009",
          pos="-0.0077 -0.0526 0.0188", rgba="1 0 0 0.2")
-    # punkt środka chwytu (kulka oparta o dłoń, środek między szczękami)
+    # punkt celowania: środek otwartej paszczy (rozwarcie 1,2 rad: ściany x = −0,0085 i ≈ +0,093)
+    _sub(grip, "site", name="aim", pos=f"0.042 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 1 1 1")
+    # punkt środka chwytu (kulka oparta o dłoń i stałą szczękę po domknięciu)
     _sub(grip, "site", name="grasp", pos=f"0.0155 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 0 1 1")
+
+    # Chwytak w trybie PWM STS3215 (tryb 2, otwarta pętla): moment = 3,35 N·m · u, u ∈ [−1, 1],
+    # + = otwieranie (rośnie kąt). Tłumienie stawu 0,6 N·m·s z modelu producenta działa jak SEM.
+    act = root.find("actuator")
+    for a in list(act):
+        if a.get("name") == "gripper":
+            act.remove(a)
+    _sub(act, "motor", name="gripper", joint="gripper", gear=GRIP_TORQUE, ctrlrange="-1 1")
 
     sens = _sub(root, "sensor")
     for s in SENSORS:
