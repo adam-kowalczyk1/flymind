@@ -1,0 +1,34 @@
+A. Siatkówka: redukcja danych 128×96 RGB → 768: 97.92 %, Full HD → 768: 99.988 %
+   toczenie piłeczki: L1 1.06, L2 1.32 (suma po 768 punktach); wysunięcie przesłony: L2 max 39.74, L1 max 25.60; scena statyczna: L1+L2 0.010
+B. Pierścień EPG (6 ziaren): kalibracja u → °/s: {np.float64(-1.0): np.int64(-139), np.float64(-0.75): np.int64(-92), np.float64(-0.5): np.int64(-27), np.float64(-0.35): np.int64(4), np.float64(-0.25): np.int64(6), np.float64(-0.1): np.int64(36), np.float64(0.0): np.int64(67), np.float64(0.25): np.int64(101), np.float64(0.5): np.int64(159), np.float64(1.0): np.int64(242)}
+   pamięć 1,5 s bez bodźca: |błąd| 16.0° (max 20.6°), skupienie 0.80
+   obrót +45°/s × 1 s: przesunięcie +58.7 ± 10.1° (cel +45°); −30°/s × 1 s: -29.6 ± 22.4° (cel −30°)
+   błąd na końcu (po 2,5 s całkowania od zniknięcia bodźca + 1,5 s pamięci): |błąd| 33.9° (max 69.6°)
+   aktywność: EPG średnio 49.2 Hz, max pojedynczego neuronu (okno 50 ms) 180 Hz
+C. Neurony zstępujące [Hz]:
+   cel −60° (prawo): DNa02_L 16, DNa02_R 24, DNa01_L 0, DNa01_R 4
+   cel 0°: DNa02_L 18, DNa02_R 22, DNa01_L 4, DNa01_R 2
+   cel +60° (lewo): DNa02_L 24, DNa02_R 16, DNa01_L 4, DNa01_R 0
+   DNp01 spoczynek: 0
+   DNp01 looming L: 200
+   DNp01 looming P (strona L): 0
+   DNp01 mała piłeczka (cel, bez loomingu): 0
+   MDN spoczynek: 0
+   MDN blisko: 88
+   DNp09 spoczynek: 0
+   DNp09 stop: 83
+   HS_L ruch w lewo: 26
+   HS_R ruch w lewo: 0
+D. VNC (72 neuronów): rekrutacja MN [ms] {'slow': 61, 'int': 562, 'fast': 1138}; RR_hold po puszczeniu [Hz] {'tylko stała 5 N': 0.0, 'tylko ruchoma 5 N': 0.0, 'obie 0,5 N': 70.0}; moment zamykania przy kącie szczęki [N·m] {0.5: 1.7785431525695223, -0.12: 0.3899928477789757, -0.17: 0.11631350881119681}
+OK   siatkówka: toczenie → L1 i L2 > 0, statyczna scena ≈ 0 (< 5 % toczenia)
+OK   siatkówka: ciemna przesłona → L2 (OFF) > L1 (ON)
+OK   pierścień: jedno skupione wzgórze w pamięci (skupienie > 0,5)
+OK   pierścień: pamięć 1,5 s, |błąd| < 30° (średnio po 6 ziarnach)
+BŁĄD pierścień: obrót przesuwa wzgórze we właściwą stronę (6/6 ziaren, oba kierunki)
+OK   brak eksplozji: max częstość < 300 Hz, EPG średnio < 100 Hz
+OK   PFL3→DNa02: cel po prawej → DNa02_R > L, po lewej → L > R
+OK   looming → DNp01 (≥ 20 Hz), mała piłeczka bez loomingu → DNp01 < 5 Hz
+OK   MDN i DNp09 odpowiadają na swoje wejścia (× 2 względem spoczynku)
+OK   zasada Hennemana: wolne < pośrednie < szybkie
+OK   bramka AND: jedna szczęka nie włącza „trzymam”, obie tak
+OK   płytka włoskowa: przy krańcu moment ≤ 25 % momentu daleko od krańca
