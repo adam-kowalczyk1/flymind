@@ -32,7 +32,7 @@ def _sub(parent, tag, **attrs):
     return ET.SubElement(parent, tag, {k: str(v) for k, v in attrs.items()})
 
 
-def build_xml(ramp_deg=12.0, real_friction=True):
+def build_xml(ramp_deg=12.0, real_friction=True, aim_x=0.042):
     """real_friction: tarcie wg materiałów (kulka 0,3, pady gumowe 1,2, dłoń PLA 0,35, stół 0,8 —
     MuJoCo bierze maksimum pary). False: wszystkie kontakty kulki μ = 1,0 (priority=1)."""
     tree = ET.parse(UPSTREAM)
@@ -99,7 +99,7 @@ def build_xml(ramp_deg=12.0, real_friction=True):
     # punkt celowania: środek paszczy przy rozwarciu 1,2 rad (ściany x = −0,0085 i ≈ +0,093); przy
     # obecnym rozwarciu 0,93 środek leży przy x ≈ 0,032, czyli celujemy ~1 cm w stronę ruchomej szczęki
     # (strojenie robione z tym punktem — nie przesuwać bez ponownego strojenia)
-    _sub(grip, "site", name="aim", pos=f"0.042 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 1 1 1")
+    _sub(grip, "site", name="aim", pos=f"{aim_x} 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 1 1 1")
     # punkt środka chwytu (kulka oparta o dłoń i stałą szczękę po domknięciu)
     _sub(grip, "site", name="grasp", pos=f"0.0155 0 {-0.0490 - BALL_R}", size="0.004", rgba="0 0 1 1")
 
@@ -117,8 +117,8 @@ def build_xml(ramp_deg=12.0, real_friction=True):
     return ET.tostring(root, encoding="unicode")
 
 
-def load(ramp_deg=12.0, real_friction=True):
-    m = mujoco.MjModel.from_xml_string(build_xml(ramp_deg, real_friction))
+def load(ramp_deg=12.0, real_friction=True, aim_x=0.042):
+    m = mujoco.MjModel.from_xml_string(build_xml(ramp_deg, real_friction, aim_x))
     return m, mujoco.MjData(m)
 
 

@@ -1,4 +1,5 @@
 """Przebieg jednej próby wokół szczytu siły (diagnostyka zgnieceń):  python tracecase.py ziarno szum"""
+import json
 import sys
 
 import numpy as np
@@ -7,7 +8,7 @@ from circuit import FlyController
 from stage3 import run_trial
 
 seed, d = int(sys.argv[1]), int(sys.argv[2])
-fc = FlyController(seed=seed + 100 * d)
+fc = FlyController(seed=seed + 100 * d, params=json.loads(sys.argv[3]) if len(sys.argv) > 3 else None)
 r = run_trial(seed, fc, record=True)
 L, g, S = r["log"], fc.groups, r["log"]["spikes"]
 F = r["F"]

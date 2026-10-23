@@ -18,8 +18,10 @@ def _one(a):
     stage3.BASE_LEAK = leak               # macOS: spawn — zmienne modułu nie przechodzą do procesów
     P = dict(P)
     q = P.pop("q_open", None)
+    ax = P.pop("aim_x", None)
+    cs = P.pop("contact_stop", stage3.CONTACT_STOP)
     rf = P.pop("real_friction", stage3.REAL_FRICTION)
-    return seed, d, run_trial(seed, FlyController(seed=seed + 100 * d, params=P), q_open=q, real_friction=rf)
+    return seed, d, run_trial(seed, FlyController(seed=seed + 100 * d, params=P), q_open=q, real_friction=rf, aim_x=ax, contact_stop=cs)
 
 
 def evaluate(P, seeds, draws=1, verbose=True, leak=None):
