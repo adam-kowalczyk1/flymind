@@ -1,9 +1,9 @@
 """Etap 4 — ablacja neuronów: jak liczba neuronów obwodu wpływa na skuteczność chwytu, czas reakcji
 i koszt obliczeń.
 
-A) Ablacja warstwowa: pełny obwód 348 neuronów (332 z MaleCNS + 16 modelowych) → 300 → 150 → 60 →
-   30 → 20. Z każdej z 20 populacji usuwamy losowo tyle samo procent neuronów, ale zostaje ≥ 1 w każdej
-   (przy 20 neuronach: dokładnie 1 na populację — minimum strukturalne). 3 losowania × 10 prób.
+A) Ablacja warstwowa: pełny obwód (332 neurony z MaleCNS + 20 modelowych = 352) → 300 → 150 → 60 →
+   30 → 22. Z każdej z 22 populacji usuwamy losowo tyle samo procent neuronów, ale zostaje ≥ 1 w każdej
+   (przy 22 neuronach: dokładnie 1 na populację — minimum strukturalne). 3 losowania × 10 prób.
    Dwa warianty: bez kompensacji oraz z kompensacją homeostatyczną (ocalałe neurony przejmują synapsy
    usuniętych — patrz FlyController(compensate=True)). Różnica rozdziela efekt LICZBY neuronów od
    efektu utraty łącznego pobudzenia.
@@ -28,14 +28,12 @@ from circuit import POPULATIONS, FlyController, full_circuit, make_groups
 from stage3 import run_trial
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIZES = [348, 300, 150, 60, 30, 20]
-DRAWS = 3
-TRIALS = range(10)
-
 NEURONS, _ = full_circuit()
 GROUPS = make_groups(NEURONS)
 N_FULL = len(NEURONS)
-
+SIZES = [N_FULL, 300, 150, 60, 30, 22]   # 22 = minimum strukturalne (1 neuron na każdą z 22 populacji)
+DRAWS = 3
+TRIALS = range(10)
 
 def stratified_keep(n_keep, draw):
     """Maska: z każdej populacji ten sam odsetek (≥ 1 neuron), losowo które."""
@@ -63,6 +61,7 @@ def knockouts():
           "RR_assist (6)": list(GROUPS["RR_assist"]),
           "RR_resist (6)": list(GROUPS["RR_resist"]),
           "RR_hold (4)": list(GROUPS["RR_hold"]),
+          "RR_gate + RR_and (4)": list(GROUPS["RR_gate"]) + list(GROUPS["RR_and"]),
           "wolne MN (4)": [i for i, c in cls.items() if c == "slow"],
           "szybki MN zginacza (1)": [i for i, c in cls.items() if c == "fast" and i in GROUPS["MN_flex"]]}
     out = {}
@@ -157,7 +156,7 @@ INK, INK2, GRID, SURF = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 BLUE, ORANGE, AQUA, YELLOW = "#2a78d6", "#eb6834", "#1baf7a", "#eda100"
 
 
-X = np.arange(len(SIZES))   # równe odstępy w kolejności redukcji 348 → 20 (jak na słupkach)
+X = np.arange(len(SIZES))   # równe odstępy w kolejności redukcji (jak na słupkach)
 
 
 def _logx(a, n):
@@ -216,8 +215,8 @@ def plot(table, ko):
     a = ax[0, 2]
     for lab, get, col, mk in series:
         a.plot(X, [get(k)["aim_err_deg"] for k in SIZES], color=col, lw=2, marker=mk, ms=8, label=lab)
-    a.axhline(3.6, color=INK2, ls="--", lw=1)
-    a.text(X[0] - 0.3, 3.8, "tolerancja paszczy ±3,6° (rozwarcie 1,0 rad)", color=INK2, fontsize=9, ha="left", va="bottom")
+    a.axhline(3.2, color=INK2, ls="--", lw=1)
+    a.text(X[0] - 0.3, 3.4, "tolerancja paszczy ±3,2° (rozwarcie 0,93 rad)", color=INK2, fontsize=9, ha="left", va="bottom")
     _logx(a, n)
     a.set_ylim(bottom=0)
     a.set_ylabel("|błąd celowania| tuż przed paszczą [°]")
@@ -232,7 +231,7 @@ def plot(table, ko):
     a = ax[1, 2]
     names = list(ko)
     vals = [ko[k]["success_pct"] for k in names]
-    full = table[348]["success_pct"]
+    full = table[N_FULL]["success_pct"]
     y = np.arange(len(names))
     a.barh(y, vals, color=BLUE, height=0.6)
     a.axvline(full, color=INK2, ls="--", lw=1)
@@ -264,7 +263,7 @@ def plot(table, ko):
 def protected_task(args):
     n, d, seed, comp = args
     keep = stratified_keep(n, d)
-    for p in ("RR_assist", "RR_resist", "RR_hold"):   # moduł odruchu nietknięty
+    for p in ("RR_assist", "RR_resist", "RR_hold", "RR_gate", "RR_and"):   # moduł odruchu nietknięty
         keep[GROUPS[p]] = True
     r = run_trial(seed, FlyController(seed=seed + 100 * d, keep=keep, compensate=comp))
     return n, comp, int(keep.sum()), r
@@ -272,7 +271,7 @@ def protected_task(args):
 
 def protected():
     """D) Kontrola hipotezy „zatrzask potrzebuje ≥ 2 neuronów”: ablacja jak w A, ale moduł odruchu
-    (16 neuronów) zostaje w całości."""
+    (20 neuronów) zostaje w całości."""
     tasks = [(n, d, s, c) for n in (150, 60, 30) for d in range(DRAWS) for s in TRIALS for c in (False, True)]
     with Pool(8) as pool:
         res = pool.map(protected_task, tasks)

@@ -12,7 +12,9 @@ import numpy as np
 import scene
 
 SERVO_SPEED = 4.7   # rad/s — STS3215 bez obciążenia ok. 0,222 s/60° @7,4 V (karta katalogowa, ok.)
-GRIP_PWM = 0.15     # 0,5 N·m; pełny PWM (3,35 N·m) dawał 72 N i wyciskał miękką kulkę ze szczęk
+GRIP_PWM = 0.25     # domykanie 0,84 N·m
+HOLD_PWM = 0.05     # trzymanie 0,17 N·m po dotyku obu szczęk. Stały PWM 0,25–0,35 daje 10–17 N i wyciska
+                    # miękką kulkę ze szczęk ustawionych w „V”; pełny PWM (3,35 N·m) dawał 72 N
 
 
 def geom_pairs(m, d):
@@ -47,7 +49,8 @@ def main(T=10.0):
         if phase == "czekam" and touch.sum() > 0.05:
             phase, phase_t["kontakt"] = "zamykam", t
         if phase == "zamykam":
-            target[5] = -GRIP_PWM            # skryptowo: stały PWM zamykania (SNN dopiero w Etapie 3)
+            # skryptowo (SNN dopiero w Etapie 3): domknij, po dotyku obu szczęk zmniejsz moment
+            target[5] = -(HOLD_PWM if "obie_szczeki" in phase_t else GRIP_PWM)
             if touch[0] > 0.05 and touch[1] > 0.05:
                 phase_t.setdefault("obie_szczeki", t)
             if "obie_szczeki" in phase_t and t - phase_t["obie_szczeki"] > 0.3:

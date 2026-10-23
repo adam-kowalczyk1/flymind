@@ -1,43 +1,46 @@
-"""Losowe przeszukiwanie stałych modułu chwytu na ZIARNACH STROJENIA 100–119 (rozłącznych z testowymi
-0–9 z Etapu 3).  python tune.py [liczba konfiguracji] [plik wynikowy .json]"""
+"""Losowe przeszukiwanie stałych chwytu na ZIARNACH STROJENIA 100–119 × 3 ziarna szumu (60 prób),
+rozłącznych z walidacją 120–139 i testem 0–9.  python tune.py [liczba konfiguracji] [plik .json]
+Wynik = sukcesy − 2·zgniecenia, potem krótszy czas reakcji."""
 import json
 import sys
 from multiprocessing import Pool
 
 import numpy as np
 
-from circuit import FlyController
-from stage3 import run_trial
+from evaluate import _one
 
 TUNE_SEEDS = range(100, 120)
-SPACE = dict(q_open=(0.85, 1.25), vel_gain=(120, 300), vel_gain_far=(20, 205), q_near=(0.7, 1.1),
-             hold_offset=(15, 30), k_muscle=(0.4, 0.6))
+DRAWS = 3
+SPACE = dict(q_open=(0.9, 1.15), vel_gain=(150, 350), vel_gain_far=(10, 80), q_near=(0.8, 1.0),
+             hold_offset=(18, 23), k_muscle=(0.4, 0.7), syn_jaw_resist=[3, 10, 30, 100, 300, 1000])
+FIXED = dict(real_friction=True)
 
 
 def sample(rng):
     return {k: (float(rng.uniform(*v)) if isinstance(v, tuple) else v[rng.integers(len(v))]) for k, v in SPACE.items()}
 
 
-def evaluate(P):
-    P = dict(P)
-    q_open = P.pop("q_open", None)
-    rs = [run_trial(s, FlyController(seed=s, params=P), q_open=q_open) for s in TUNE_SEEDS]
-    P["q_open"] = q_open
-    rt = [r["reaction_ms"] for r in rs if r["success"]]
-    return dict(params=P, success=sum(r["success"] for r in rs), crushed=sum(r["crushed"] for r in rs),
-                reaction=float(np.mean(rt)) if rt else 1e9,
-                lifted=sum(r["lifted"] for r in rs), peak=float(np.mean([r["peak_force"] for r in rs])))
+def score(P, rs):
+    ok = [r for r in rs if r["success"]]
+    crushed = sum(r["crushed"] for r in rs)
+    return dict(params=P, success=len(ok), crushed=crushed, nogrip=len(rs) - len(ok) - crushed,
+                reaction=float(np.mean([r["reaction_ms"] for r in ok])) if ok else 1e9,
+                score=len(ok) - 2 * crushed)
 
 
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 40
     out = sys.argv[2] if len(sys.argv) > 2 else "../results/tune.json"
-    rng = np.random.default_rng(1)
-    configs = [{}] + [sample(rng) for _ in range(n - 1)]
+    rng = np.random.default_rng(2)
+    configs = [dict(FIXED)] + [dict(FIXED, **sample(rng)) for _ in range(n - 1)]
+    tasks = [(i, (P, s, d, None)) for i, P in enumerate(configs) for d in range(DRAWS) for s in TUNE_SEEDS]
     with Pool(8) as pool:
-        res = pool.map(evaluate, configs)
-    # najpierw brak zgnieceń, potem sukcesy, potem krótsza reakcja
-    res.sort(key=lambda r: (r["crushed"] > 0, -r["success"], r["reaction"]))
-    json.dump(res, open(out, "w"), indent=1)
-    for r in res[:8]:
-        print(r["success"], r["crushed"], r["lifted"], round(r["peak"], 2), round(r["reaction"]), {k: round(v, 2) for k, v in r["params"].items()})
+        res = pool.map(_one, [t for _, t in tasks], chunksize=4)
+    by = {}
+    for (i, _), (_, _, r) in zip(tasks, res):
+        by.setdefault(i, []).append(r)
+    table = sorted((score(configs[i], rs) for i, rs in by.items()), key=lambda r: (-r["score"], r["reaction"]))
+    json.dump(table, open(out, "w"), indent=1)
+    for r in table[:8]:
+        print(r["success"], r["crushed"], r["nogrip"], round(r["reaction"]),
+              {k: (round(v, 2) if isinstance(v, float) else v) for k, v in r["params"].items()})
