@@ -1,4 +1,4 @@
-"""Scena v2 (Explory, „bio2”): SO-101 z czujnikami nacisku w szczękach (z sim/scene.py, sprawdzone w v1–v3)
+"""Scena v2 (Explory, „bio2”): SO-101 z czujnikami nacisku w szczękach (so101_base.py = sim/scene.py v3)
 + kamera „oko w dłoni” + piłeczka tocząca się w poprzek pola widzenia + ruchoma przesłona (mocap)
 + sonda kalibracyjna czujników (mocap, kulka 5 cm na sztywnym uchwycie).
 
@@ -12,8 +12,7 @@ import xml.etree.ElementTree as ET
 import mujoco
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sim"))
-import scene  # noqa: E402  (model SO-101 + pady + czujniki touch)
+import so101_base as scene  # model SO-101 + pady + czujniki touch (kopia sim/scene.py @ a6922bc)
 
 # --- nasze stałe sceny ---
 BALL_X = 0.44          # tor piłeczki
