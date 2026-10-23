@@ -25,6 +25,10 @@ F_SECURE = 0.3     # N — minimalny nacisk szczęki (2·μ·F > m·g z zapasem;
 SERVO_SPEED = 4.7  # rad/s, ramię (STS3215, ok.)
 WINDUP = 0.02      # rad, maks. odjazd celu serwa bazy od zmierzonej pozycji
 BASE_LEAK = None   # s, wygasanie przesunięcia celu serwa bazy (None = brak)
+CONTACT_STOP = True   # dotyk chwytaka zatrzymuje bazę (cel serwa = pozycja). Bez tego szybszy pościg wbijał
+                      # stałą szczękę w kulkę (zgniecenia 5–10 N); hamowanie DNa02 w sieci nie wystarczało,
+                      # bo zostawało przesunięcie celu serwa
+AIM_X = 0.042      # m, punkt celowania w układzie chwytaka (scene.py)
 REAL_FRICTION = True   # tarcie wg materiałów (scene.build_xml); μ = 1 wszędzie dawało klin przy dłoni
 T_TRIAL = 5.0
 Q_OPEN = 0.93      # rad, rozwarcie szczęk w oczekiwaniu (szczelina ~8 cm na kulkę 5 cm); 1,2 dawało
@@ -55,23 +59,27 @@ def bearing(d):
     return float(np.angle(np.exp(1j * (np.arctan2(b[1], b[0]) - np.arctan2(g[1], g[0])))))
 
 
-def base_cmd(m, d, yaw):
+def base_cmd(m, d, yaw, stop=False):
     """Prędkość obrotu bazy → cel serwa pozycyjnego: cel = pozycja + przesunięcie, które całkuje −ω·dt
     (dodatni kąt shoulder_pan obraca w prawo), ograniczone do ±WINDUP i (opcjonalnie) wygasające ze
     stałą BASE_LEAK. Bez wygasania przesunięcie zostaje na granicy windupu po skręcie i serwo przy
     ω ≈ 0 dociska stałą szczękę do kulki."""
     w = np.clip(yaw, -SERVO_SPEED, SERVO_SPEED)
     off = d.ctrl[0] - d.qpos[0]
+    if stop:          # dotyk chwytaka: baza staje w miejscu (cel = pozycja), komenda skrętu pomijana
+        d.ctrl[0] = d.qpos[0]
+        return
     if BASE_LEAK:
         off *= np.exp(-scene.CONTROL_DT / BASE_LEAK)
     off = np.clip(off - w * scene.CONTROL_DT, -WINDUP, WINDUP)
     d.ctrl[0] = np.clip(d.qpos[0] + off, *m.actuator_ctrlrange[0])
 
 
-def run_trial(seed, controller, record=False, on_step=None, q_open=None, real_friction=REAL_FRICTION):
+def run_trial(seed, controller, record=False, on_step=None, q_open=None, real_friction=REAL_FRICTION, aim_x=None,
+              contact_stop=CONTACT_STOP):
     rng = np.random.default_rng(seed)
     ramp = rng.uniform(9, 14)
-    m, d = scene.load(ramp_deg=ramp, real_friction=real_friction)
+    m, d = scene.load(ramp_deg=ramp, real_friction=real_friction, aim_x=AIM_X if aim_x is None else aim_x)
     q_catch, _ = scene.ik_catch_pose(m, d, r=0.28)
     q_lift = q_catch.copy()
     q_lift[1] -= 0.25
@@ -115,7 +123,7 @@ def run_trial(seed, controller, record=False, on_step=None, q_open=None, real_fr
         c0 = time.perf_counter()
         yaw, tau, spk = controller.control_step(th, touch, active=True, jaw_vel=d.qvel[5], jaw_q=d.qpos[5])
         cpu += time.perf_counter() - c0
-        base_cmd(m, d, yaw)
+        base_cmd(m, d, yaw, stop=contact_stop and touch.max() > 0.05)
         d.ctrl[5] = np.clip(-tau / scene.GRIP_TORQUE, -1, 1)  # zamykanie = ujemny PWM
         # program uniesienia: wyzwalany czujnikami sterownika (obie szczęki > F_SECURE przez 100 ms)
         secure_ctrl = secure_ctrl + 1 if min(touch[0], touch[1]) > F_SECURE else 0

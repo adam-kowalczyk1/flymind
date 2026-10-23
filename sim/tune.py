@@ -11,9 +11,9 @@ from evaluate import _one
 
 TUNE_SEEDS = range(100, 120)
 DRAWS = 3
-SPACE = dict(q_open=(0.9, 1.15), vel_gain=(150, 350), vel_gain_far=(10, 80), q_near=(0.8, 1.0),
-             hold_offset=(18, 23), k_muscle=(0.4, 0.7), syn_jaw_resist=[3, 10, 30, 100, 300, 1000])
-FIXED = dict(real_friction=True)
+SPACE = dict(k_yaw=(0.06, 0.10), k_muscle=(0.30, 0.45), syn_resist_slow=[10, 30, 100], vel_gain=(150, 300),
+             q_near=(0.85, 1.0), syn_jaw_resist=[100, 300, 1000], hold_offset=(20, 24))
+FIXED = dict()
 
 
 def sample(rng):
@@ -31,7 +31,7 @@ def score(P, rs):
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 40
     out = sys.argv[2] if len(sys.argv) > 2 else "../results/tune.json"
-    rng = np.random.default_rng(2)
+    rng = np.random.default_rng(3)
     configs = [dict(FIXED)] + [dict(FIXED, **sample(rng)) for _ in range(n - 1)]
     tasks = [(i, (P, s, d, None)) for i, P in enumerate(configs) for d in range(DRAWS) for s in TUNE_SEEDS]
     with Pool(8) as pool:

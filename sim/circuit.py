@@ -49,7 +49,8 @@ P = dict(
     bias_in=4.0,       # tło interneuronów nogi (niezmodelowane wejścia premotoryczne)
     sens_gain=26.0,    # mV / N siły (× współczynnik progu neuronu)
     state_bias=4.0,    # prąd stanu „aktywny/pasywny” na neurony odwrócenia odruchu
-    k_yaw=0.04,        # rad/s na (spike/s) DNa02 L−R → wzmocnienie pościgu ~2,7 (°/s)/° (mucha: 2–3,3)
+    k_yaw=0.08,        # rad/s na (spike/s) DNa02 L−R → wzmocnienie pościgu ~5,4 (°/s)/° (mucha: 2–3,3); przy
+                       # 0,04 robot nie nadążał za kulką i 6 z 7 porażek bez chwytu to wytoczenia z boku paszczy
     resist_kmax=5.0,   # aferenty szczęk o czułości < resist_kmax zasilają opór
     syn_resist_dn=1000, syn_resist_assist=0,
     calibrate=True,    # auto-trym DNa02 przy tworzeniu (patrz calibrate)

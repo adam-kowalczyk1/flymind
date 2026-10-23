@@ -76,29 +76,30 @@ Sukces liczę z sił kontaktu MuJoCo, nie z czujników sterownika: kulka uniesio
 obiema szczękami na końcu próby, a siła ściskania (średnia 20 ms) nigdy nie przekroczyła 5 N.
 Stałe strojone na ziarnach 100–119, walidowane na 120–139, testowane jednorazowo na 0–9.
 
-Wersja 3 (obecna). Każde ziarno próby × 3 ziarna szumu sieci:
+Wersja 4 (obecna). Każde ziarno próby × 3 ziarna szumu sieci:
 
 | zbiór | sukces | zgniecione | bez chwytu | chybione |
 |---|---|---|---|---|
 | **test (ziarna 0–9), 1 ziarno szumu** | **8/10 = 80%** | 0 | 2 | 0 |
-| **test 0–9 × 3 ziarna szumu** | **24/30 = 80%** | **0** | 6 | 0 |
-| walidacja 120–139 × 3 | 52/60 = 87% | 0 | 8 | 0 |
-| strojenie 100–119 × 3 | 52/60 = 87% | 1 | 7 | 0 |
+| **test 0–9 × 3 ziarna szumu** | **26/30 = 87%** | **0** | 4 | 0 |
+| walidacja 120–139 × 3 | 53/60 = 88% | 0 | 7 | 0 |
+| strojenie 100–119 × 3 | 57/60 = 95% | 0 | 3 | 0 |
 
-- Czas od kontaktu do pewnego chwytu (obie szczęki ≥ 0,3 N przez 50 ms) w próbach udanych: **997 ± 289 ms** (test 0–9).
-- Latencja neuronalna (kontakt → moment > 0,2 N·m): **43 ± 7 ms**. Szczęka rusza po 87 ± 15 ms.
+- Czas od kontaktu do pewnego chwytu (obie szczęki ≥ 0,3 N przez 50 ms) w próbach udanych: **981 ± 268 ms** (test 0–9).
+- Latencja neuronalna (kontakt → moment > 0,2 N·m): **43 ± 6 ms**. Szczęka rusza po 107 ± 38 ms.
 - Resztę czasu zajmuje domykanie z hamowaniem: armatura serwa 0,028 kg·m² z modelu producenta to ~7,8 kg masy efektywnej na końcu szczęki, więc szybkie domknięcie zgniata kulkę uderzeniem. Szczęka zamyka się więc szybko poza strefą domknięcia i hamuje dopiero w niej.
-- Siła trzymania 2,3–3,2 N, szczyty 3,0–4,7 N. Zapas do progu zgniecenia (5 N) jest mały.
-- Śledzenie: błąd celowania tuż przed paszczą 2,2° (tolerancja paszczy ±3,2° przy rozwarciu 0,93 rad). Bez sterowania bazą byłoby 5,7°.
+- Siła trzymania 2,4–3,1 N, szczyty 2,8–3,6 N (w v3 do 4,7 N — udział miała baza dociskająca stałą szczękę).
+- Śledzenie: błąd celowania tuż przed paszczą 1,8° (tolerancja paszczy ±3,2° przy rozwarciu 0,93 rad). Bez sterowania bazą byłoby 5,7°.
 
 ### Historia wersji
 
-| | v1 | v2 | **v3** |
-|---|---|---|---|
-| test 0–9 | 7/10, 0 zgn. | 8/10, 0 zgn. | **8/10, 0 zgn.** |
-| test 0–9 × 3 szumy | 21/30, 3 zgn. | 24/30, 3 zgn. | **24/30, 0 zgn.** (6 bez chwytu) |
-| walidacja 120–139 × 3 | — | 45/60, 5 zgn., 10 bez chwytu | **52/60, 0 zgn., 8 bez chwytu** |
-| kontakt → pewny chwyt | 2119 ± 241 ms | 1127 ± 375 ms | **997 ± 289 ms** |
+| | v1 | v2 | v3 | **v4** |
+|---|---|---|---|---|
+| test 0–9 | 7/10, 0 zgn. | 8/10, 0 zgn. | 8/10, 0 zgn. | **8/10, 0 zgn.** |
+| test 0–9 × 3 szumy | 21/30, 3 zgn. | 24/30, 3 zgn. | 24/30, 0 zgn., 6 bez chwytu | **26/30, 0 zgn., 4 bez chwytu** |
+| walidacja 120–139 × 3 | — | 45/60, 5 zgn., 10 bez chwytu | 52/60, 0 zgn., 8 bez chwytu | **53/60, 0 zgn., 7 bez chwytu** |
+| strojenie 100–119 × 3 | — | 54/60, 4 zgn., 2 bez chwytu | 52/60, 1 zgn., 7 bez chwytu | **57/60, 0 zgn., 3 bez chwytu** |
+| kontakt → pewny chwyt | 2119 ± 241 ms | 1127 ± 375 ms | 997 ± 289 ms | **981 ± 268 ms** |
 
 **v2 (przyspieszenie).** Tłumienie prędkością działało w całym zakresie ruchu (szczęka ~0,3 rad/s), więc kulka zdążała się wytoczyć. Zmiany:
 - aferenty położenia szczęki (odpowiednik „claw” FeCO) bramkują tłumienie — silne dopiero w strefie domknięcia. **Założenie modelowe:** rozmiar kulki jest znany, więc i kąt kontaktu;
@@ -119,34 +120,34 @@ Sprawdzone i odrzucone w v3:
 - wygasanie celu serwa bazy (τ = 30–300 ms) — mechanizm dociskania był prawdziwy (−2 N·m przy ω ≈ 0), ale na 60 próbach nie poprawił wyniku (85% i 5 zgn. wobec 90% i 4), więc go cofnąłem;
 - dodatkowy prąd „stanu pasywnego” dla RR_resist — nie zmieniał wyjścia, cofnięty.
 
+**v4 (próby bez chwytu).** Klasyfikacja porażek v3 (`sim/classify.py`): z 7 prób bez chwytu na zbiorze strojenia 6 to wytoczenia, 1 to przepychanie. Przy wytoczeniu kulka przyjeżdża ~5° obok środka (po stronie ruchomej szczęki), uderza w jej wewnętrzną ścianę i jest wypychana na zewnątrz przez domykającą się szczękę ustawioną w „V”.
+
+Błąd celowania był w większości *deterministyczny*, nie szumowy:
+- korelacja z początkowym przesunięciem kulki: 0,71, z jej prędkością boczną: 0,53;
+- rozrzut między ziarnami 2,3°, a szum sieci tylko 1,2°.
+
+Robot nie nadążał za kulką, której azymut szybko rośnie, gdy toczy się w stronę bazy. Zmiany:
+1. Wzmocnienie pościgu k_yaw 0,04 → 0,08, tj. ~5,4 (°/s)/° — powyżej zakresu zmierzonego u muchy (2–3,3). Na 60 próbach strojenia: bez chwytu 7 → 1, ale zgnieceń 1 → 6. Zgniecenia miały siłę tylko na stałej szczęce, 0,2–0,3 s po kontakcie: rozpędzona baza wbijała w kulkę stałą szczękę.
+2. Zatrzymanie bazy przy dotyku (`CONTACT_STOP` w `stage3.py`): przy dowolnym nacisku czujników chwytaka cel serwa bazy = bieżąca pozycja. To reguła warstwy serwa, nie neuron. Ten sam pomysł w sieci (RR_stop: 2 neurony GABA, dotyk → hamowanie DNa02) **pogorszył** wynik (44/60, 12 zgnieceń): komenda skrętu gasła, ale zostawało przesunięcie celu serwa i baza pchała dalej z −1 N·m.
+
+Sprawdzone i odrzucone w v4 (60 prób strojenia; v3 = 52/60, 1 zgn., 7 bez chwytu):
+
+| zmiana | sukces | zgn. | bez chwytu |
+|---|---|---|---|
+| chwyt wyzwalany z widzenia (kulka < 6 / 8 / 10 cm od punktu chwytu) | 52 / 48 / 44 | 2 / 1 / 0 | 6 / 11 / 16 |
+| punkt celowania 1–2,4 cm w stronę stałej szczęki | 44 / 42 / 35 | 3 / 6 / 6 | 13 / 12 / 19 |
+| punkt celowania 0,6–1,3 cm w stronę ruchomej szczęki | 47 / 40 | 2 / 1 | 11 / 19 |
+| RR_stop w sieci (k_yaw 0,08), też z wygasaniem celu serwa τ 0,05/0,1 s | 44 / 45 / 48 | 12 / 7 / 6 | 4 / 8 / 6 |
+| przeszukiwanie 79 losowych konfiguracji (k_yaw, siła, tłumienie, bramka) | najlepsza 49 | 3 | 8 |
+| słabszy opór z ruchomej szczęki (syn_jaw_resist 30 / 60 / 100 zamiast 300) | 4 / 55 / 58 | 54 / 3 / 0 | 2 / 2 / 2 |
+
+Opór z ruchomej szczęki zostaje na 300. 100 dawało na strojeniu 58/60, ale na walidacji 52/60 (300: 53/60), a przy 60 zaczyna się urwisko zgnieceń.
+
+Wybór k_yaw: 0,06 / 0,07 / 0,08 / 0,10 z zatrzymaniem bazy dały na strojeniu 54 / 52 / 57 / 50 sukcesów, wszystkie bez zgnieceń. Na walidacji 0,06 → 47/60, 0,08 → 53/60.
+
 Co zostało:
-- na zbiorze testowym × 3 przybyło prób bez chwytu (3 → 6), choć na walidacji ubyło (10 → 8);
-- tryby porażki bez chwytu to: kulka odbija się i wytacza, zanim szczęka ją domknie, albo ruchoma szczęka długo przepycha kulkę po stole.
-
-### Przyspieszenie chwytu (wersja 2, 2026-10-23)
-
-| | wersja 1 | wersja 2 |
-|---|---|---|
-| test 0–9 | 7/10, 0 zgniecionych | **8/10, 0 zgniecionych** |
-| walidacja 120–139 | 13/20, 0 zgniecionych | **16/20, 0 zgniecionych** |
-| 30 prób pełnego obwodu | 21/30, 3 zgniecione | **24/30, 3 zgniecione** |
-| kontakt → pewny chwyt | 2119 ± 241 ms | **1127 ± 375 ms** |
-
-Diagnoza wersji 1: tłumienie prędkością działało w całym zakresie ruchu, więc szczęka jechała ~0,3 rad/s.
-W tym czasie kulka odbijała się od dłoni i wytaczała z paszczy (2 z 3 porażek testu), albo klinowała się
-przy ruchomej szczęce, bo stan „trzymam” odpalał się od jednej szczęki.
-
-Zmiany:
-1. Aferenty położenia szczęki (odpowiednik neuronów „claw” FeCO) bramkują tłumienie: poza strefą domknięcia (q > 0,88 rad) jest słabe (25 mV na rad/s), w strefie silne (257). Szczęka dojeżdża szybko i hamuje przed kulką. **Założenie modelowe:** rozmiar kulki jest znany (np. z widzenia), więc znany jest też kąt, przy którym następuje kontakt — kąt ściśnięcia w próbach wynosił 0,41–0,70 rad.
-2. Rozwarcie startowe 1,2 → 1,0 rad: krótsza droga szczęki kosztem tolerancji celowania (±5,3° → ±3,6°; błąd celowania 2,1°).
-3. Wyższy próg koincydencji RR_hold (prąd stanu −20,6 mV) i k_muscle 0,48 → 0,50.
-
-Wszystko strojone na ziarnach 100–119 (80 konfiguracji, priorytet: 0 zgnieceń, potem sukces, potem
-czas). Z dwóch najlepszych wybrałem tę z lepszą walidacją; test 0–9 uruchomiony raz.
-
-Nie udało się:
-- tłumienie zależne tylko od kąta nie chroni przed zakleszczeniem kulki między ruchomą szczęką a dłonią przy szeroko otwartej szczęce — tam krótkie ramię dźwigni daje ponad 4 N już z samych wolnych MN;
-- w 30 próbach pełnego obwodu 3 są nadal zgniecione (tyle samo co w wersji 1).
+- na walidacji poprawa wobec v3 mieści się w szumie (+1 próba); wyraźna jest na strojeniu (+5) i teście (+2);
+- 4 porażki testu: 2 wytoczenia, 1 przepychanie (ruchoma szczęka 4,3 s naciska, stała nie), 1 inna.
 
 ## Etap 4 — ablacja neuronów (`sim/stage4_ablation.py`)
 
@@ -158,44 +159,44 @@ minimum strukturalne: po 1 na populację). Dla każdej wielkości: 3 losowania �
 
 | neurony | sukces bez komp. | sukces z komp. | zgniecione (bez / z, z 30) | błąd celowania (bez / z) | reakcja [ms] (bez / z) | CPU [ms/cykl 10 ms] |
 |---|---|---|---|---|---|---|
-| 352 | 80 ± 8% | 80 ± 8% | 0 / 0 | 2,2° / 2,2° | 1236 / 1236 | 0,34 |
-| 300 | 67 ± 19% | **83 ± 5%** | 2 / 2 | 1,7° / 1,6° | 1559 / 933 | 0,36 |
-| 150 | 0% | 40 ± 24% | 5 / 4 | 4,1° / 3,2° | — / 2083 | 0,25 |
-| 60 | 0% | 0% | 11 / 14 | 7,4° / 4,3° | — | 0,19 |
-| 30 | 0% | 0% | 14 / 6 | 6,1° / 5,8° | — | 0,18 |
-| 22 | 0% | 0% | 10 / 12 | 7,4° / 7,2° | — | 0,18 |
+| 352 | 87 ± 5% | 87 ± 5% | 0 / 0 | 1,8° / 1,8° | 1056 / 1056 | 0,42 |
+| 300 | 80 ± 8% | **90 ± 0%** | 0 / 0 | 1,3° / 1,8° | 1427 / 981 | 0,43 |
+| 150 | 0% | 40 ± 42% | 0 / 0 | 4,4° / 3,7° | — / 1459 | 0,32 |
+| 60 | 0% | 3 ± 5% | 0 / 2 | 9,4° / 10,5° | — / 3025 | 0,25 |
+| 30 | 0% | 3 ± 5% | 1 / 1 | 9,2° / 4,7° | — / 3769 | 0,25 |
+| 22 | 0% | 0% | 1 / 0 | 11,3° / 11,1° | — | 0,24 |
 
 Nokauty pojedynczych populacji w pełnym obwodzie (10 prób, ziarno szumu 0; pełny obwód w tych samych próbach: 8/10):
 
 | usunięte | sukces | co się dzieje |
 |---|---|---|
-| RR_resist (6) | 0% | 7/10 zgniecionych, szczyt 29 N — bez hamowania nie ma regulacji siły |
-| RR_assist (6) | 0% | 9/10 bez chwytu — nie ma zatrzasku „łap” |
-| RR_hold (4) | 40% | 3 zgniecione — bez stanu „trzymam” szybkie MN wracają po domknięciu |
-| RR_gate + RR_and (4) | 40% | 3 zgniecione — to samo, bo bez bramki zatrzask się nie włącza |
+| RR_resist (6) | 0% | 7/10 zgniecionych, szczyt 27 N — bez hamowania nie ma regulacji siły |
+| RR_assist (6) | 0% | 10/10 bez chwytu — nie ma zatrzasku „łap” |
+| RR_hold (4) | 50% | 5 zgniecionych — bez stanu „trzymam” szybkie MN wracają po domknięciu |
+| RR_gate + RR_and (4) | 50% | 5 zgniecionych — to samo, bo bez bramki zatrzask się nie włącza |
 | AOTU019 L+P | 80% | |
-| AOTU025 L+P | 80% | 1 zgnieciona |
-| wolne MN (4) | 80% | 1 zgnieciona (w v2: 40%) |
-| szybki MN zginacza (1) | 90% | 1 zgnieciona |
-| IN_GABA nogi (10) | 100% | 10 prób to za mało, by odróżnić od 80% |
+| szybki MN zginacza (1) | 90% | |
+| AOTU025 L+P | 100% | 10 prób to za mało, by odróżnić 80–100% |
+| IN_GABA nogi (10) | 100% | jw. |
+| wolne MN (4) | 100% | jw. |
 
 Kontrola mechanizmu (`--protected`): ablacja jak wyżej, ale moduł odruchu (20 neuronów) zostaje w całości.
 
 | neurony | sukces bez komp. | sukces z komp. |
 |---|---|---|
-| ~162 | 13% (16 zgniecionych) | 43% |
-| ~75 | 0% | 17% |
-| ~45 | 0% | 20% |
+| ~162 | 23% (8 zgniecionych) | 67% |
+| ~75 | 0% | 13% |
+| ~45 | 0% | 13% |
 
 ### Wnioski
 
-1. **Przy 300 neuronach straty wynikają z utraty łącznego pobudzenia, nie z liczby komórek.** Bez kompensacji 67 ± 19%, z kompensacją 83 ± 5% — tyle co pełny obwód (80 ± 8%).
-2. **Poniżej ~150 neuronów kompensacja przestaje wystarczać** (40% przy 150, 0% od 60 w dół). Przyczyny:
-   - zatrzaski z 1 neuronem nie samopodtrzymują się (brak autapsy). Ochrona modułu odruchu podnosi wynik przy ~45 neuronach z 0% do 20%, ale nie ratuje całości;
-   - z puli 5 zginaczy zostaje 1. Jeśli to szybki MN, nie ma wolnych jednostek do delikatnego trzymania;
-   - z 275 LC10a zostaje 6–12 i śledzenie traci precyzję (błąd 4–7° wobec tolerancji 3,2°).
-3. **Najważniejsze dla „nie zgnieść” są neurony hamujące (RR_resist) i stan „trzymam” z bramką AND.** Nokaut wolnych MN boli mniej niż w v2 (80% wobec 40%): przy realistycznym tarciu trzymanie mniej zależy od precyzji siły.
-4. **Koszt CPU prawie nie zależy od liczby neuronów:** 352 → 22 skraca cykl tylko 1,9× (0,34 → 0,18 ms). Dominuje narzut Pythona na krok, nie mnożenie macierzy N×N. Pełny obwód zużywa ~3–4% budżetu 10 ms.
+1. **Przy 300 neuronach straty wynikają z utraty łącznego pobudzenia, nie z liczby komórek.** Bez kompensacji 80 ± 8%, z kompensacją 90 ± 0% — tyle co pełny obwód (87 ± 5%).
+2. **Poniżej ~150 neuronów kompensacja przestaje wystarczać** (40% przy 150, ≤ 3% od 60 w dół). Przyczyny:
+   - zatrzaski z 1 neuronem nie samopodtrzymują się (brak autapsy). Ochrona modułu odruchu podnosi wynik przy ~160 neuronach z 40% do 67% (z kompensacją), ale niżej nie ratuje;
+   - z 275 LC10a zostaje 6–12 i śledzenie traci precyzję (błąd 4–11° wobec tolerancji 3,2°). W v4 to główna przyczyna: od 60 neuronów w dół pojawiają się chybienia (6–8 na 30);
+   - z puli 5 zginaczy zostaje 1. Jeśli to szybki MN, nie ma wolnych jednostek do delikatnego trzymania.
+3. **Najważniejsze dla „nie zgnieść” są neurony hamujące (RR_resist) i stan „trzymam” z bramką AND.** Bez nich zgnieceń jest 5–7 na 10.
+4. **Koszt CPU prawie nie zależy od liczby neuronów:** 352 → 22 skraca cykl tylko 1,8× (0,42 → 0,24 ms). Dominuje narzut Pythona na krok, nie mnożenie macierzy N×N. Pełny obwód zużywa ~4% budżetu 10 ms.
 
 ## Co jest z konektomu, a co nasze (ważne na konkurs)
 
@@ -204,7 +205,7 @@ Kontrola mechanizmu (`--protected`): ablacja jak wyżej, ale moduł odruchu (20 
   - parametry membrany (Shiu 2024);
   - stosunki rezystancji i siły klas MN (Azevedo 2020);
   - pola LC10a −15°…165° (Ribeiro 2018);
-  - wzmocnienie pościgu ~2–3 (°/s)/° (Collie 2025).
+  - wzmocnienie pościgu u muchy ~2–3,3 (°/s)/° (Collie 2025) — robot w v4 ma ~5,4, bo przy wartościach muszych nie nadążał za kulką.
 - **Nasze (model, strojone w symulacji):**
   - 20 neuronów modułu odruchu i ich połączenia (w tym bramka AND: RR_gate z rezystancją ×8);
   - prądy tła (zastępują niezmodelowane wejścia, np. DNa02 ma silniejsze wejście z AN03A008 niż z AOTU);
@@ -212,15 +213,16 @@ Kontrola mechanizmu (`--protected`): ablacja jak wyżej, ale moduł odruchu (20 
   - przydział aferentów do czujników;
   - mięsień → moment (k_muscle);
   - tłumienie prędkością szczęki (odpowiednik aferentów prędkości FeCO), bramkowane kątem szczęki — strefa domknięcia q < 0,97 rad przyjęta przy założeniu, że rozmiar kulki jest znany;
-  - auto-trym DNa02, który kompensuje asymetrię L/P konektomu, inaczej dającą stały przechył ~7°.
+  - auto-trym DNa02, który kompensuje asymetrię L/P konektomu, inaczej dającą stały przechył ~7°;
+  - zatrzymanie bazy przy dotyku chwytaka (reguła warstwy serwa, nie neuron — wersja w sieci nie działała, patrz v4).
 - **Odchylenie od standardu:** wagi ln(1+N) zamiast liniowych jak u Shiu (o to prosiło zadanie). Logarytm ściska jedną silną synapsę AOTU→DNa02 i trzeba ją było kompensować wzmocnieniem DNa02.
 - **Uproszczenia fizyki:**
   - tarcie wg materiałów (wartości przyjęte, nie zmierzone na prawdziwym chwytaku). Do v2 wszystkie kontakty kulki miały μ = 1,0, co powodowało klin przy dłoni;
   - „oko” siedzi na osi bazy (kamera nieruchoma), nie na chwytaku. Oko na chwytaku dawało oscylacje ±40°;
   - przed puszczeniem kulki robot 1 s patrzy na nią i obraca się w jej stronę.
 - **Słabe strony:**
-  - 13–20% prób kończy się bez chwytu (kulka wytacza się przed domknięciem albo jest długo przepychana); zgnieceń 0 na testowych 30 i walidacyjnych 60 prób, 1 na 60 strojeniowych;
-  - siła trzymania 2,3–3,2 N ze szczytami do 4,7 N — mały zapas do progu 5 N;
+  - 5–13% prób kończy się bez chwytu (kulka wytacza się przed domknięciem albo jest długo przepychana); zgnieceń 0 we wszystkich 150 próbach testu, walidacji i strojenia;
+  - siła trzymania 2,4–3,1 N, szczyty do 3,6 N;
   - reakcja ~1 s jest daleka od muchy; ogranicza ją inercja serwa, nie sieć (latencja 43 ms);
   - odwrócenie odruchu zrobiłem jako bramkowanie stanem aktywny/pasywny. W stanie pasywnym widać je tylko jako +5 Hz na prostowniku, bo zginacze są wtedy wyciszone.
 

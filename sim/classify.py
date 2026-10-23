@@ -14,8 +14,10 @@ def one(a):
     P, seed, d = a
     P = dict(P)
     q = P.pop("q_open", None)
+    ax = P.pop("aim_x", None)
+    cs = P.pop("contact_stop", stage3.CONTACT_STOP)
     fc = FlyController(seed=seed + 100 * d, params=P)
-    r = stage3.run_trial(seed, fc, record=True, q_open=q)
+    r = stage3.run_trial(seed, fc, record=True, q_open=q, aim_x=ax, contact_stop=cs)
     if r["success"] or r["crushed"]:
         return seed, d, r["success"], r["crushed"], None, {}
     L = r["log"]
