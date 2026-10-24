@@ -1,0 +1,95 @@
+Etap 5 — testy autentyczności (struktura konektomu vs dowolna sieć). Seedy 0–9; seed próby = seed przetasowania = seed szumu; VNC pełny.
+Po każdej zmianie mózgu: calibrate_ring + calibrate_steer (ze strażnikiem nachylenia). Wszystkie liczby surowe, bez wykluczeń.
+Przewidywania: results/stage5_predictions.txt (Zapisano: 2026-10-24 21:42:12 CEST (przed jakimkolwiek pomiarem Etapu 5)); treść zgodna z PRED w kodzie: TAK
+Wzgórze istnieje = skupienie > 0.5 i EPG ≥ 5 Hz w oknie pamięci (ablation.py). n prób: A/B1/B2 10 na warunek, otwarta pętla 50.
+
+MODYFIKACJE STRUKTURY (średnio po seedach)
+  rewire_all   krawędzi 16823; udanych wymian 168230; krawędzi w nowym miejscu 27 %
+  rewire_cx    krawędzi 16169; udanych wymian 161690; krawędzi w nowym miejscu 20 %
+  shuffle_all  krawędzi 16823; wag zmienionych 100 %
+  shuffle_cx   krawędzi 16169; wag zmienionych 100 %
+
+POMIARY (przedział Wilsona 95 % dla A, B2, B1 w nawiasach)
+warunek                     n   A<10°   A<20°  med|b|   śr. b     B2     (95%)                          klasy B2    B1  lat0,3m [ms]  wzgórze  err_pam [°]  shift+45
+kontrola (pełny mózg)      10    4/10    5/10    15.9   -11.2   8/10  49-94 %sukces 8, upuszczenie 1, chybienie 1 10/10          53     100%   17.7 ± 9.754.3 ± 18.1
+REWIRE cały mózg           10    0/10    1/10    34.7   -35.7   6/10  31-83 %sukces 6, wytoczenie 3, przepchnięcie 1  0/10           —       0%            —         —
+REWIRE tylko CX            10    0/10    1/10    37.1   -40.3   5/10  24-76 %sukces 5, wytoczenie 4, chybienie 1 10/10          53       0%            —         —
+WEIGHT-SHUFFLE cały mózg   10    1/10    4/10    32.0   -36.9   3/10  11-60 %wytoczenie 3, przepchnięcie 3, sukces 3, chybienie 1 10/10          58       0%            —         —
+WEIGHT-SHUFFLE tylko CX    10    0/10    3/10    25.8   -39.7   5/10  24-76 %sukces 4, przepchnięcie 2, wytoczenie 2, upuszczenie 1, zgniecenie* 1 10/10          53       0%            —         —
+lezja PFL3                 10    2/10    3/10    78.8   -64.9   4/10  17-69 %przepchnięcie 5, sukces 3, zgniecenie* 1, wytoczenie 1 10/10          53     100%  22.3 ± 11.955.9 ± 19.2
+lezja EPG                  10    0/10    3/10    24.8   -23.4   5/10  24-76 %            wytoczenie 5, sukces 5 10/10          53       0%            —         —
+lezja PEN_a+PEN_b          10    0/10    0/10    50.5   -44.5   5/10  24-76 %sukces 5, chybienie 2, przepchnięcie 2, wytoczenie 1 10/10          53       0%            —         —
+lezja Delta7               10    1/10    5/10    23.6    -6.4   3/10  11-60 %przepchnięcie 6, sukces 3, chybienie 1 10/10          53       0%            —         —
+lezja LC4+LPLC2            10    4/10    5/10    15.9   -11.2   8/10  49-94 %sukces 8, upuszczenie 1, chybienie 1  0/10           —     100%   17.7 ± 9.754.3 ± 18.1
+lezja DNa02+DNa01          10    0/10    0/10    31.0   -31.1   5/10  24-76 %            wytoczenie 5, sukces 5 10/10          53     100%   17.7 ± 9.754.3 ± 18.1
+lezja HS (HSN+HSE+HSS)     10    3/10    5/10    20.7   -13.9   8/10  49-94 %sukces 8, upuszczenie 1, chybienie 1 10/10          53     100%   17.7 ± 9.754.3 ± 18.1
+odniesienie: A none (pełny) 10    0/10    0/10    30.5   -33.0
+odniesienie: B2 zabl. baza                                     5/10 (results/stage3_b2.txt)
+
+PRZEWIDYWANIE vs WYNIK (TRAFIONE = wynik w przedziale lo..hi)
+warunek                            A <10° [z 10]                      med|b| A [°]                  B2 sukces [z 10]                  B1 sukces [z 10]                  wzgórze [% z 50]
+control                     4..4 -> 4.0 TRAFIONE         15.8..16 -> 15.9 TRAFIONE              8..8 -> 8.0 TRAFIONE           10..10 -> 10.0 TRAFIONE         96..100 -> 100.0 TRAFIONE
+rewire_all                  0..1 -> 0.0 TRAFIONE           20..90 -> 34.7 TRAFIONE              0..6 -> 6.0 TRAFIONE              0..2 -> 0.0 TRAFIONE             0..30 -> 0.0 TRAFIONE
+rewire_cx                   0..1 -> 0.0 TRAFIONE           20..90 -> 37.1 TRAFIONE              0..6 -> 5.0 TRAFIONE            9..10 -> 10.0 TRAFIONE             0..40 -> 0.0 TRAFIONE
+shuffle_all                 0..1 -> 1.0 TRAFIONE           20..90 -> 32.0 TRAFIONE              0..6 -> 3.0 TRAFIONE            4..10 -> 10.0 TRAFIONE             0..30 -> 0.0 TRAFIONE
+shuffle_cx                  0..1 -> 0.0 TRAFIONE           20..90 -> 25.8 TRAFIONE              0..6 -> 5.0 TRAFIONE            9..10 -> 10.0 TRAFIONE             0..30 -> 0.0 TRAFIONE
+les_PFL3                 0..1 -> 2.0 NIETRAFIONE           20..90 -> 78.8 TRAFIONE              0..6 -> 4.0 TRAFIONE            9..10 -> 10.0 TRAFIONE         90..100 -> 100.0 TRAFIONE
+les_EPG                     0..1 -> 0.0 TRAFIONE           20..90 -> 24.8 TRAFIONE              0..6 -> 5.0 TRAFIONE            9..10 -> 10.0 TRAFIONE              0..2 -> 0.0 TRAFIONE
+les_PEN                     0..1 -> 0.0 TRAFIONE           25..90 -> 50.5 TRAFIONE              4..9 -> 5.0 TRAFIONE            9..10 -> 10.0 TRAFIONE             0..60 -> 0.0 TRAFIONE
+les_D7                      0..1 -> 1.0 TRAFIONE           20..90 -> 23.6 TRAFIONE              0..6 -> 3.0 TRAFIONE            9..10 -> 10.0 TRAFIONE             0..10 -> 0.0 TRAFIONE
+les_LOOM                    4..4 -> 4.0 TRAFIONE         15.8..16 -> 15.9 TRAFIONE              7..9 -> 8.0 TRAFIONE                0. -> 0.0 TRAFIONE         96..100 -> 100.0 TRAFIONE
+les_DNa                     0..1 -> 0.0 TRAFIONE           15..45 -> 31.0 TRAFIONE              4..6 -> 5.0 TRAFIONE            9..10 -> 10.0 TRAFIONE         96..100 -> 100.0 TRAFIONE
+les_HS                      2..6 -> 3.0 TRAFIONE           10..25 -> 20.7 TRAFIONE             6..10 -> 8.0 TRAFIONE            9..10 -> 10.0 TRAFIONE         96..100 -> 100.0 TRAFIONE
+przedziałowe: trafionych 59/60
+Przewidywania „identyczne z kontrolą co do próby”:
+  les_LOOM   ring : TRAFIONE (identyczne)
+  les_LOOM   A    : TRAFIONE (identyczne)
+  les_DNa    ring : TRAFIONE (identyczne)
+  les_HS     ring : TRAFIONE (identyczne)
+RAZEM trafionych 63/64
+
+SZCZEGÓŁY — błędy A przy wyłonieniu [°] (seedy 0…9; NaN = brak wyłonienia), uwagi
+  control      [-23.0, 9.0, 22.0, -66.0, -11.0, -21.0, 3.0, -1.0, -27.0, 3.0]  bez wzgórza (bump=0): 0, ucieczki: 0, śr.|b| 18.6 ± 18.3
+  rewire_all   [-30.0, -20.0, -53.0, -44.0, -21.0, -41.0, -22.0, -40.0, -69.0, -16.0]  bez wzgórza (bump=0): 9, ucieczki: 0, śr.|b| 35.7 ± 16.0
+  rewire_cx    [-66.0, -58.0, -27.0, -18.0, -23.0, -50.0, -61.0, -26.0, -47.0, -27.0]  bez wzgórza (bump=0): 10, ucieczki: 0, śr.|b| 40.3 ± 17.0
+  shuffle_all  [-71.0, -18.0, -14.0, -71.0, -34.0, -5.0, -53.0, -30.0, -58.0, -15.0]  bez wzgórza (bump=0): 7, ucieczki: 0, śr.|b| 36.9 ± 23.4
+  shuffle_cx   [-33.0, 15.0, -14.0, -61.0, -27.0, -134.0, -83.0, -25.0, -14.0, -22.0]  bez wzgórza (bump=0): 9, ucieczki: 0, śr.|b| 42.8 ± 37.2
+  les_PFL3     [9.0, -88.0, -34.0, -15.0, -69.0, -112.0, -104.0, -114.0, -7.0, -116.0]  bez wzgórza (bump=0): 1, ucieczki: 0, śr.|b| 66.8 ± 43.7
+  les_EPG      [-31.0, -25.0, -24.0, -27.0, -30.0, -21.0, -18.0, -17.0, -27.0, -13.0]  bez wzgórza (bump=0): 10, ucieczki: 0, śr.|b| 23.4 ± 5.7
+  les_PEN      [-53.0, -32.0, -26.0, -68.0, -30.0, -29.0, -51.0, -52.0, -50.0, -53.0]  bez wzgórza (bump=0): 9, ucieczki: 0, śr.|b| 44.5 ± 13.2
+  les_D7       [-28.0, -44.0, 17.0, -95.0, 74.0, -16.0, -19.0, 35.0, -9.0, 20.0]  bez wzgórza (bump=0): 0, ucieczki: 0, śr.|b| 35.5 ± 26.7
+  les_LOOM     [-23.0, 9.0, 22.0, -66.0, -11.0, -21.0, 3.0, -1.0, -27.0, 3.0]  bez wzgórza (bump=0): 0, ucieczki: 0, śr.|b| 18.6 ± 18.3
+  les_DNa      [-34.0, -34.0, -29.0, -29.0, -28.0, -31.0, -32.0, -29.0, -33.0, -31.0]  bez wzgórza (bump=0): 0, ucieczki: 0, śr.|b| 31.1 ± 2.0
+  les_HS       [-19.0, -10.0, 22.0, -23.0, -11.0, -41.0, 3.0, -33.0, -27.0, 0.0]  bez wzgórza (bump=0): 0, ucieczki: 0, śr.|b| 18.9 ± 12.4
+  A none       [-40.0, -41.0, -25.0, -30.0, -23.0, -25.0, -44.0, -31.0, -27.0, -43.0]
+
+SZCZEGÓŁY — B1 i B2 po seedach
+  control      B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 1101011111  zgniecenia 0
+  rewire_all   B1 ok: 0000000000 (spike przed startem: 0, brak spike'a: 10)   B2 ok: 0111001110  zgniecenia 0
+  rewire_cx    B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 1110001010  zgniecenia 0
+  shuffle_all  B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 0010001010  zgniecenia 0
+  shuffle_cx   B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 0110011010  zgniecenia 1
+  les_PFL3     B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 1011100000  zgniecenia 1
+  les_EPG      B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 0111001010  zgniecenia 0
+  les_PEN      B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 0111000110  zgniecenia 0
+  les_D7       B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 1100000100  zgniecenia 0
+  les_LOOM     B1 ok: 0000000000 (spike przed startem: 0, brak spike'a: 10)   B2 ok: 1101011111  zgniecenia 0
+  les_DNa      B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 0111001010  zgniecenia 0
+  les_HS       B1 ok: 1111111111 (spike przed startem: 0, brak spike'a: 0)   B2 ok: 1101011111  zgniecenia 0
+
+SZCZEGÓŁY — otwarta pętla (50 prób): skupienie, EPG Hz, błąd pamięci, przesunięcia, poprawny znak obrotu (z wzgórzem)
+  control      skupienie 0.80 ± 0.00, EPG 49.7 ± 0.3 Hz, pamięć 17.7 ± 9.7° (n=50), +45°/s: 54.3 ± 18.1°, −30°/s: -21.1 ± 16.9°, znak OK 90 %
+  rewire_all   skupienie 0.00 ± 0.00, EPG 0.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  rewire_cx    skupienie 0.00 ± 0.00, EPG 0.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  shuffle_all  skupienie 0.04 ± 0.06, EPG 0.1 ± 0.2 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  shuffle_cx   skupienie 0.00 ± 0.00, EPG 0.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  les_PFL3     skupienie 0.80 ± 0.00, EPG 49.6 ± 0.3 Hz, pamięć 22.3 ± 11.9° (n=50), +45°/s: 55.9 ± 19.2°, −30°/s: -16.8 ± 18.0°, znak OK 84 %
+  les_EPG      skupienie 0.00 ± 0.00, EPG 0.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  les_PEN      skupienie 0.00 ± 0.00, EPG 0.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  les_D7       skupienie 0.00 ± 0.00, EPG 200.0 ± 0.0 Hz, pamięć —° (n=0), +45°/s: —°, −30°/s: —°, znak OK nan %
+  les_LOOM     skupienie 0.80 ± 0.00, EPG 49.7 ± 0.3 Hz, pamięć 17.7 ± 9.7° (n=50), +45°/s: 54.3 ± 18.1°, −30°/s: -21.1 ± 16.9°, znak OK 90 %
+  les_DNa      skupienie 0.80 ± 0.00, EPG 49.7 ± 0.3 Hz, pamięć 17.7 ± 9.7° (n=50), +45°/s: 54.3 ± 18.1°, −30°/s: -21.1 ± 16.9°, znak OK 90 %
+  les_HS       skupienie 0.80 ± 0.00, EPG 49.7 ± 0.3 Hz, pamięć 17.7 ± 9.7° (n=50), +45°/s: 54.3 ± 18.1°, −30°/s: -21.1 ± 16.9°, znak OK 90 %
+
+błędy techniczne scenariuszy: brak
+CZAS OBLICZEŃ: 9004 s CPU (w tym kalibracje 6389 s), 120 zadań (warunek × seed), 3 procesy
