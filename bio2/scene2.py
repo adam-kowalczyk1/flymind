@@ -22,12 +22,15 @@ CAM_W, CAM_H = 128, 96           # obraz z kamery (FlyRetinaFilter w Etapie 2 zr
 CAM_FOVY = 70.0
 PARK = (0.0, 0.8, 0.05)          # pozycja przesłony poza sceną
 ROLL_MU = 1e-5                   # opór toczenia kulka/stół [m] (nasza stała)
+PRED_R = 0.08                    # promień „drapieżnika” [m]
 
 
-def build_xml(real_friction=True):
-    root = ET.fromstring(scene.build_xml(real_friction=real_friction))
+def build_xml(real_friction=True, ramp_deg=None):
+    """ramp_deg=None: bez równi (piłeczka na torze poprzecznym); liczba: równia z v1 (scenariusz chwytu B2)."""
+    root = ET.fromstring(scene.build_xml(ramp_deg=ramp_deg or 12.0, real_friction=real_friction))
     world = root.find("worldbody")
-    world.remove(next(g for g in world.iter("geom") if g.get("name") == "ramp"))   # równia z v1 — tu zbędna
+    if ramp_deg is None:
+        world.remove(next(g for g in world.iter("geom") if g.get("name") == "ramp"))
     # opór toczenia 1e-5 m (nasza stała; z v1 było 2e-4 m → kulka 0,1 m/s stawała po ~2 s)
     for g in root.iter("geom"):
         if g.get("name") in ("ball", "table"):
@@ -40,6 +43,14 @@ def build_xml(real_friction=True):
     occ = ET.SubElement(world, "body", dict(name="occluder", mocap="true", pos=" ".join(map(str, PARK))))
     ET.SubElement(occ, "geom", dict(name="occluder", type="box", size=" ".join(map(str, OCC_SIZE)),
                                     rgba="0.35 0.25 0.2 1"))
+    # tło: jasnoszara ściana daleko za stołem (bez niej „niebo” renderu jest czarne i czarny obiekt nie daje
+    # kontrastu OFF na siatkówce)
+    ET.SubElement(world, "geom", dict(name="backdrop", type="box", size="0.01 3 1.5", pos="1.8 0 1.0",
+                                      rgba="0.75 0.75 0.75 1", contype="0", conaffinity="0"))
+    # „drapieżnik”: duża czarna kula na uchwycie mocap (bodziec looming w scenariuszu B1)
+    pred = ET.SubElement(world, "body", dict(name="predator", mocap="true", pos="0 -0.9 0.3"))
+    ET.SubElement(pred, "geom", dict(name="predator", type="sphere", size=str(PRED_R), rgba="0.02 0.02 0.02 1",
+                                     contype="0", conaffinity="0"))
     # sonda: swobodna kulka jak piłeczka (stawiana między szczękami w teście czujników)
     probe = ET.SubElement(world, "body", dict(name="probe", pos=f"0 0.9 {scene.BALL_R}"))
     ET.SubElement(probe, "freejoint", dict(name="probe"))
@@ -49,8 +60,8 @@ def build_xml(real_friction=True):
     return ET.tostring(root, encoding="unicode")
 
 
-def load(real_friction=True):
-    m = mujoco.MjModel.from_xml_string(build_xml(real_friction))
+def load(real_friction=True, ramp_deg=None):
+    m = mujoco.MjModel.from_xml_string(build_xml(real_friction, ramp_deg))
     d = mujoco.MjData(m)
     m.vis.global_.offwidth, m.vis.global_.offheight = max(CAM_W, 1280), max(CAM_H, 720)
     return m, d

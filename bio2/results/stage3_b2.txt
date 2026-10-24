@@ -1,0 +1,47 @@
+Etap 3, scenariusz B2 „chwyt” (bio2) — piłeczka z równi do paszczy, śledzenie wzrokiem, chwyt VNC, uniesienie
+seedy 0–9 (10 prób), jeden przebieg; md5 plików: agent.py d041148a94, brain.py bdbafc3145, vision.py a4772f8e16, retina.py dfbc29de3c, vnc.py adf3f5de2d, snn.py a0aab67fec, scene2.py 7680a175b9, so101_base.py c69dfcc8e2, stage3.py 2fb98601e3, stage3_b2.py 47823a3a0f
+parametry sceny: {'ramp': 12.0, 'ramp_L': 0.16, 's0': 0.85, 'y_range': (-0.01, 0.09), 'vy_range': (0.0, 0.0), 'T': 5.0, 'q_open': 0.93, 'W_MAX': 0.6, 'no_turn': False, 'dn_ref': False}
+
+Miary (z prawdy MuJoCo: mj_contactForce, pozycje ciał, segmentacja kamery; niezależne od czujników sterownika):
+  sukces = środek piłeczki ≥ 3 cm nad stołem przez cały czas okna 1 s, obie szczęki w kontakcie w ≥ 99 % kroków 1 ms
+  zgniecenie = maks. średniej 20 ms siły normalnej szczęka–piłeczka (miara v1) > 5 N; podaję też szczyt chwilowy (1 ms)
+  reakcja (i) = pierwsza widoczność (≥ 20 px) → start ruchu bazy (|ω| > 0,05 rad/s przez ≥ 30 ms)
+  reakcja (ii) = pierwszy dotyk piłeczki z ramieniem → pewny chwyt (obie szczęki ≥ 0.3 N przez 50 ms)
+  siła trzymania: średnia sumy sił obu szczęk w oknie trzymania; CV = σ/μ (krok 1 ms); poślizg = przesunięcie piłeczki w układzie chwytaka (okno trzymania)
+  porażki: chybienie / zgniecenie / upuszczenie (był pewny chwyt) / przepchnięcie (kontakt z ruchem `aim` > 3 cm/s) / wytoczenie (reszta). * = uniesiona, ale szczyt siły > 5 N
+
+WYNIKI (agent z siatkówką → EPG → DNa02/DNa01 → VNC):
+   0 y0= +5.4cm  upuszczenie   szczyt= 5.76N (20ms 3.36)  reakcja_ruch=240ms  reakcja_chwyt=1675ms  baza=49.4°  F=  -  N CV=  -   poślizg=  -  mm
+   1 y0= +4.1cm  sukces        szczyt= 3.86N (20ms 3.80)  reakcja_ruch=330ms  reakcja_chwyt=2276ms  baza=11.4°  F=4.67N CV=0.12 poślizg=1.9mm
+   2 y0= +1.6cm  przepchnięcie szczyt= 4.36N (20ms 2.47)  reakcja_ruch=270ms  reakcja_chwyt=  -  ms  baza=20.0°  F=  -  N CV=  -   poślizg=  -  mm
+   3 y0= -0.1cm  sukces        szczyt= 3.88N (20ms 3.12)  reakcja_ruch=270ms  reakcja_chwyt=1339ms  baza=4.6°  F=4.33N CV=0.20 poślizg=1.9mm
+   4 y0= +8.4cm  przepchnięcie szczyt= 5.81N (20ms 2.00)  reakcja_ruch=240ms  reakcja_chwyt=  -  ms  baza=83.5°  F=  -  N CV=  -   poślizg=  -  mm
+   5 y0= +7.1cm  sukces        szczyt= 3.95N (20ms 2.70)  reakcja_ruch=240ms  reakcja_chwyt=949ms  baza=9.5°  F=4.26N CV=0.10 poślizg=2.0mm
+   6 y0= +4.4cm  sukces        szczyt= 4.36N (20ms 4.08)  reakcja_ruch=320ms  reakcja_chwyt=720ms  baza=15.4°  F=4.27N CV=0.11 poślizg=2.0mm
+   7 y0= +5.3cm  przepchnięcie szczyt= 6.46N (20ms 4.80)  reakcja_ruch=240ms  reakcja_chwyt=  -  ms  baza=24.6°  F=  -  N CV=  -   poślizg=  -  mm
+   8 y0= +2.3cm  sukces        szczyt= 2.96N (20ms 2.79)  reakcja_ruch=310ms  reakcja_chwyt=814ms  baza=5.0°  F=4.43N CV=0.14 poślizg=2.0mm
+   9 y0= +7.7cm  sukces        szczyt= 5.68N (20ms 3.60)  reakcja_ruch=260ms  reakcja_chwyt=654ms  baza=15.6°  F=4.60N CV=0.23 poślizg=2.1mm
+
+PODSUMOWANIE: sukces 6/10 (60 %), sukces bez zgniecenia 6/10, szczyt > 5 N: 4/10 (chwilowy, 1 ms), 0/10 (średnia 20 ms = miara zgniecenia)
+  klasy: sukces 6, przepchnięcie 3, upuszczenie 1
+  reakcja (i) widoczność → ruch bazy [ms]: 272 ± 34 (n=10)
+  reakcja (ii) dotyk → pewny chwyt [ms] (tylko próby z pewnym chwytem): 1204 ± 553 (n=7)
+  siła trzymania [N]: 4.43 ± 0.16 (n=6); CV: 0.15 ± 0.05 (n=6)
+  poślizg w oknie trzymania [mm]: 2.0 ± 0.1 (n=6) (maks. odchylenie 1.4 ± 0.0 (n=6))
+  szczyt siły chwilowy [N]: 4.7 ± 1.1 (n=10), średnia 20 ms: 3.3 ± 0.8 (n=10)
+
+KONTROLA — te same seedy z zablokowaną bazą (bez skrętu): sukces 5/10 (50 %), sukces bez zgniecenia 5/10, szczyt > 5 N: 0/10 (chwilowy, 1 ms), 0/10 (średnia 20 ms = miara zgniecenia)
+  klasy: wytoczenie 5, sukces 5
+  (zakres bocznego startu piłeczki wybrany tak, że tylko część położeń trafia w paszczę bez skrętu bazy)
+   0 y0= +5.4cm  wytoczenie    szczyt= 3.77N (20ms 1.81)  reakcja_ruch=  -  ms  reakcja_chwyt=  -  ms  baza=0.0°  F=  -  N CV=  -   poślizg=  -  mm
+   1 y0= +4.1cm  sukces        szczyt= 3.49N (20ms 3.47)  reakcja_ruch=  -  ms  reakcja_chwyt=995ms  baza=0.0°  F=4.61N CV=0.13 poślizg=2.0mm
+   2 y0= +1.6cm  sukces        szczyt= 3.97N (20ms 3.94)  reakcja_ruch=  -  ms  reakcja_chwyt=1021ms  baza=0.0°  F=4.14N CV=0.19 poślizg=2.0mm
+   3 y0= -0.1cm  sukces        szczyt= 2.96N (20ms 2.86)  reakcja_ruch=  -  ms  reakcja_chwyt=1856ms  baza=0.0°  F=4.87N CV=0.10 poślizg=2.0mm
+   4 y0= +8.4cm  wytoczenie    szczyt= 3.62N (20ms 1.36)  reakcja_ruch=  -  ms  reakcja_chwyt=  -  ms  baza=0.0°  F=  -  N CV=  -   poślizg=  -  mm
+   5 y0= +7.1cm  wytoczenie    szczyt= 3.70N (20ms 1.71)  reakcja_ruch=  -  ms  reakcja_chwyt=  -  ms  baza=0.0°  F=  -  N CV=  -   poślizg=  -  mm
+   6 y0= +4.4cm  sukces        szczyt= 3.19N (20ms 2.85)  reakcja_ruch=  -  ms  reakcja_chwyt=865ms  baza=0.0°  F=4.67N CV=0.13 poślizg=2.0mm
+   7 y0= +5.3cm  wytoczenie    szczyt= 3.48N (20ms 1.72)  reakcja_ruch=  -  ms  reakcja_chwyt=  -  ms  baza=0.0°  F=  -  N CV=  -   poślizg=  -  mm
+   8 y0= +2.3cm  sukces        szczyt= 3.56N (20ms 3.11)  reakcja_ruch=  -  ms  reakcja_chwyt=791ms  baza=0.0°  F=4.38N CV=0.22 poślizg=2.2mm
+   9 y0= +7.7cm  wytoczenie    szczyt= 3.76N (20ms 1.58)  reakcja_ruch=  -  ms  reakcja_chwyt=  -  ms  baza=0.0°  F=  -  N CV=  -   poślizg=  -  mm
+
+czas obliczeń: 124 s

@@ -1,0 +1,66 @@
+B1 ucieczka — final, ziarna 0–9, parametry {'g0': 20}
+(wersje plików współdzielonych, md5: agent.py:d041148a, brain.py:bdbafc31, vision.py:e7b9ea8a, scene2.py:7680a175, vnc.py:adf3f5de)
+
+Drapieżnik (n=10): sukces (spike DNp01 po starcie i przed 0,10 m) 10/10 = 100 %; spike przed startem kuli 0; brak spike'a 0; spike za późno 0
+seed  v[m/s] yaw[°]  spike[s]  d@spike[m]  opóźn.od0,30m[ms]  opóźn.odloom[ms]  odsunięcie2cm od spike[ms]  d@odsun[m]  odsun.od startu[ms]  d@(od startu)
+   0   1.27    +4.1     1.28      0.210                70               10                        80      0.126                 80        0.126  OK
+   1   1.95    +0.4     1.01      0.205                40               20                        80      0.068                 80        0.068  OK
+   2   1.30    -7.2     1.27      0.200                70               30                        80      0.114                 80        0.114  OK
+   3   1.24   -12.4     1.30      0.211                70               10                        80      0.129                 80        0.129  OK
+   4   1.51   +13.3     1.14      0.233                40               40                        80      0.129                 80        0.129  OK
+   5   1.81    +9.2     1.04      0.224                40               30                        80      0.097                 80        0.097  OK
+   6   1.34    +1.1     1.24      0.206                60               10                        80      0.117                 80        0.117  OK
+   7   1.90    +3.8     1.02      0.213                40               30                        80      0.080                 80        0.080  OK
+   8   1.99    -5.2     0.99      0.226                30               30                        80      0.086                 80        0.086  OK
+   9   1.29   +11.1     1.27      0.209                70               20                        80      0.124                 80        0.124  OK
+
+opóźnienie od 0,30 m [ms]: 53 ± 16 [30…70] n=10/10
+opóźnienie od 1. loom>0 [ms]: 23 ± 10 [10…40] n=10/10
+odległość kuli przy spike'u [m]: 0.214 ± 0.010 [0.200…0.233] n=10/10
+spike → odsunięcie 2 cm [ms]: 80 ± 0 [80…80] n=10/10; odległość kuli wtedy [m]: 0.107 ± 0.021 [0.068…0.129] n=10/10
+1. loom>0 → odsunięcie 2 cm [ms]: 103 ± 10 [90…120] n=10/10
+położenie sprzed startu kuli → odsunięcie 2 cm, od spike'a [ms]: 80 ± 0 [80…80] n=10/10 (ujemne = chwytak ruszył przed spike'em)
+odsunięcie o 2 cm zdążyło przed 0,10 m: 6/10 = 60 % (tylko raport, bez strojenia)
+
+Kontrole fałszywych ucieczek (3 s po 0,5 s ciszy, spike DNp01 kiedykolwiek):
+  (a) obrót własny ±1,8 rad/s, kopia eferentna TAK: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.00, maks. |ω| bazy 1.87 rad/s)
+  (a) obrót własny ±1,8 rad/s, kopia eferentna NIE: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.33, maks. |ω| bazy 1.87 rad/s)
+  (a′) obrót własny ±3 rad/s, kopia eferentna TAK: 10/10 = 100 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00, maks. |ω| bazy 3.17 rad/s)
+  (a′) obrót własny ±3 rad/s, kopia eferentna NIE: 10/10 = 100 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00, maks. |ω| bazy 3.15 rad/s)
+  (b1) piłeczka z równi do paszczy: 1/10 = 10 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00)
+  (b2) piłeczka w poprzek bez przesłony: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.00)
+  (c) sama scena, bez bodźca: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.00)
+
+====================================================================================================
+B1 ucieczka — ODNIESIENIE bez strojenia (G_LOOM0 = 15), ziarna 0–9
+(wersje plików współdzielonych, md5: agent.py:d041148a, brain.py:bdbafc31, vision.py:e7b9ea8a, scene2.py:7680a175, vnc.py:adf3f5de)
+
+Drapieżnik (n=10): sukces (spike DNp01 po starcie i przed 0,10 m) 10/10 = 100 %; spike przed startem kuli 0; brak spike'a 0; spike za późno 0
+seed  v[m/s] yaw[°]  spike[s]  d@spike[m]  opóźn.od0,30m[ms]  opóźn.odloom[ms]  odsunięcie2cm od spike[ms]  d@odsun[m]  odsun.od startu[ms]  d@(od startu)
+   0   1.27    +4.1     1.27      0.222                60               20                        80      0.139                 80        0.139  OK
+   1   1.95    +0.4     1.00      0.225                30               30                        80      0.087                 80        0.087  OK
+   2   1.30    -7.2     1.25      0.226                50               20                        80      0.140                 80        0.140  OK
+   3   1.24   -12.4     1.29      0.223                60              100                        80      0.142                 80        0.142  OK
+   4   1.51   +13.3     1.12      0.263                20               60                        80      0.159                 80        0.159  OK
+   5   1.81    +9.2     1.03      0.242                30               50                        80      0.115                 80        0.115  OK
+   6   1.34    +1.1     1.24      0.206                60               40                        80      0.117                 80        0.117  OK
+   7   1.90    +3.8     1.01      0.232                30               30                        80      0.099                 80        0.099  OK
+   8   1.99    -5.2     0.99      0.226                30               70                        80      0.086                 80        0.086  OK
+   9   1.29   +11.1     1.26      0.222                60               40                        80      0.137                 80        0.137  OK
+
+opóźnienie od 0,30 m [ms]: 43 ± 16 [20…60] n=10/10
+opóźnienie od 1. loom>0 [ms]: 46 ± 24 [20…100] n=10/10
+odległość kuli przy spike'u [m]: 0.229 ± 0.014 [0.206…0.263] n=10/10
+spike → odsunięcie 2 cm [ms]: 80 ± 0 [80…80] n=10/10; odległość kuli wtedy [m]: 0.122 ± 0.024 [0.086…0.159] n=10/10
+1. loom>0 → odsunięcie 2 cm [ms]: 126 ± 24 [100…180] n=10/10
+położenie sprzed startu kuli → odsunięcie 2 cm, od spike'a [ms]: 80 ± 0 [80…80] n=10/10 (ujemne = chwytak ruszył przed spike'em)
+odsunięcie o 2 cm zdążyło przed 0,10 m: 7/10 = 70 % (tylko raport, bez strojenia)
+
+Kontrole fałszywych ucieczek (3 s po 0,5 s ciszy, spike DNp01 kiedykolwiek):
+  (a) obrót własny ±1,8 rad/s, kopia eferentna TAK: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.08, maks. |ω| bazy 1.87 rad/s)
+  (a) obrót własny ±1,8 rad/s, kopia eferentna NIE: 10/10 = 100 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00, maks. |ω| bazy 1.87 rad/s)
+  (a′) obrót własny ±3 rad/s, kopia eferentna TAK: 10/10 = 100 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00, maks. |ω| bazy 3.15 rad/s)
+  (a′) obrót własny ±3 rad/s, kopia eferentna NIE: 10/10 = 100 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00, maks. |ω| bazy 3.15 rad/s)
+  (b1) piłeczka z równi do paszczy: 1/10 = 10 %, spike w ciszy przed bodźcem 0  (maks. looming 1.00)
+  (b2) piłeczka w poprzek bez przesłony: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.00)
+  (c) sama scena, bez bodźca: 0/10 = 0 %, spike w ciszy przed bodźcem 0  (maks. looming 0.00)
