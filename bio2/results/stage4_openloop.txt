@@ -1,0 +1,134 @@
+Etap 4, pomiar otwartej pętli (bez MuJoCo). 10 losowań lezji × 5 ziaren szumu na poziom; protokół stage2_test B: cue 0,3 s (60°) → ciemność 1,5 s → +45°/s 1 s → 0,5 s → −30°/s 1 s.
+WARIANT 1: lezja trwała, BEZ kompensacji; po lezji ponownie calibrate_ring + calibrate_steer (kalibracja dekodera).
+„Wzgórze istnieje” = skupienie (średnia z okien 10 ms, jak stage2) > 0.5 ORAZ EPG ≥ 5 Hz w oknie pamięci. Błąd = |kąt wzgórza − całka prawdy| [°]; przy braku wzgórza kąt jest niezdefiniowany, więc podaję błąd (a) tylko dla prób, gdzie wzgórze istnieje i (b) „efektywny” = 90° (poziom losowy) dla pozostałych.
+Średnia ± SD po wszystkich próbach (losowania × ziarna); w nawiasie liczba prób.
+
+Ile neuronów zostaje z każdej warstwy:
+warstwa (typ_strona)       292   120    50   (mózg/VNC)
+EPG_R                       23     9     2   z 23 (mózg)
+EPG_L                       23     9     2   z 23 (mózg)
+PEN_a(PEN1)_L               10     4     1   z 10 (mózg)
+PEN_a(PEN1)_R               10     4     1   z 10 (mózg)
+PEN_b(PEN2)_R               11     4     1   z 11 (mózg)
+PEN_b(PEN2)_L               11     4     1   z 11 (mózg)
+Delta7_R                    21     8     2   z 21 (mózg)
+Delta7_L                    21     8     2   z 21 (mózg)
+PFL3_L                      12     4     1   z 12 (mózg)
+PFL3_R                      12     4     1   z 12 (mózg)
+DNa01_L                      1     1     1   z 1 (mózg)
+DNa01_R                      1     1     1   z 1 (mózg)
+DNa02_R                      1     1     1   z 1 (mózg)
+DNa02_L                      1     1     1   z 1 (mózg)
+MDN_R                        2     1     1   z 2 (mózg)
+MDN_L                        2     1     1   z 2 (mózg)
+DNp01_R                      1     1     1   z 1 (mózg)
+DNp01_L                      1     1     1   z 1 (mózg)
+DNp09_L                      1     1     1   z 1 (mózg)
+DNp09_R                      1     1     1   z 1 (mózg)
+LC4_L                       12     4     1   z 12 (mózg)
+LC4_R                       12     4     1   z 12 (mózg)
+LPLC2_L                     12     4     1   z 12 (mózg)
+LPLC2_R                     12     4     1   z 12 (mózg)
+HSN_R                        1     1     1   z 1 (mózg)
+HSN_L                        1     1     1   z 1 (mózg)
+HSE_R                        1     1     1   z 1 (mózg)
+HSE_L                        1     1     1   z 1 (mózg)
+HSS_R                        1     1     1   z 1 (mózg)
+HSS_L                        1     1     1   z 1 (mózg)
+SENS_fixed                   7     3     1   z 7 (VNC)
+SENS_moving                  7     3     1   z 7 (VNC)
+SENS_palm                    6     2     1   z 6 (VNC)
+IN_ACh                       8     3     1   z 8 (VNC)
+IN_GABA                     10     4     1   z 10 (VNC)
+IN_Glu                       2     1     1   z 2 (VNC)
+RR_assist                    6     2     1   z 6 (VNC)
+RR_resist                    6     2     1   z 6 (VNC)
+RR_hold                      4     2     1   z 4 (VNC)
+RR_gate_fixed                1     1     1   z 1 (VNC)
+RR_gate_moving               1     1     1   z 1 (VNC)
+RR_and                       2     1     1   z 2 (VNC)
+MN_ext                       2     1     1   z 2 (VNC)
+MN_flex                      5     2     1   z 5 (VNC)
+MN_ltm                       4     1     1   z 4 (VNC)
+HP                           1     1     1   z 1 (VNC)
+RAZEM                      292   120    50
+
+miara                                                                    pełny                 120                  50
+neuronów łącznie (mózg+VNC)                                                292                 120                  50
+EPG / PEN / Delta7 (żywe, średnio)                                    46/42/42            18/16/16               4/4/4
+wzgórze istnieje w pamięci [% prób]                                100 (50/50)            0 (0/50)            0 (0/50)
+wzgórze istnieje jeszcze w ostatnich 0,3 s [% prób]                        100                   0                   0
+skupienie wzgórza w pamięci (wszystkie próby)                      0.8 ±   0.0         0.0 ±   0.0         0.0 ±   0.0
+EPG w pamięci [Hz/neuron] (wszystkie próby)                       49.7 ±   0.3         0.0 ±   0.0         0.0 ±   0.0
+błąd pamięci 1,5 s [°], próby z wzgórzem                     23.2 ±  13.4 (50)             —   (0)             —   (0)
+błąd pamięci 1,5 s [°], efektywny (brak = 90°)                    23.2 ±  13.4        90.0 ±   0.0        90.0 ±   0.0
+przesunięcie przy +45°/s × 1 s [°] (cel +45), z wzgórzem          55.8 ±  15.4                 —                   —  
+przesunięcie przy −30°/s × 1 s [°] (cel −30), z wzgórzem         -17.6 ±  15.3                 —                   —  
+|błąd| całkowania obrotu: |przesunięcie − cel| (+45) [°]          15.8 ±  10.2                 —                   —  
+|błąd| całkowania obrotu: |przesunięcie − cel| (−30) [°]          16.7 ±  10.4                 —                   —  
+poprawny znak obrotu (+45 → >0 i −30 → <0) [% prób z wzgórzem]                  84                 nan                 nan
+|błąd| na końcu (po całym protokole) [°], z wzgórzem              44.6 ±  24.5                 —                   —  
+
+Rozrzut między losowaniami lezji (SD średnich z losowań; w losowaniach, gdzie wzgórze istnieje wszędzie obliczone z prób z wzgórzem):
+  N=292: błąd pamięci — średnie z losowań   23.2 ±   5.9 (losowań z wzgórzem: 10/10); odsetek istnienia na losowanie  100.0 ±   0.0 %
+  N=120: błąd pamięci — średnie z losowań    —   (losowań z wzgórzem: 0/10); odsetek istnienia na losowanie    0.0 ±   0.0 %
+  N=50: błąd pamięci — średnie z losowań    —   (losowań z wzgórzem: 0/10); odsetek istnienia na losowanie    0.0 ±   0.0 %
+
+Poziomy pośrednie i krzywa degradacji (10 losowań × 3 ziarna; 292/120/50: × 5 ziaren)
+    N  istnieje %   skupienie    EPG Hz  EPG żywych     błąd pamięci [°] (z wzgórzem)
+  292         100        0.80      49.7          46                  23.2 ±  13.4 (50)
+  270          90        0.73      43.8          42                  65.8 ±  32.3 (27)
+  250          70        0.60      30.3          40                  35.3 ±  30.9 (21)
+  230          50        0.42      23.0          36                  30.6 ±  18.9 (15)
+  210           7        0.06       2.7          32                  35.7 ±  24.3 (2)
+  190           0        0.00       0.0          28                           —   (0)
+  160           0        0.00       0.0          24                           —   (0)
+  120           0        0.00       0.0          18                           —   (0)
+   90           0        0.00       0.0          12                           —   (0)
+   70           0        0.00       0.0           8                           —   (0)
+   50           0        0.00       0.0           4                           —   (0)
+
+====================================================================================================
+
+Etap 4, pomiar otwartej pętli (bez MuJoCo). 10 losowań lezji × 5 ziaren szumu na poziom; protokół stage2_test B: cue 0,3 s (60°) → ciemność 1,5 s → +45°/s 1 s → 0,5 s → −30°/s 1 s.
+WARIANT 2: lezja + skalowanie synaptyczne warstw (× n_pełne/n_żywe, limit 10×); po lezji ponownie calibrate_ring + calibrate_steer (kalibracja dekodera).
+„Wzgórze istnieje” = skupienie (średnia z okien 10 ms, jak stage2) > 0.5 ORAZ EPG ≥ 5 Hz w oknie pamięci. Błąd = |kąt wzgórza − całka prawdy| [°]; przy braku wzgórza kąt jest niezdefiniowany, więc podaję błąd (a) tylko dla prób, gdzie wzgórze istnieje i (b) „efektywny” = 90° (poziom losowy) dla pozostałych.
+Średnia ± SD po wszystkich próbach (losowania × ziarna); w nawiasie liczba prób.
+
+miara                                                                    pełny                 120                  50
+neuronów łącznie (mózg+VNC)                                                292                 120                  50
+EPG / PEN / Delta7 (żywe, średnio)                                    46/42/42            18/16/16               4/4/4
+wzgórze istnieje w pamięci [% prób]                                100 (50/50)          42 (21/50)            8 (4/50)
+wzgórze istnieje jeszcze w ostatnich 0,3 s [% prób]                        100                  40                   8
+skupienie wzgórza w pamięci (wszystkie próby)                      0.8 ±   0.0         0.4 ±   0.4         0.1 ±   0.3
+EPG w pamięci [Hz/neuron] (wszystkie próby)                       49.7 ±   0.3        22.1 ±  26.3         8.0 ±  27.1
+błąd pamięci 1,5 s [°], próby z wzgórzem                     23.2 ±  13.4 (50)   26.7 ±  14.3 (21)    36.8 ±   0.0 (4)
+błąd pamięci 1,5 s [°], efektywny (brak = 90°)                    23.2 ±  13.4        63.4 ±  32.6        85.7 ±  14.4
+przesunięcie przy +45°/s × 1 s [°] (cel +45), z wzgórzem          55.8 ±  15.4        -1.0 ±   6.5         0.0 ±   0.0
+przesunięcie przy −30°/s × 1 s [°] (cel −30), z wzgórzem         -17.6 ±  15.3        -0.3 ±   5.0         0.0 ±   0.0
+|błąd| całkowania obrotu: |przesunięcie − cel| (+45) [°]          15.8 ±  10.2        46.0 ±   6.5        45.0 ±   0.0
+|błąd| całkowania obrotu: |przesunięcie − cel| (−30) [°]          16.7 ±  10.4        29.7 ±   5.0        30.0 ±   0.0
+poprawny znak obrotu (+45 → >0 i −30 → <0) [% prób z wzgórzem]                  84                  14                   0
+|błąd| na końcu (po całym protokole) [°], z wzgórzem              44.6 ±  24.5        28.4 ±  25.2        21.8 ±   0.0
+
+Rozrzut między losowaniami lezji (SD średnich z losowań; w losowaniach, gdzie wzgórze istnieje wszędzie obliczone z prób z wzgórzem):
+  N=292: błąd pamięci — średnie z losowań   23.2 ±   5.9 (losowań z wzgórzem: 10/10); odsetek istnienia na losowanie  100.0 ±   0.0 %
+  N=120: błąd pamięci — średnie z losowań   32.0 ±  17.4 (losowań z wzgórzem: 5/10); odsetek istnienia na losowanie   42.0 ±  47.7 %
+  N=50: błąd pamięci — średnie z losowań   36.8 ±   0.0 (losowań z wzgórzem: 1/10); odsetek istnienia na losowanie    8.0 ±  24.0 %
+
+Poziomy pośrednie i krzywa degradacji (10 losowań × 3 ziarna; 292/120/50: × 5 ziaren)
+    N  istnieje %   skupienie    EPG Hz  EPG żywych     błąd pamięci [°] (z wzgórzem)
+  292         100        0.80      49.7          46                  23.2 ±  13.4 (50)
+  270          93        0.75      52.2          42                  63.8 ±  38.2 (28)
+  250         100        0.81      55.8          40                  54.6 ±  45.9 (30)
+  230          90        0.75      54.3          36                  38.6 ±  26.8 (27)
+  210          70        0.60      40.6          32                  26.4 ±  15.3 (21)
+  190          87        0.75      42.7          28                  35.8 ±  25.6 (26)
+  160          40        0.33      29.9          24                  95.7 ±  55.7 (12)
+  120          42        0.38      22.1          18                  26.7 ±  14.3 (21)
+   90          43        0.37      33.4          12                  38.6 ±  22.2 (13)
+   70          23        0.18      16.5           8                  62.0 ±  39.5 (7)
+   50           8        0.08       8.0           4                  36.8 ±   0.0 (4)
+
+====================================================================================================
+

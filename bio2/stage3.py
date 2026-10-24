@@ -55,9 +55,9 @@ def setup_A(seed):
     return m, d, q
 
 
-def scenario_A(seed, memory="pred", calib=None, record=False, T=6.0):
+def scenario_A(seed, memory="pred", calib=None, record=False, T=6.0, brain=None, vnc=None):
     m, d, q = setup_A(seed)
-    ag = Agent(m, d, seed=seed, memory=memory, q_catch=q, calib=calib)
+    ag = Agent(m, d, seed=seed, memory=memory, q_catch=q, calib=calib, brain=brain, vnc=vnc)
     sr, opt = _seg(m)
     truth, px, behind = [], [], []
     for k in range(int(T * 100)):

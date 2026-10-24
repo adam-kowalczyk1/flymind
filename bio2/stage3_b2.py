@@ -8,8 +8,12 @@ Miary:
                 (okno 1 s: wysokość spełniona przez cały czas, kontakt z obiema szczękami w ≥ 99 % kroków 1 ms);
   zgniecenie  = maks. siła normalna kontaktu szczęka–piłeczka (pojedyncza szczęka, średnia 20 ms jak w v1: pojedynczy
                 krok 1 ms z uderzenia 50 g piłeczki daje szpilki 5–10 N bez ściskania) > F_CRUSH; szczyt 1 ms raportowany obok;
-  reakcja (i) = od pierwszej widoczności piłeczki (segmentacja ≥ 20 px, jak stage3._ball_visible) do startu ruchu
-                bazy (|ω| > 0,05 rad/s przez ≥ 30 ms, z qvel[0]);
+  reakcja (i) = od pierwszego wykrycia celu przez agenta (ag.log["seen"]) do chwili, gdy baza obróciła się o ≥ 1° od
+                położenia startowego W STRONĘ piłeczki (znak azymutu piłeczki względem paszczy wtedy) i utrzymuje to ≥ 50 ms.
+                Poprzednia miara (|qvel[0]| > 0,05 rad/s od widoczności z segmentacji) była artefaktem: piłeczka jest widoczna
+                od klatki 0, a w chwili otwarcia bramki „polowanie+lock” w agent.py odczyt DNa02/DNa01 (≈0 Hz w spoczynku) jest
+                odejmowany od trymu −3…−5 Hz, co daje skok ω ≈ +0,5 rad/s (zawsze w lewo, niezależnie od strony piłeczki
+                i od ringu EPG) — mierzyła więc moment wykrycia, nie skręt do celu. Zapisywane są t_detect i t_move;
   reakcja (ii)= od pierwszego dotyku piłeczki z ramieniem do pewnego chwytu (obie szczęki ≥ F_SECURE przez 50 ms);
   stabilność  = średnia i współczynnik zmienności (σ/μ) sumarycznej siły szczęk w oknie trzymania, poślizg =
                 przesunięcie piłeczki względem chwytaka (układ ciała `gripper`) w oknie trzymania [mm].
@@ -112,7 +116,7 @@ def _forces(m, d, ball, pads, palm, robot):
     return out, n_rob
 
 
-def run_trial(seed, P=None, record=False, calib=None):
+def run_trial(seed, P=None, record=False, calib=None, brain=None, vnc=None):
     P = dict(P0, **(P or {}))
     rng = np.random.default_rng(seed)
     if P["W_MAX"] is not None:
@@ -127,7 +131,7 @@ def run_trial(seed, P=None, record=False, calib=None):
     d.qpos[bj:bj + 7] = [0.45 + s * L * np.cos(a), y0, s * L * np.sin(a) + sb.BALL_R / np.cos(a) + 0.001, 1, 0, 0, 0]
     d.qvel[bv:bv + 6] = [0, vy0, 0, -vy0 / sb.BALL_R, 0, 0]
     mujoco.mj_forward(m, d)
-    ag = B2Agent(m, d, seed=seed, q_catch=q, calib=calib, dn_ref=P["dn_ref"])
+    ag = B2Agent(m, d, seed=seed, q_catch=q, calib=calib, dn_ref=P["dn_ref"], brain=brain, vnc=vnc)
     sr, opt = _seg(m)
     ball = m.geom("ball").id
     pads = (m.geom("jaw_fixed").id, m.geom("jaw_moving").id)
@@ -176,7 +180,7 @@ def run_trial(seed, P=None, record=False, calib=None):
         qj[k] = d.qpos[5]
     ag.close()
     sr.close()
-    out = analyse(seed, P, y0, F, NR, BZ, REL, VAIM, px, wpan, qpan)
+    out = analyse(seed, P, y0, F, NR, BZ, REL, VAIM, px, wpan, qpan, np.array(ag.log["seen"], bool), az_ball, az_aim)
     out["peak_ball_x"] = float(d.body("ball").xpos[0])
     if record:
         out["log"] = {k: np.array(v) for k, v in ag.log.items()}
@@ -192,7 +196,7 @@ def _runs(mask):
     return st, en - st
 
 
-def analyse(seed, P, y0, F, NR, BZ, REL, VAIM, px, wpan, qpan):
+def analyse(seed, P, y0, F, NR, BZ, REL, VAIM, px, wpan, qpan, seen, az_ball, az_aim):
     n = len(F)
     Ff, Fm = F[:, 0], F[:, 1]
     Fs = Ff + Fm
@@ -218,18 +222,24 @@ def analyse(seed, P, y0, F, NR, BZ, REL, VAIM, px, wpan, qpan):
         ok = [(a, l) for a, l in zip(st, ln) if a + l > first_touch and l >= 50]
         if ok:
             t_secure = max(ok[0][0], first_touch)
-    # reakcja (i): widoczność → ruch bazy
+    # reakcja (i): pierwsze wykrycie celu przez agenta (log["seen"]) → baza obrócona ≥ 1° od pozycji startowej W STRONĘ
+    # piłeczki (znak azymutu piłeczki względem paszczy w tej chwili) i utrzymująca to ≥ 50 ms. Miara |qvel| > 0,05 rad/s
+    # łapała impuls bramki (patrz docstring modułu), nie skręt do celu. t_vis (segmentacja) zostaje tylko informacyjnie.
     vis = np.where(px > 20)[0]
     t_vis = int(vis[0]) * 0.01 if len(vis) else None
-    mv = np.abs(wpan) > 0.05
-    st, ln = _runs(mv)
-    t_move = None
-    if t_vis is not None:
-        c = [a for a, l in zip(st, ln) if l >= 3 and a * 0.01 >= t_vis]
+    det = np.where(seen)[0]
+    t_det, t_move = None, None
+    if len(det):
+        k0 = int(det[0])
+        t_det = k0 * 0.01
+        toward = np.sign(az_ball - az_aim) * -(qpan - qpan[0]) >= np.radians(1.0)     # −Δq_pan: + = baza w lewo
+        toward[:k0] = False
+        st, ln = _runs(toward)
+        c = [a for a, l in zip(st, ln) if l >= 5]
         t_move = c[0] * 0.01 if c else None
     out = dict(seed=seed, y0_cm=100 * y0, peak=peak, peak20=peak20, t_touch=None if first_touch is None else first_touch / 1000,
-               t_vis=t_vis, t_move=t_move,
-               react_move_ms=None if (t_vis is None or t_move is None) else 1000 * (t_move - t_vis),
+               t_vis=t_vis, t_detect=t_det, t_move=t_move,
+               react_move_ms=None if (t_det is None or t_move is None) else 1000 * (t_move - t_det),
                react_grip_ms=None if (t_secure is None or first_touch is None) else float(t_secure - first_touch),
                base_turn_deg=float(np.degrees(qpan.max() - qpan.min())), base_net_deg=float(np.degrees(qpan[-1] - qpan[0])),
                crushed=peak20 > F_CRUSH, success=t_hold is not None, secured=t_secure is not None)
@@ -340,7 +350,7 @@ def report(seeds=range(N_REP), procs=3, outdir=os.path.join(HERE, "results")):
          "Miary (z prawdy MuJoCo: mj_contactForce, pozycje ciał, segmentacja kamery; niezależne od czujników sterownika):",
          f"  sukces = środek piłeczki ≥ {LIFT_H * 100:g} cm nad stołem przez cały czas okna {HOLD_T:g} s, obie szczęki w kontakcie w ≥ 99 % kroków 1 ms",
          f"  zgniecenie = maks. średniej 20 ms siły normalnej szczęka–piłeczka (miara v1) > {F_CRUSH:g} N; podaję też szczyt chwilowy (1 ms)",
-         "  reakcja (i) = pierwsza widoczność (≥ 20 px) → start ruchu bazy (|ω| > 0,05 rad/s przez ≥ 30 ms)",
+         "  reakcja (i) = pierwsze wykrycie celu przez agenta (log[\"seen\"]) → baza obrócona ≥ 1° od startu w stronę piłeczki, utrzymane ≥ 50 ms",
          f"  reakcja (ii) = pierwszy dotyk piłeczki z ramieniem → pewny chwyt (obie szczęki ≥ {F_SECURE:g} N przez 50 ms)",
          "  siła trzymania: średnia sumy sił obu szczęk w oknie trzymania; CV = σ/μ (krok 1 ms); poślizg = przesunięcie piłeczki w układzie chwytaka (okno trzymania)",
          "  porażki: chybienie / zgniecenie / upuszczenie (był pewny chwyt) / przepchnięcie (kontakt z ruchem `aim` > "
@@ -348,7 +358,7 @@ def report(seeds=range(N_REP), procs=3, outdir=os.path.join(HERE, "results")):
          "WYNIKI (agent z siatkówką → EPG → DNa02/DNa01 → VNC):"]
     L += [_fmt(r) for r in main]
     L += ["", "PODSUMOWANIE: " + _counts(main), "  klasy: " + _classes(main),
-          f"  reakcja (i) widoczność → ruch bazy [ms]: {_ms(main, 'react_move_ms')}",
+          f"  reakcja (i) wykrycie → ruch bazy w stronę piłeczki [ms]: {_ms(main, 'react_move_ms')}",
           f"  reakcja (ii) dotyk → pewny chwyt [ms] (tylko próby z pewnym chwytem): {_ms(main, 'react_grip_ms')}",
           f"  siła trzymania [N]: {_ms([r for r in main if r['success']], 'f_mean', '{:.2f}')}; CV: {_ms([r for r in main if r['success']], 'f_cv', '{:.2f}')}",
           f"  poślizg w oknie trzymania [mm]: {_ms([r for r in main if r['success']], 'slip_mm', '{:.1f}')} (maks. odchylenie {_ms([r for r in main if r['success']], 'slip_max_mm', '{:.1f}')})",
@@ -417,7 +427,7 @@ def _plot(main, ctrl, outdir):
     b1.grid(alpha=0.3)
     b2 = fig.add_subplot(gs[2, 1])
     x = np.arange(len(main))
-    b2.bar(x - 0.2, [r["react_move_ms"] or 0 for r in main], 0.4, label="(i) widoczność → ruch bazy")
+    b2.bar(x - 0.2, [r["react_move_ms"] or 0 for r in main], 0.4, label="(i) wykrycie → ruch do piłeczki")
     b2.bar(x + 0.2, [r["react_grip_ms"] or 0 for r in main], 0.4, label="(ii) dotyk → pewny chwyt")
     b2.set_xticks(x, [str(r["seed"]) for r in main])
     b2.set_ylabel("reakcja [ms]")

@@ -1,0 +1,572 @@
+# bio2 — kontroler SO-101 z konektomu muchy, ze wzrokiem i pamięcią: wyniki Etapów 1–4
+
+Kontynuacja projektu opisanego w [../RESULTS.md](../RESULTS.md) (v1–v3: pościg LC10a → AOTU → DNa02 i odruch chwytu nogi,
+bez kamery, z „okiem” na osi bazy). W **bio2** ramię SO-101 dostaje kamerę „oko w dłoni”, cyfrową siatkówkę muchy,
+pierścień kierunku głowy (komórki EPG) z kompleksu centralnego, neurony zstępujące (DNa01/02, DNp01, DNp09, MDN),
+detektory loomingu (LC4/LPLC2) i ruchu poziomego (HS), a chwyt realizuje rdzeń brzuszny (VNC) z v1–v3.
+Wszystko z podzbioru **MaleCNS v1.0** (Janelia FlyEM, CC-BY 4.0). Zadania Etapu 3: pamięć obiektu przy zasłonięciu (A),
+ucieczka przed zbliżającym się obiektem (B1) i chwyt piłeczki prowadzony wzrokiem (B2). Etap 4 to ablacja neuronów układu (292 → 120 → 50) w tych samych scenariuszach.
+
+Wszystkie liczby pochodzą z symulacji MuJoCo. **Nic nie było sprawdzane na prawdziwym ramieniu.** Próby mają n = 10 (rzadziej 20),
+więc większość różnic między wariantami mieści się w niepewności — patrz „Ograniczenia”.
+
+Etapy 1–3 opisują stan z commita 4d10051 (2026-10-24) **z późniejszą poprawką `agent.py` (start odczytu DN), wprowadzoną po obejrzeniu wyników testowych** i zapisaną w commicie Etapu 4; wyniki A, B2 i Etapu 4 są po poprawce, wersje sprzed niej leżą w `results/pre_dn_fix/` (patrz „Poprawka startu odczytu DN”). Walidacja A po poprawce: `results/stage3_A_val_post_fix.txt`. Etap 4 (ablacja): `results/stage4*.txt`, `stage4_closed.jsonl`, `stage4_parts.jsonl`, `ablation.py`, `stage4.py`.
+
+## Streszczenie
+
+| etap | co sprawdzano | wynik | główne zastrzeżenie |
+|---|---|---|---|
+| 1 — scena | 9 sprawdzeń geometrii, kontaktów, zasłonięcia, czujników, czasu | **8/9** | odpada tylko pomiar czasu (obciążenie maszyny); pomiar izolowany: render 3,5 ms, fizyka 0,17 ms |
+| 2 — sieć bez fizyki | 12 sprawdzeń siatkówki, pierścienia EPG, DN, VNC | **11/12** | odpada „obrót −30°/s przesuwa wzgórze we właściwą stronę u 6/6 ziaren”; pamięć 1,5 s: błąd 16° |
+| 3 A — pamięć obiektu | piłeczka za przesłoną 1,7 s, błąd kierunku przy wyłonieniu < 10° | **pred 4/10** (przed poprawką 3/10), static 1/10, none 0/10 (test 0–9); walidacja 120–139: **pred 9/20** (przed 5/20), static 0/20 (przed 3/20), none 0/20 | poprawka odczytu DN powstała po obejrzeniu wyników testowych; „< 20°” na teście spadło z 8/10 do 5/10; strojenia 100–119 po poprawce nie przeliczano |
+| 3 B1 — ucieczka | spike DNp01 przed 0,10 m od kamery | **10/10**, spike średnio 0,214 m, 53 ± 16 ms po 0,30 m | odsunięcie o 2 cm przed 0,10 m: 6/10; obrót własny ±3 rad/s daje 100 % fałszywych ucieczek |
+| 3 B2 — chwyt | uniesienie ≥ 3 cm, trzymanie 1 s, bez zgniecenia | **8/10** (przed poprawką 6/10), 0 zgnieceń (średnia 20 ms); porażki: upuszczenie 1, chybienie 1 | kontrola z zablokowaną bazą 5/10, przedziały 49–94 % i 24–76 % zachodzą; wynik po obejrzeniu testu; reakcja (i) 920 ± 1675 ms z n = 5 z 10; baza czasem skręca od piłeczki (hipoteza: wysokość przecięcia ze stołem) |
+| 4 — ablacja (lezja, bez przestrajania; po poprawce odczytu DN) | A, B1, B2 w zamkniętej pętli przy 292 / 120 / 50 neuronach, seedy 0–9; pierścień EPG w otwartej pętli | **B2: 8/10 → 0/10** bez kompensacji przy 120 i 50 (rozbicie: winna lezja VNC, martwy mózg 6/10 i 5/10 ≈ zablokowana baza 5/10); **A:** pamięć znika (martwe wzgórze w 10/10 prób przy 120 bez komp.); **B1: 10/10 na wszystkich poziomach** | B1 nie dowodzi odporności (≥ 1 LC4/LPLC2 na stronę, DNp01 nigdy nie lezjonowany); skalowanie przy 120: B2 5/10 ze zgnieceniami (2/10), A gorsze niż bez pamięci; n = 10 |
+
+## Architektura
+
+```
+kamera 128×96 (chwytak) ─► FlyRetinaFilter: R odrzucone, 32×24 ommatidia, filtr górnoprzepustowy ─► L1 (ON), L2 (OFF)
+        │                                                                                       │
+        │   kopia eferentna obrotu bazy (przesunięcie wolnej średniej) ◄── propriocepcja serwa 1  │
+        ▼                                                                                       ▼
+Vision (model): plamka zwarta ON+OFF ─► kierunek celu          przyrost obszaru OFF w 50 ms ─► loom L/P     ruch poziomy ─► HS
+        │ promień kamery ∩ stół ─► azymut z osi bazy                                              │               │
+        ▼                                                                                          ▼               ▼
+Brain (ALIF, 1 ms, 220 neuronów z MaleCNS):
+   cel ─► EPG (pierścień 16 klinów, 46 neuronów) ◄─ PEN_a/PEN_b (obrót: −prędkość bazy + prędkość celu) ◄─ Delta7 (hamowanie)
+          EPG ─► (cel modelowy + wzgórze) PFL3 ─► DNa02 (szybki), DNa01 (wolny, kopia modelowa)  ─► ω bazy
+   loom ─► LC4/LPLC2 ─► DNp01 (Giant Fiber, spike) ─► program ucieczki (bark + łokieć)
+   bliskość ─► MDN,  stop ─► DNp09,  ruch ─► HS
+VNC (72 neurony: 52 z MaleCNS + 20 modelowych): czucie dotyku szczęk ─► IN ─► MN (zginacz/ltm/prostownik) ─► moment chwytaka
+   + moduł odruchu (RR_assist/resist/hold/gate/and, modelowy) + płytka włoskowa (wyłącznik krańcowy, modelowa)
+```
+
+Pętla 100 Hz (`agent.py`): render kamery → siatkówka → wzrok → mózg (10 kroków po 1 ms) → odczyt DN → serwo bazy → VNC → serwo chwytaka.
+Sieć to ConnectomeSNN (ALIF) z v1–v3: V_rest = −52, V_th = −45 mV, τ_m = 20 ms, τ_syn = 5 ms, refrakcja 2,2 ms, opóźnienie 2 ms,
+adaptacja τ_a = 300 ms, 0,5 mV/spike (`snn.py`).
+
+## Dane: MaleCNS v1.0 (`extract_bio2.py` → `circuit_bio2.json`, `circuit_vnc.json`)
+
+`circuit_bio2.json`: 272 neurony, 9252 krawędzi, 143 805 synaps (neuroprzekaźniki: 207 ACh, 55 Glu, 10 GABA).
+Z tego mózg (moduły cx, dn, loom, hs) to **220 neuronów, 8906 krawędzi, 137 690 synaps**; moduł „grip” (52 neurony, 342 krawędzie,
+6096 synaps) odpowiada chwytowi nogi T1-L, a VNC ładuje go z `circuit_vnc.json` (51 neuronów chwytu + płytka włoskowa).
+
+| moduł | neurony | dobór |
+|---|---|---|
+| cx (154) | EPG 46, PEN_a 20, PEN_b 22, Delta7 42, PFL3 24 | wszystkie neurony tych typów |
+| dn (12) | DNa01 2, DNa02 2, MDN 4, DNp01 (Giant Fiber) 2, DNp09 2 | wszystkie, obie strony |
+| loom (48) | LC4 24, LPLC2 24 (po 12 na stronę i typ) | 12 o największej liczbie synaps do DNp01 |
+| hs (6) | HSN, HSE, HSS po 2 | wszystkie |
+| grip (52) | 20 aferentów proprioceptywnych, 20 IN, 11 MN (5 Ti flexor, 4 ltm, 2 Ti extensor), 1 płytka włoskowa (SNpp45) | jak w `sim/extract_connectome.py` + płytka włoskowa ProLN |
+
+Wartości z danych, na których opiera się wynik:
+
+- **Kolejność pierścienia wyznaczona z danych.** EPG z glomerulusa L_i łączą się najsilniej z R_(9−i) i R_(10−i); daje to pierścień
+  R1–L8–R2–L7–…–R8–L1 (16 klinów, 2–4 EPG na klin; macierz EPG→EPG, `extract_bio2.py`). EPG→EPG: 11 486 synaps, EPG→Delta7 19 896,
+  Delta7→EPG 4294, EPG→PEN_a 6100.
+- **PFL3 → DNa02:** 736 synaps (380 + 356, krzyżowo L→P i P→L). **PFL3 → DNa01: 0** w tym podzbiorze.
+- **Looming:** LC4 → DNp01 1587 synaps, LPLC2 → DNp01 1183 (dla wybranych 12 neuronów na stronę).
+- **HS → DNa02:** HSN 17, HSE 37, HSS 83 synapsy; HSE → DNa01: 0.
+
+## Co jest z konektomu, a co modelowe
+
+| element | źródło |
+|---|---|
+| tożsamość i liczba neuronów, znak neuroprzekaźnika, liczby synaps poza CX (`J0_RAW` = 0,3 mV/synapsa, liniowo) | **dane** |
+| kolejność klinów EPG, profile połączeń w CX (średnia liczba synaps w funkcji różnicy kątów, 16 koszyków, per para grup) | **dane**, ale uśrednione i wygładzone (patrz niżej) |
+| rozmiar MN → klasa szybki/pośredni/wolny, aferenty, IN, MN nogi T1-L | **dane** (+ Azevedo i in. 2020 dla zasady wielkości) |
+| parametry membrany | literatura (Shiu i in. 2024) |
+| równe odstępy neuronów wzdłuż pierścienia (zamiast położeń z danych), J0_CX = 0,14, G_INH = 8, G_DD = 0,3, brak adaptacji w CX | **model** (strojone na pierścieniu) |
+| wejście wzrokowe EPG (bodziec gaussowski), komenda obrotu PEN (PEN_L += k·u, PEN_R −= k·u) i jej kalibracja | **model** (kalibracja dekodera) |
+| przewidywanie ruchu celu (ostatnia prędkość celu w świecie wpisywana do PEN podczas zasłonięcia) | **założenie modelowe**, w CX muchy nieopisane |
+| cel dla PFL3 (prąd ~ cos(θ − cel ± 45°)) | **model** (FC2 nie ma w podzbiorze; Westeinde i in. 2024) |
+| DNa01 (wolne dokręcenie) | **model**: kopia ścieżki PFL3 → DNa02, bo w danych brak połączeń |
+| stan „polowanie/spoczynek” (OA-VUM), uwaga odgórna GATE ±25° | **model** |
+| siatkówka (pasmo 0,6·B + 0,4·G, 32×24, τ_HP = 0,10 s) | **model** inspirowany muchą (Rh1 ~480 nm, ~750–800 ommatidiów) |
+| detektory: plamka zwarta ON+OFF (wybór celu), przyrost obszaru OFF (looming), korelacja kolumn (HS) | **model** (algorytmy; wejścia do LC4/LPLC2/HS wstrzykiwane prądem) |
+| kopia eferentna obrotu przy siatkówce i wygaszanie HS przy własnym obrocie | **model** (zjawisko znane: Kim i in. 2015, 2017, wg komentarza w `agent.py`) |
+| kierunek celu = promień kamery ∩ płaszczyzna stołu | **założenie**: robot zna swoją kinematykę i wie, że piłeczka leży na stole |
+| moduł odruchu RR_* (20 neuronów), płytka włoskowa → RR_hold, kodery/dekodery, k_muscle | **model** (jak w v1–v3; połączenie HP → RR_hold modelowe, w danych brak synaps) |
+| wzmocnienie obrotu G_TURN = 2,5 1/s | literatura: pościg muchy ~2–3,3 (°/s)/° (komentarz w `agent.py`) |
+
+## Etap 1 — scena (`scene2.py`, `stage1_verify.py`, wynik: `results/stage1.png`)
+
+![etap 1](results/stage1.png)
+
+Scena: model SO-101 zamrożony w `so101_base.py` (kopia `sim/scene.py` @ a6922bc, niezależna od zmian w `sim/`) + elementy bio2:
+
+- kamera „eye” na chwytaku (pozycja w układzie chwytaka 0,016 / −0,03 / −0,03 m), 128×96, fovy 70°;
+- piłeczka 5 cm toczona po torze x = 0,44 m (bez poślizgu, opór toczenia 10⁻⁵ m — nasza stała; w v1 było 2·10⁻⁴ m i kulka 0,1 m/s stawała po ~2 s);
+- ruchoma przesłona (mocap, 14 × 10 cm) w x = 0,37 m, schowana pod stołem poza próbą;
+- „drapieżnik” — czarna kula r = 8 cm (mocap, bez kolizji), tło szare (bez niego niebo renderu jest czarne i czarny obiekt nie daje kontrastu OFF);
+- sonda: swobodna kulka 5 cm stawiana między szczękami do kalibracji czujników;
+- render bez cieni, odbić i nieba (cień kosztował 4,4 ms z 7,7 ms renderu — zmierzone — a ruchomy cień zakłócałby filtr ruchu siatkówki).
+
+Test 10 s (1000 cykli × 10 kroków po 1 ms + render): 0–6 s piłeczka toczy się 0,1 m/s, 1,5–3 s przesłona zasłania tor, 7–10 s sonda w szczękach
+z domknięciem PWM 0,05. Zasłonięcie liczone z **segmentacji obrazu** (piksele piłeczki), nie z harmonogramu; czujniki touch porównane
+z niezależną siłą kontaktu `mj_contactForce`.
+
+Wynik: **8/9 sprawdzeń**.
+
+| sprawdzenie | wynik |
+|---|---|
+| fizyka stabilna (brak NaN) | OK |
+| piłeczka toczy się po stole (≥ 0,4 m w 6 s, nie podskakuje > 2 mm) | OK |
+| piłeczka nie zderza się z ramieniem ani przesłoną | OK |
+| brak kolizji ramię–stół | OK |
+| przesłona zasłania 1,5 s ± 0,15 s | OK (na wykresie: 1,39 s) |
+| piłeczka widoczna przed i po zasłonięciu | OK |
+| obie szczęki czują sondę (> 0,3 N) | OK (na wykresie ~2,5 N) |
+| touch zgodny z siłą kontaktu (< 5 %) | OK (krzywe na wykresie się pokrywają) |
+| **pętla 100 Hz z renderem w czasie rzeczywistym (p99 < 10 ms)** | **BŁĄD przy obciążonej maszynie** |
+
+Odpada wyłącznie pomiar czasu: skrypt sam oznacza go jako niewiarygodny, gdy obciążenie maszyny przekracza liczbę rdzeni.
+Pomiar izolowany: render RGB **3,5 ms** (p99 4,2 ms), fizyka (10 kroków) **0,17 ms**,
+czyli pętla mieści się w budżecie 10 ms. Tej liczby nie ma w zapisanym pliku wyników (skrypt Etapu 1 drukuje na ekran, zapisuje tylko wykres).
+
+## Etap 2 — sieć bez fizyki (`stage2_test.py`, `results/stage2_test.txt`)
+
+Mózg 220 neuronów + VNC 72 (razem 292). Wynik: **11/12 sprawdzeń**; wynik powtórzony po późniejszych zmianach parametrów mózgu bez zmiany (11/12).
+
+### A. Siatkówka (`retina.py`)
+
+![siatkówka](results/stage2_retina.png)
+
+- Redukcja danych: 128×96 RGB → 768 punktów to **97,92 %**; Full HD → 768 to 99,988 %.
+- Pasmo: kanał R pominięty (jasność 0,6·B + 0,4·G); rozmycie Gaussa (σ = 0,5 oczka) i próbkowanie do 32×24; filtr górnoprzepustowy w czasie
+  (τ_HP = 0,10 s, nasza stała) usuwa statyczne tło; L1 = jaśnienie (ON), L2 = ciemnienie (OFF).
+- Toczenie piłeczki: suma po 768 punktach L1 = 1,06, L2 = 1,32. Wysunięcie przesłony: L2 max 39,74 > L1 max 25,60 (ciemny obiekt → OFF).
+  Scena statyczna: L1 + L2 = 0,010 (< 5 % toczenia). Samotest `retina.py`: czerwień nie daje sygnału, tło wygasa, jaśnienie → ON, ciemnienie → OFF.
+
+### B. Pierścień EPG (6 ziaren szumu)
+
+![pierścień EPG](results/stage2.png)
+
+Surowa macierz konektomu daje tylko **2 stabilne położenia wzgórza** (zmierzone: ~75° i ~210°), bo na klin przypada 2–4 EPG, a liczby synaps
+różnią się między glomerulusami (komentarz w `brain.py`). Dlatego wagi wewnątrz CX są liczone z **profili zmierzonych w danych** (punkt „Co jest z konektomu”), a neurony
+każdej grupy stoją w równych odstępach w kolejności swoich zmierzonych kątów. Wagi liniowe (ln(1+N) spłaszczał kontrast profili i wzgórze nie powstawało).
+
+| wielkość | wynik |
+|---|---|
+| pamięć 1,5 s bez bodźca | \|błąd\| **16,0°** (max 20,6°), skupienie 0,80 |
+| obrót +45°/s przez 1 s | przesunięcie **+58,7 ± 10,1°** (cel +45°) |
+| obrót −30°/s przez 1 s | **−29,6 ± 22,4°** (cel −30°) |
+| błąd po 2,5 s całkowania + 1,5 s pamięci | \|błąd\| 33,9° (max 69,6°) |
+| aktywność | EPG średnio 49,2 Hz, max pojedynczego neuronu (okno 50 ms) 180 Hz |
+
+Kalibracja komenda u → prędkość wzgórza [°/s] w tym przebiegu: −1,0 → −139; −0,75 → −92; −0,5 → −27; −0,35 → +4; −0,25 → +6; −0,1 → +36;
+0 → +67; 0,25 → +101; 0,5 → +159; 1,0 → +242. Zależność jest monotoniczna, ale **z dryfem**: wzgórze bez komendy ucieka (+67°/s przy u = 0) z powodu asymetrii PEN L/P
+w danych; kalibracja (`calibrate_ring`) odwraca zmierzoną krzywą. To dekoder skalibrowany na sieci, nie obrót „z natury” obwodu.
+
+Odpada sprawdzenie **„obrót przesuwa wzgórze we właściwą stronę (6/6 ziaren, oba kierunki)”**: część ziaren przy −30°/s stoi lub idzie w złą stronę
+(SD przesunięcia 22,4° przy celu −30°). Dodatkowo +45°/s przesuwa wzgórze o ~30 % za dużo.
+
+### C. Neurony zstępujące [Hz]
+
+| bodziec | odpowiedź |
+|---|---|
+| cel −60° / 0° / +60° | DNa02 L/P: 16/24, 18/22, 24/16; DNa01 L/P: 0/4, 4/2, 4/0 |
+| DNp01 w spoczynku; mała piłeczka bez loomingu | 0; 0 |
+| looming po stronie L → DNp01_L; looming P → DNp01_L | 200; 0 |
+| MDN spoczynek / „blisko” | 0 / 88 |
+| DNp09 spoczynek / „stop” | 0 / 83 |
+| HS_L / HS_R przy ruchu w lewo | 26 / 0 |
+
+Cel po lewej daje przewagę DNa02_L, po prawej DNa02_R (sprawdzenie przeszło), ale **różnica jest mała (±8 Hz przy ±60°) i przy celu na wprost wynosi −4 Hz** (przechył z asymetrii L/P konektomu).
+Ten przechył kompensuje `calibrate_steer` (trym i nachylenie, osobne dla stanu z bodźcem i dla pamięci).
+
+### D. Rdzeń brzuszny (VNC, 72 neurony)
+
+- Zasada Hennemana (rampa prądu): rekrutacja wolny **61 ms** → pośredni **562 ms** → szybki **1138 ms** (jak w v1–v3).
+- Bramka AND stanu „trzymam”: sama stała szczęka 5 N → RR_hold 0 Hz; sama ruchoma 5 N → 0 Hz; obie po 0,5 N → **70 Hz**.
+- Płytka włoskowa jako wyłącznik krańcowy: moment zamykania 1,78 N·m (q = 0,5 rad), 0,39 N·m (q = −0,12), 0,12 N·m (q = −0,17) — przy krańcu ≤ 25 % wartości daleko od krańca.
+
+### Wszystkie sprawdzenia Etapu 2
+
+| sprawdzenie | |
+|---|---|
+| siatkówka: toczenie → L1, L2 > 0, statyczna scena < 5 % toczenia | OK |
+| siatkówka: ciemna przesłona → L2 > L1 | OK |
+| pierścień: jedno skupione wzgórze w pamięci (skupienie > 0,5) | OK |
+| pierścień: pamięć 1,5 s, \|błąd\| < 30° (średnio po 6 ziarnach) | OK (16,0°) |
+| **pierścień: obrót we właściwą stronę, 6/6 ziaren, oba kierunki** | **BŁĄD** |
+| brak eksplozji (max < 300 Hz, EPG średnio < 100 Hz) | OK (180 Hz, 49,2 Hz) |
+| PFL3 → DNa02: strona celu | OK |
+| looming → DNp01 ≥ 20 Hz, piłeczka < 5 Hz | OK (200 Hz, 0) |
+| MDN i DNp09 odpowiadają (× 2 względem spoczynku) | OK |
+| Henneman: wolne < pośrednie < szybkie | OK |
+| bramka AND | OK |
+| płytka włoskowa: moment przy krańcu ≤ 25 % | OK |
+
+## Etap 3 — pętla zamknięta (`agent.py`, `stage3.py`, `stage3_b1.py`, `stage3_b2.py`)
+
+### Agent
+
+Kierunek celu liczony **od osi bazy**, nie od kamery: środek plamki na siatkówce → promień kamery → przecięcie z płaszczyzną stołu → azymut względem paszczy.
+Pamięć obiektu (wariant `pred`): widoczny cel ustawia wzgórze EPG; PEN dostaje prędkość kątową celu względem ramienia, czyli (ostatnia zmierzona
+prędkość celu w świecie, regresja z 0,6 s widzenia, min. 0,3 s, ograniczona do ±1 rad/s) − (prędkość bazy z propriocepcji serwa). Podczas zasłonięcia wzgórze
+przesuwa się więc razem z przewidywanym celem. Warianty kontrolne: `static` (PEN dostaje tylko −prędkość bazy, wzgórze pamięta kierunek w świecie) i `none` (baza stoi, gdy celu nie widać).
+
+Stałe (nasze): polowanie startuje po ACQ_N = 5 kolejnych spójnych wykryciach (rozrzut < 8°) i trwa HUNT_HOLD = 3,0 s po ostatnim widzeniu (OA-VUM — model);
+w polowaniu wykrycia liczą się tylko w ±25° od kierunku wzgórza (uwaga odgórna — model); baza rusza, gdy wzgórze jest w ±20° od celu;
+odczyt skrętu: DNa02 (τ = 0,10 s) i DNa01 (τ = 0,40 s) przeliczone na kąt kalibracją trymu i nachylenia, ω = G_TURN · kąt, |ω| ≤ 1 rad/s; poza stanem „polowanie + zatrzaśnięcie” filtr odczytu stoi na trymie (kąt 0) — poprawka opisana niżej;
+cel serwa bazy nie wyprzedza jego położenia o więcej niż 0,02 rad (WINDUP); dotyk szczęk wstrzymuje skręt. Ucieczka: spike DNp01 uruchamia program „wyrzut w tył” (bark −1,1 rad, łokieć +0,4 rad).
+Miary w każdym scenariuszu liczone **z prawdy MuJoCo** (siły kontaktu, pozycje ciał, segmentacja), nie z sygnałów sterownika.
+
+### Poprawka startu odczytu DN (wprowadzona po obejrzeniu wyników testowych)
+
+**Usterka.** Filtr odczytu DNa02/DNa01 (`dn_f`) startował od wartości spoczynkowej różnicy L−P ≈ 0 Hz, a trym stanu aktywnego wynosi −3…−5 Hz. W chwili zatrzaśnięcia wzgórza na celu
+odczyt przeskakiwał z 0 do trymu, a dekoder brał to za kąt: powstawał **impuls skrętu ok. 0,5 rad/s, zawsze w lewo**, niezależny od pierścienia EPG.
+Wykrył to subagent B2: dawna miara reakcji (i) (272 ± 34 ms) była identyczna we wszystkich ablacjach Etapu 4, także przy martwym wzgórzu. **Poprawka** (`agent.py`, 4 linie):
+poza stanem „polowanie + zatrzaśnięcie” `dn_f` = trym, czyli odczyt kąta 0.
+
+**Status poprawki.** Powstała **po obejrzeniu wyników testowych** (A i B2 na seedach 0–9; seedy 0–9 w A były wcześniej używane w rozwoju, a walidacja A 120–139 też była widziana przed poprawką: 5/20).
+Żaden zbiór nie jest więc niezależnym sprawdzianem poprawki. Strojenia A 100–119 po poprawce nie przeliczano. B1 nie korzysta z odczytu DN, więc jest bez zmian (10/10, 53 ± 16 ms).
+Wszystkie wyniki A, B2 i Etapu 4 w tym raporcie są **po poprawce**; wersje sprzed niej leżą w `results/pre_dn_fix/` (`stage3_A.txt`, `stage3_A_tune_val.txt`, `stage3_b2.txt`, `stage4.txt`, `stage4_closed.jsonl`, `stage4_parts.jsonl`).
+Uwaga: plik `pre_dn_fix/stage3_b2.txt` został już przeliczony nową miarą reakcji (i); dawnej wartości 272 ± 34 ms (n = 10) nie ma w żadnym zapisanym pliku, wpisuję ją z wersji raportu sprzed poprawki.
+
+| miara | przed poprawką | po poprawce |
+|---|---|---|
+| A, test 0–9, `pred`, sukces (< 10°) | 3/10 (11–60 %) | **4/10** (17–69 %) |
+| A, test 0–9, `pred`, \|b\| < 20° | 8/10 (49–94 %) | **5/10** (24–76 %) |
+| A, test 0–9, `pred`, mediana \|b\| / średni b | 12,0° / −12,4° | 15,9° / −11,2° |
+| A, test 0–9, `static` (sukces; mediana) | 1/10; 27,0° | 1/10; 29,2° |
+| A, test 0–9, `none` (sukces; mediana) | 0/10; 34,7° | 0/10; 30,5° |
+| A, walidacja 120–139, `pred` (sukces; mediana) | 5/20 (11–47 %); 18,4° | **9/20** (26–66 %); 15,5° |
+| A, walidacja 120–139, `static` | 3/20 (5–36 %); 29,8° | 0/20 (0–16 %); 27,2° |
+| A, walidacja 120–139, `none` | 0/20; 34,4° | 0/20; 33,9° |
+| A, strojenie 100–119, `pred` / `static` / `none` | 11/20 (mediana 9,5°) / 1/20 / 0/20 | nie przeliczano |
+| B2, sukces | 6/10 (31–83 %) | **8/10** (49–94 %) |
+| B2, klasy | sukces 6, przepchnięcie 3, upuszczenie 1 | sukces 8, upuszczenie 1, chybienie 1 |
+| B2, kontrola z zablokowaną bazą | 5/10 | 5/10 (baza zablokowana, bez odczytu DN) |
+| B2, reakcja (i), stara miara (start ruchu bazy) | 272 ± 34 ms (n = 10), identyczna we wszystkich ablacjach — artefakt impulsu | zarzucona |
+| B2, reakcja (i), nowa miara | 1590 ± 1778 ms (n = 7) | 920 ± 1675 ms (n = 5) |
+| B2, reakcja (ii) dotyk → pewny chwyt | 1204 ± 553 ms (n = 7) | 1210 ± 486 ms (n = 9) |
+| B1 | 10/10, 53 ± 16 ms | bez zmian |
+
+Wnioski: poprawka usuwa artefakt, ale **nie dowodzi poprawy pamięci**. Na teście A sukces rośnie o 1 próbę (3 → 4), a „< 20°” spada z 8/10 do 5/10; na walidacji `pred` rośnie z 5/20 do 9/20, `static` spada z 3/20 do 0/20.
+Wszystkie te różnice mieszczą się w przedziałach ufności. W B2 zmiana (6/10 → 8/10) jest większa, ale też nieistotna statystycznie przy n = 10 i dotyczy zbioru oglądanego przed poprawką.
+
+### A. Pamięć obiektu przy zasłonięciu
+
+![pamięć obiektu](results/stage3_A.png)
+
+Scena: piłeczka y₀ ∈ [0,12; 0,16] m, v ∈ [0,09; 0,12] m/s w poprzek, przesłona 4–8 cm z boku osi; ramię (z kamerą) śledzi piłeczkę i podczas zasłonięcia obraca się wg wzgórza.
+Miara: **różnica azymutów piłeczki i paszczy (od osi bazy) w chwili wyjścia piłeczki zza przesłony** (geometria odcinka kamera → piłeczka przez prostopadłościan przesłony,
+niezależna od pola widzenia); sukces = |błąd| < 10°. Zasłonięcie trwa średnio 1,73 s (pred). Pełne wyniki strojenia i walidacji (błędy każdej próby), także sekcja „po poprawce startu odczytu DN”: `results/stage3_A_tune_val.txt`.
+Wyniki sprzed poprawki: `results/pre_dn_fix/`. **Wszystkie liczby w tabeli poniżej są po poprawce startu odczytu DN, poza strojeniem.**
+
+| zbiór | wariant | sukces (< 10°) | \|b\| < 20° | mediana \|b\| | średni b |
+|---|---|---|---|---|---|
+| **test 0–9** | **pred** | **4/10** (17–69 %) | 5/10 (24–76 %) | 15,9° | −11,2° |
+| | static | 1/10 | 1/10 | 29,2° | −32,4° |
+| | none | 0/10 (0–28 %) | 0/10 | 30,5° | −33,0° |
+| strojenie 100–119 (**sprzed poprawki, nie przeliczano**) | pred | 11/20 (34–74 %) | — | 9,5° | — |
+| | static / none | 1/20 / 0/20 | — | — | — |
+| walidacja 120–139 | pred | **9/20** (26–66 %) | 12/20 (39–78 %)\* | 15,5° | −13,6°\* |
+| | static | 0/20 (0–16 %) | — | 27,2° | — |
+| | none | 0/20 (0–16 %) | — | 33,9° | — |
+
+\* policzone przeze mnie z listy błędów walidacji `pred` (−19, −28, 1, 0, −9, 1, −4, −23, −9, 18, −33, −32, −5, −41, −23, −13, −21, 0, −25, −7).
+Błędy `pred`, test 0–9 (°, seedy 0…9): −23, 9, 22, −66, −11, −21, 3, −1, −27, 3. Ucieczek fałszywych w teście: 0 w żadnym wariancie.
+Znak: błąd ujemny = piłeczka jest dalej na swojej drodze niż paszcza, czyli ramię zostaje w tyle.
+
+Rozbicie błędu `pred` w teście po poprawce: pamięć pierścienia (prawda − wzgórze) −26, 55, 56, −58, −8, −18, 14, 58, −31, 31°; ramię względem wzgórza 3, −46, −34, −8, −3, −2, −11, −58, 4, −27°.
+Średnia |błąd pamięci pierścienia| na teście wynosi 35,5° (przed poprawką 22,5°; oba wg moich obliczeń z list), czyli **sama pamięć pierścienia nie jest po poprawce dokładniejsza**; przyczyny nie badano.
+Przed poprawką, na seedach 110–119 (pomiar z sesji), pamięć pierścienia miała średni błąd −2°, a ramię było średnio 10° za wzgórzem; dryf wzgórza w pamięci wynosił ~12–15° na 1,5–1,9 s, bez stałego przesunięcia.
+
+**Wnioski i zastrzeżenia.**
+1. `pred` jest lepsze od `static` i `none` w teście (mediana 15,9° vs 29,2° vs 30,5°; sukces 4/10 vs 1/10 vs 0/10) i na walidacji (9/20 vs 0/20 vs 0/20; mediany 15,5° vs 27,2° vs 33,9°).
+   Na walidacji przedziały `pred` (26–66 %) i `static` (0–16 %) są rozłączne; przed poprawką były nierozłączne (5/20 vs 3/20). Na teście 4/10 (17–69 %) vs 1/10 (2–40 %) zachodzą na siebie.
+2. **Poprawka powstała po obejrzeniu wyników testowych**, więc ani test 0–9, ani walidacja 120–139 nie są niezależnym sprawdzianem. Test 0–9 był ponadto używany w rozwoju na starszej wersji kodu.
+   Poprawa walidacji (5/20 → 9/20) mieści się w przedziałach (11–47 % vs 26–66 %).
+3. Sukces w sensie < 10° pozostaje **rzadki** (4/10 na teście, 9/20 na walidacji). Mediana błędu 15,5–15,9° jest wyższa niż przed poprawką na teście (12,0°) i niższa na walidacji (18,4°).
+   Na teście „< 20°” spadło z 8/10 do 5/10.
+4. Jeden seed (3) ma błąd −66° przy pamięci pierścienia −58°: awaria samej pamięci (przed poprawką: seed 2, −67°/−64°). Przyczyny nie badałem.
+5. Test mierzy kierunek w chwili wyłonienia, nie ponowne złapanie celu. Na wykresie przykładowym (seed 0, błąd −23°) wykrycia wracają po wyłonieniu i wzgórze podąża za piłeczką;
+   wcześniejsze zastrzeżenie (przykład sprzed poprawki: ramię nie podjęło piłeczki po wyłonieniu) nie dotyczy już tego wykresu, ale nie sprawdzano jego częstości w pozostałych próbach.
+
+### B1. Ucieczka przed zbliżającym się obiektem
+
+![ucieczka](results/stage3_b1.png)
+
+Scena: czarna kula r = 8 cm startuje 1,2 m od kamery, kierunek lotu w ±15° od osi kamery, po 0,5 s ciszy leci po prostej na stałą kamerę z prędkością U(1,0; 2,0) m/s
+(zmierzone na seedach 0–9: 1,24–1,99 m/s). Obwód: looming (przyrost obszaru OFF w 50 ms, próg G_LOOM0 = 20, pełna skala G_LOOM0 + 24) → LC4/LPLC2 (danymi: 1587 i 1183 synaps do DNp01)
+→ DNp01 → program ucieczki. Rozdzielczość czasu 10 ms.
+
+Sukces = pierwszy spike DNp01 po starcie kuli i zanim środek kuli zbliży się do kamery na ≤ 0,10 m (powierzchnia kuli 2 cm od kamery). Seedy 0–9, jeden przebieg:
+
+| miara | wynik (n = 10) |
+|---|---|
+| sukces (spike w oknie) | **10/10**; spike przed startem 0; brak spike’a 0; za późno 0 |
+| odległość kuli przy spike’u | **0,214 ± 0,010 m** [0,200…0,233] |
+| opóźnienie od chwili 0,30 m | **53 ± 16 ms** [30…70] |
+| opóźnienie od pierwszej klatki loom > 0 | 23 ± 10 ms [10…40] |
+| spike → chwytak odsunięty o 2 cm | **80 ± 0 ms**; odległość kuli wtedy 0,107 ± 0,021 m [0,068…0,129] |
+| odsunięcie o 2 cm zdążyło przed 0,10 m | **6/10** (tylko raport, bez strojenia) |
+
+Odsunięcie o 2 cm zajmuje stałe 80 ms we wszystkich próbach (rozdzielczość 10 ms; ograniczenie serwa, nie sieci). Ponieważ kula jest już w 4/10 prób bliżej niż 0,10 m w chwili odsunięcia,
+„sukces” 10/10 jest miarą zdarzenia neuronalnego (spike DNp01), a nie unikniętego kontaktu.
+
+Kontrole fałszywych ucieczek (3 s po 0,5 s ciszy; odsetek prób z jakimkolwiek spike’em DNp01, n = 10):
+
+| kontrola | G_LOOM0 = 20 (finalne) | G_LOOM0 = 15 (odniesienie bez strojenia) |
+|---|---|---|
+| (a) obrót własny ±1,8 rad/s, kopia eferentna TAK | 0 % | 0 % |
+| (a) obrót własny ±1,8 rad/s, kopia eferentna NIE | **0 %** (max looming 0,33) | **100 %** |
+| (a′) obrót własny ±3 rad/s, kopia TAK | **100 %** | 100 % |
+| (a′) obrót własny ±3 rad/s, kopia NIE | 100 % | 100 % |
+| (b1) piłeczka z równi do paszczy | **10 %** (1/10) | 10 % |
+| (b2) piłeczka w poprzek bez przesłony | 0 % | 0 % |
+| (c) sama scena, bez bodźca | 0 % | 0 % |
+
+Odniesienie G_LOOM0 = 15: odsunięcie na czas 7/10, spike 0,229 ± 0,014 m, opóźnienie od 0,30 m 43 ± 16 ms. Strojenie G_LOOM0 15 → 20 (jedyny strojony parametr) wykonano na seedach 100–119, sprawdzono na 120–139:
+komentarz w `vision.py` podaje fałszywą ucieczkę z równi w 8/40 prób przy 15, 2/40 przy 20 i 0/40 przy 25, ale przy 25 spike przychodzi o 1,3 cm później, a odsunięcie na czas udaje się w 28/40 zamiast 36/40.
+
+**Zastrzeżenia.**
+1. Cena strojenia: przy G_LOOM0 = 20 **kopia eferentna przestaje rozstrzygać w kontroli (a)** (0 % z kopią i bez niej), więc jej wkładu nie wykazuje ten test; przy 15 działała (0 % vs 100 %). Przy ±3 rad/s fałszywa ucieczka jest zawsze (100 %).
+2. Zbliżenie piłeczki z równi do paszczy — dokładnie sytuacja B2 — daje 10 % fałszywych ucieczek. Plik wyników B2 nie raportuje ucieczek, więc nie wiem, czy któraś z 10 prób B2 je zawierała.
+3. Próg G_LOOM0 został ustawiony z pomiarów tej sceny (`vision_calib.py`), więc „detektor” jest dopasowany do kuli r = 8 cm i prędkości 1–2 m/s.
+4. Drapieżnik to jedyna kula o jednej wielkości i kontraście; nie testowano kształtów ani tła o słabym kontraście.
+
+### B2. Chwyt piłeczki prowadzony wzrokiem
+
+![chwyt](results/stage3_b2.png)
+
+Scena: piłeczka stacza się z równi 12° (długość 0,16 m, start na 0,85 długości) w stronę paszczy; boczne przesunięcie startu y₀ ∈ [−1; 9] cm (zakres dobrany tak, by tylko część położeń trafiała w paszczę bez skrętu bazy);
+T = 5 s; maksymalna prędkość bazy zmniejszona do W_MAX = 0,6 rad/s (przy 1,0 baza spychała piłeczkę). Agent: siatkówka → EPG → DNa02/DNa01 skręcają bazę → dotyk → VNC zamyka szczęki → uniesienie.
+Miary z kontaktów MuJoCo: sukces = środek piłeczki ≥ 3 cm nad stołem przez okno 1 s i obie szczęki w kontakcie w ≥ 99 % kroków; zgniecenie = średnia 20 ms siły normalnej szczęka–piłeczka > 5 N.
+
+**Nowa definicja reakcji (i):** od pierwszego wykrycia celu przez agenta (`log["seen"]`) do obrotu bazy o ≥ 1° od startu w stronę piłeczki, utrzymanego ≥ 50 ms.
+Dawna miara (od widoczności w segmentacji do |ω| > 0,05 rad/s przez ≥ 30 ms) mierzyła impuls opisany w „Poprawce startu odczytu DN” i została zarzucona.
+
+Seedy 0–9, jeden przebieg, **po poprawce** (przed poprawką w nawiasach; plik: `results/stage3_b2.txt`, wersja sprzed: `results/pre_dn_fix/stage3_b2.txt`):
+
+| miara | wynik |
+|---|---|
+| **sukces** | **8/10** (49–94 %) (przed: 6/10); seedy 0, 1, 3, 5, 6, 7, 8, 9. Porażki: **1 upuszczenie** (seed 2), **1 chybienie** (seed 4: piłeczka nigdy nie dotknęła ramienia; baza obróciła się o 105°). Przed poprawką: 3 przepchnięcia, 1 upuszczenie |
+| zgniecenia (średnia 20 ms) | **0/10**; szczyt chwilowy (1 ms) > 5 N w 4/10 (seedy 1, 2, 3, 9; max 5,65 N, seed 2) |
+| reakcja (i) wykrycie → obrót bazy do piłeczki | **920 ± 1675 ms (n = 5)**; wartości 50, 80, 100, 100 i 4270 ms (przed: 1590 ± 1778 ms, n = 7) |
+| dotyk → pewny chwyt (obie szczęki ≥ 0,3 N przez 50 ms) | 1210 ± 486 ms (n = 9) |
+| siła trzymania | 4,39 ± 0,39 N, CV 0,19 ± 0,03 (n = 8) |
+| poślizg piłeczki w oknie trzymania | 2,6 ± 1,0 mm (n = 8), maks. odchylenie 1,8 ± 0,6 mm |
+| szczyt siły | chwilowy 4,5 ± 0,9 N, średnia 20 ms 3,5 ± 0,4 N (n = 9) |
+
+**Kontrola z zablokowaną bazą** (te same seedy; bez odczytu DN, więc bez zmian po poprawce): **5/10** (24–76 %), seedy 1, 2, 3, 6, 8; 5 wytoczeń; 0 zgnieceń; szczyt chwilowy > 5 N: 0/10.
+
+**Zastrzeżenia.**
+1. **Poprawka i wynik 8/10 powstały po obejrzeniu wyników testowych** na tych samych seedach. 8/10 (49–94 %) vs kontrola 5/10 (24–76 %): przedziały zachodzą na siebie, więc przewaga skrętu jest sugerowana, nie wykazana.
+   Zestawienie prób: z 5 wytoczeń kontroli skręt ratuje 4 (seedy 0, 5, 7, 9), a seed 4 kończy się chybieniem; seed 2, udany bez skrętu, kończy się upuszczeniem.
+2. **Reakcja (i) jest słabą miarą.** Kryterium spełnia tylko 5 z 10 prób (w pozostałych nie zostało spełnione; przyczyn w poszczególnych próbach nie badałem), rozrzut jest ogromny (SD 1675 ms przy średniej 920 ms),
+   a wartość ~4 s (seed 2) to pościg za odbitą piłeczką, nie reakcja na pierwsze pojawienie się. Cztery pozostałe wartości to 50–100 ms. Średnia 920 ms nie jest typowym czasem reakcji.
+3. **Baza nadal w niektórych próbach skręca o kilka stopni od piłeczki.** Hipoteza (niezweryfikowana): kierunek celu liczony jest jako przecięcie promienia kamery ze stołem na wysokości promienia piłeczki, a piłeczka na równi leży wyżej, więc przecięcie jest obciążone.
+   Nie sprawdzałem też, czy chybienie w seedzie 4 (obrót bazy o 105°) ma ten sam mechanizm.
+4. Szczyty chwilowe 1 ms > 5 N pojawiają się tylko z aktywną bazą (4/10, kontrola 0/10). Zgnieceń w sensie 20 ms nie ma, ale seedy 1, 2, 3 i 9 mają szczyt chwilowy 5,08–5,65 N.
+5. Siła trzymania 4,4 N jest wyższa niż w v4 (2,4–3,1 N), a czas dotyk → chwyt (1210 ms) dłuższy niż w v4 (981 ms). Sceny nie są identyczne (inne przesunięcie boczne, W_MAX 0,6), więc nie porównywałbym wyników wprost z v4 (8/10, 26/30).
+6. Wyniki strojenia (100–119) i walidacji (120–139) dla B2 nie są zapisane w plikach wynikowych; plik ma tylko seedy 0–9.
+
+## Co nie działało i dlaczego (usterki znalezione i poprawione w Etapie 3)
+
+1. **Krawędzie bliskiej przesłony brane za cel.** Przy obrocie bazy paralaksa przesuwa krawędzie przesłony, które wyglądały jak mały poruszający się obiekt.
+   Poprawka: filtr zwartej plamki — kandydat musi mieć 4–40 komórek, proporcje ≤ 2·w + 1 (krawędzie przesłony to paski h 13–16 × w 2–4 komórki) i krawędzie ON **i** OFF jednocześnie (każda ≥ 15 % sumy; toczący się obiekt ma obie, krawędź przesłony jedną).
+2. **Kierunek celu z kamery zamiast z osi bazy.** Kamera siedzi ~25 cm od osi obrotu, więc kierunek do bliskiej piłeczki zmienia się przy obrocie bazy ~2,3× szybciej niż kąt bazy;
+   kompensacja PEN „−prędkość bazy” była za słaba, a pętla wzrokowa za silna. Poprawka: promień kamery ∩ stół (azymut z osi bazy).
+3. **Odczyt DNa02 skalibrowany przy bodźcu miał w stanie pamięci inny trym** (seed 100: wzgórze średnio na 5°, odczyt 10°; w `brain.py`: trym o 3–5 Hz i ok. 2× większe nachylenie). Przy złej kalibracji ramię obracało się bez końca.
+   Poprawka: osobna kalibracja dla pamięci (`offset_mem`, `slope_mem`).
+4. **Resztka przepływu przez HS → DN dawała skręty o złym znaku** (3–4 rad/s), bo odejmowanie przewidywanego przepływu nie wystarcza przy paralaksie. Poprawka: HS wygaszane, gdy |ω bazy| > 0,05 rad/s
+   (u muchy sygnał ruchowy kasuje odpowiedź HS podczas skrętów dobrowolnych — Kim i in. 2015, 2017).
+5. **Zbyt rzadka kalibracja prędkości pierścienia** (4 powtórzenia dawały błąd średniej prędkości ~7°/s, czyli ~13° błędu pamięci po 1,9 s). Poprawka: 12 powtórzeń i gęsta siatka komend wokół u ≈ −0,3 (tam wypada prędkość 0).
+6. **Renderer MuJoCo bez `close()` przy nowym `MjModel` w tym samym procesie renderował błędne klatki** (wykrył to subagent przy B1; komentarze w `vision_calib.py` i `stage3_b1.py`).
+   Po poprawce wyniki A przeliczone: identyczne (pomiar z sesji).
+7. **Fałszywe ucieczki przy własnym obrocie i przy piłeczce z równi** (próg G_LOOM0 = 15): zmniejszone przez podniesienie progu do 20 — kosztem opisanym w B1.
+8. **Spontaniczne wzgórze EPG z szumu obracało ramię, zanim pojawił się cel.** Rozwiązanie modelowe: stan „polowanie” (OA-VUM) i tłumienie pierścienia w spoczynku (`rest_inh`).
+9. **Nierozróżnialny pierścień z surowych wag** (tylko 2 położenia wzgórza) — rozwiązanie opisane w Etapie 2 B (profile zamiast macierzy).
+10. **Start filtra odczytu DN od zera dawał impuls skrętu ~0,5 rad/s w lewo przy zatrzaśnięciu na celu** (wykryty przy B2, bo dawna miara reakcji 272 ± 34 ms była identyczna w każdej ablacji). Poprawka: `dn_f` = trym poza stanem „polowanie + zatrzaśnięcie”. **Wprowadzona po obejrzeniu wyników testowych** — patrz „Poprawka startu odczytu DN” (liczby przed i po).
+
+## Ograniczenia
+
+- Wszystko w symulacji; fizyka tarcia, opór toczenia (10⁻⁵ m), sztywność serw i szum kamery to wartości przyjęte, nie zmierzone na sprzęcie.
+- Próby małe (n = 10, na strojeniu i walidacji A n = 20). Przedziały Wilsona 95 %, policzone przeze mnie z liczników (po poprawce): A test pred 4/10 → 17–69 %, „< 20°” 5/10 → 24–76 %; A walidacja pred 9/20 → 26–66 %, static 0/20 → 0–16 %;
+  A strojenie (sprzed poprawki) pred 11/20 → 34–74 %; B2 8/10 → 49–94 %, kontrola 5/10 → 24–76 %. Przedziały pred i static na teście oraz B2 i kontrola **zachodzą na siebie**; na walidacji A są rozłączne.
+- **Poprawka odczytu DN powstała po obejrzeniu wyników testowych** (A i B2, seedy 0–9; walidacja A 120–139 też była widziana przed nią). Wyniki po poprawce nie są niezależnym sprawdzianem; strojenia A 100–119 po poprawce nie przeliczano.
+  Dawny wynik reakcji (i) 272 ± 34 ms był artefaktem impulsu skrętu i nie należy go cytować.
+- Kontrole „static/none” i „zablokowana baza” dowodzą, że pamięć/skręt coś dają w tej scenie, ale nie izolują wkładu poszczególnych elementów obwodu; Etap 4 ablatuje neurony losowo i warstwowo, bez nokautów pojedynczych typów.
+- Wiele kluczowych elementów jest modelowe (przewidywanie celu, OA-VUM, uwaga odgórna, dekodery, kalibracje, detektory wzrokowe); konektom dostarcza tożsamość, znak i liczbę połączeń oraz kształt profili w CX, a nie dynamikę obliczeń.
+- Wzgórze EPG w pamięci dryfuje ~12–15° na 1,5–1,9 s (pomiar sprzed poprawki); całkowanie obrotu ma błąd do ±22° SD i systematycznie przestrzela przy +45°/s.
+- Test A mierzy kierunek w chwili wyłonienia, nie ponowne złapanie celu; przed poprawką ramię nie zawsze podejmowało piłeczkę po wyłonieniu (przykład seed 0), a częstości po poprawce nie sprawdzano. Sukces < 10° jest rzadki (4/10 na teście, 9/20 na walidacji), a „< 20°” na teście spadło po poprawce z 8/10 do 5/10.
+- B1: 100 % fałszywych ucieczek przy obrocie własnym ±3 rad/s i 10 % przy piłeczce z równi; odsunięcie chwytaka o 2 cm zdążyło tylko w 6/10 prób.
+- B2: 8/10 (przed poprawką 6/10), porażki: upuszczenie 1, chybienie 1 (baza obróciła się o 105°); bez wykazanej przewagi nad blokadą bazy (5/10). Baza w niektórych próbach nadal skręca o kilka stopni od piłeczki (hipoteza, niezweryfikowana: przecięcie promienia ze stołem na wysokości promienia piłeczki, a piłeczka na równi leży wyżej).
+  Reakcja (i) w nowej definicji: 920 ± 1675 ms z n = 5 z 10, wartość ~4 s to pościg za odbitą piłeczką.
+- Test A na seedach 0–9 wykorzystywano wcześniej w rozwoju na starszej wersji kodu.
+- Etap 4: B1 10/10 przy każdej lezji wynika z reguły (≥ 1 LC4/LPLC2 na stronę, DNp01 nigdy nie lezjonowany) i z modelowo wstrzykiwanego loomingu, więc nie świadczy o odporności; brak nokautów pojedynczych typów;
+  seed = lezja = szum = scena (jedno losowanie lezji na seed); zamknięta pętla tylko dla 292/120/50; skalowanie synaptyczne to niestrojona reguła modelowa; przy martwym wzgórzu skręt = 0 z konstrukcji dekodera.
+
+## Etap 4 — ablacja neuronów
+
+Pytanie: ile neuronów układu 292 (mózg 220 + VNC 72) można usunąć, zanim zadania Etapu 3 przestaną działać. Wyniki: `results/stage4.txt`
+(zamknięta pętla), `results/stage4_openloop.txt` (otwarta pętla, sam pierścień EPG). Źródła kodu: `ablation.py`, `stage4.py`.
+**Zamknięta pętla jest przeliczona po poprawce startu odczytu DN** (patrz Etap 3); wersja sprzed poprawki: `results/pre_dn_fix/stage4.txt`, `stage4_closed.jsonl`, `stage4_parts.jsonl`. Otwarta pętla nie korzysta z odczytu DN i nie zmieniła się.
+
+![ablacja, zamknięta i otwarta pętla](results/explory_connectome_results.png)
+
+![ablacja pierścienia EPG, otwarta pętla](results/stage4_openloop.png)
+
+### Protokół
+
+**Lezja, nie kompensacja.** Usunięty neuron jest martwy na stałe: jego wiersz i kolumna w macierzy wag są zerami, nie dostaje prądu zewnętrznego
+(jest wycięty z grup wejść) i jego spike’i są maskowane. W wariancie podstawowym („bez komp.”) wagi pozostałych **nie są skalowane**, a stałe nie są przestrajane.
+Jedyna ingerencja po lezji to **ponowna kalibracja odczytu** (`calibrate_ring` i `calibrate_steer`, czyli odwrócona krzywa prędkość wzgórza → komenda u oraz trym i nachylenie DNa02/DNa01).
+To kalibracja dekodera, a nie sieci: nie dodaje synaps i nie zmienia wag.
+
+**Zabezpieczenie nachylenia dekodera** (`LesionedBrain.calibrate_steer`). Przy martwym wzgórzu regresja L−P na kąt wzgórza daje nachylenie 0 lub nieskończone.
+Bez zabezpieczenia agent dzielił przez 0, w sterowaniu pojawiał się NaN, MuJoCo zerował wszystkie komendy, a ramię skakało do q = 0 — artefakt numeryczny, nie skutek lezji.
+Teraz nachylenie zerowe lub nieskończone zamieniam na ∞, czyli odczyt skrętu wynosi 0 (dekoder nie niesie informacji). To jedyna ingerencja w odczyt po lezji
+i ma konsekwencję: przy martwym wzgórzu baza **z założenia** nie skręca.
+
+**Reguła wyboru neuronów** (losowanie warstwowe, `allocation`). 46 warstw: 30 w mózgu (typ komórki × strona L/R) i 16 w VNC (populacje chwytu, z bramką RR_gate rozbitą na szczękę stałą i ruchomą).
+Każda warstwa zachowuje ≥ 1 neuron; resztę rozdziela się proporcjonalnie do rozmiaru warstwy (water-filling). **Przydział jest deterministyczny**, a ziarno wybiera tylko, *które* neurony zostają.
+Warstwy jednoneuronowe (DNa01/02, DNp01/09, HSN/HSE/HSS, płytka włoskowa, RR_gate ×2) nigdy nie są lezjonowane. Poziomy: **292** (pełny), **120**, **50**.
+Przy 120 zostaje 18 EPG, 16 PEN i 16 Delta7, a przy 50 po 4 EPG, PEN i Delta7 oraz po 1 neuronie w każdej pozostałej warstwie (w tym po 1 LC4 i 1 LPLC2 na stronę).
+Z VNC zostaje przy 120 np. 2 z 5 MN zginacza i 2 z 6 neuronów RR_resist, a przy 50 po jednym.
+
+**Wariant „skalowanie” (kompensacja synaptyczna, założenie modelowe, niestrojone).**
+Mózg: wagi wejściowe od każdej warstwy × min(n_pełne / n_żywe, 10). VNC: wagi wyjściowe ocalałych z populacji × n_pełne / n_żywe (bez limitu) i siła skurczu ocalałych MN × to samo (reinerwacja kolateralna).
+Na poziomie 292 skala = 1, więc oba warianty są tam identyczne (liczone raz).
+
+**Zamknięta pętla.** Seedy 0–9; **seed próby = losowanie lezji = ziarno szumu = scena** (te same scenariusze A, B1, B2 co w Etapie 3, parametry zamrożone, nic nie strojono).
+Każdy scenariusz dostaje *świeży* mózg i VNC (to samo losowanie lezji, kalibracja od nowa), tak jak w Etapie 3. Wszystkie liczby są surowe, bez wykluczeń:
+próba, w której piłeczka nie wyszła zza przesłony lub scenariusz zgłosił błąd techniczny, liczy się jako porażka (błędów technicznych: brak).
+**Poziom 292 odtwarza Etap 3 (po poprawce) dokładnie**: błędy A (`pred` i `none`), B2 8/10 z tymi samymi klasami i 920 ± 1675 ms (n = 5), B1 10/10 z 53 ± 16 ms są identyczne z plikami Etapu 3. Wariant z jednym mózgiem przez kolejne A → B1 → B2 odrzucono, bo B2 dawał w nim 4/10: pojedyncza próba jest czuła na realizację szumu (pomiar z sesji).
+Wariant z jednym mózgiem przez kolejne A → B1 → B2 odrzucono, bo B2 dawał w nim 4/10: pojedyncza próba jest czuła na realizację szumu (pomiar z sesji).
+
+### A. Pamięć przestrzenna (błąd azymutu przy wyłonieniu, sukces |błąd| < 10°; n = 10; po poprawce odczytu DN)
+
+W nawiasach przedziały Wilsona 95 % (obliczone z liczników); „przed” = wynik sprzed poprawki startu odczytu DN (`results/pre_dn_fix/stage4.txt`).
+
+| układ | \|b\| < 10° (przed) | \|b\| < 20° (przed) | mediana \|b\| | śr. \|b\| ± SD | śr. b | „bez wzgórza” |
+|---|---|---|---|---|---|---|
+| 292, bez pamięci (`none`) | 0/10 (0–28 %) (0/10) | 0/10 (1/10) | 30,5° | 33,0 ± 7,8° | −33,0° | 0 |
+| **292, `pred`** | **4/10** (17–69 %) (3/10) | 5/10 (24–76 %) (8/10) | 15,9° | 18,6 ± 18,3° | −11,2° | 0 |
+| 120, bez komp. | 0/10 (0–28 %) (0/10) | 2/10 (6–51 %) (2/10) | 31,6° | 32,5 ± 12,4° | −32,5° | **10** |
+| 120, skalowanie | 1/10 (2–40 %) (1/10) | 2/10 (6–51 %) (5/10) | 40,6° | **63,5 ± 48,4°** | −49,2° | 3 |
+| 50, bez komp. | 0/10 (0–28 %) (0/10) | 2/10 (6–51 %) (2/10) | 26,1° | 30,9 ± 14,4° | −30,9° | **10** |
+| 50, skalowanie | 1/10 (2–40 %) (1/10) | 4/10 (17–69 %) (4/10) | 25,6° | 25,0 ± 13,0° | −25,0° | **10** |
+
+„Bez wzgórza” = w chwili wyłonienia kąt wzgórza jest dokładnie 0, czyli EPG nie wygenerowały spike’ów (`stage4.py`). Ucieczek fałszywych: 0 we wszystkich wierszach; wszystkie próby wyłoniły się zza przesłony (10/10).
+
+- Bez kompensacji **pamięć znika całkowicie już przy 120 neuronach**: martwe wzgórze w 10/10 prób, a średni błąd (32,5°) jest taki jak bez pamięci (`none`: 33,0°). To samo przy 50 (30,9°).
+- Ze skalowaniem przy 120 wzgórze częściej istnieje (martwe w 3/10), ale **jakość pamięci nie wraca**: mediana 40,6° i średnia |b| 63,5° są **gorsze niż bez pamięci** (30,5° i 33,0°),
+  bo trzy próby mają błąd od −128° do −135°, a jedna −77° (błędy: −134, −9, −77, −47, 14, −128, 33, 25, −135, −35). Ramię działa wtedy na fałszywym kierunku, a nie tylko go nie zna.
+- Ze skalowaniem przy 50 wzgórze jest martwe w 10/10 prób, a błąd (25,0 ± 13,0°) nie różni się od `none` (33,0 ± 7,8°) przy n = 10; „< 20°” 4/10 vs 0/10 ma zachodzące przedziały (17–69 % vs 0–28 %).
+- Przedziały pełnego układu i lezji zachodzą na siebie przy kryterium < 10° (4/10: 17–69 % vs 0–1/10: 0–40 %). Przy „< 20°” pełny układ 5/10 (24–76 %) zachodzi na wszystkie wiersze lezji (2–4/10).
+  Po poprawce różnica pełny–lezje jest więc mniej wyraźna niż przed nią (8/10 vs 2–5/10).
+
+### B2. Chwyt (n = 10; po poprawce odczytu DN)
+
+Reakcja (i) w nowej definicji (od wykrycia celu do obrotu bazy ≥ 1° w stronę piłeczki, utrzymanego ≥ 50 ms); n w nawiasie to liczba prób, w których kryterium spełniono.
+
+| układ | sukces (przed) | zgniecenie (średnia 20 ms) | szczyt 1 ms > 5 N | reakcja (i) | klasy |
+|---|---|---|---|---|---|
+| **292** | **8/10** (49–94 %) (6/10) | 0/10 | 4/10 | 920 ± 1675 ms (n = 5) | sukces 8, upuszczenie 1, chybienie 1 |
+| 120, bez komp. | 0/10 (0–28 %) (0/10) | 0/10 | 0/10 | 235 ± 144 ms (n = 4) | wytoczenie 10 |
+| 120, skalowanie | 5/10 (24–76 %) (3/10) | **2/10** | 5/10 | 737 ± 817 ms (n = 7) | sukces 3, przepchnięcie 2, zgniecenie\* 2, chybienie 2, wytoczenie 1 |
+| 50, bez komp. | 0/10 (0–28 %) (0/10) | 0/10 | 0/10 | 1655 ± 1425 ms (n = 2) | wytoczenie 10 |
+| 50, skalowanie | 1/10 (2–40 %) (0/10) | 1/10 | 2/10 | 262 ± 175 ms (n = 5) | wytoczenie 5, przepchnięcie 3, chybienie 1, zgniecenie\* 1 |
+
+(zgniecenie\* = piłeczka uniesiona, ale średnia siła 20 ms > 5 N; wchodzi do „sukcesu”, więc bez zgniecenia jest 3/10 przy 120 ze skalowaniem i 0/10 przy 50 ze skalowaniem.)
+Reakcję (i) podaję dla kompletności; przy martwym wzgórzu baza nie powinna skręcać z woli sterownika, więc wartości w wierszach „bez komp.” (n = 2–4) nie interpretuję (mogą wynikać z fizycznych kontaktów; nie sprawdzano). Zastrzeżenia jak w B2 Etapu 3.
+
+Rozbicie diagnostyczne (ta sama lezja tylko w mózgu przy pełnym VNC albo tylko w VNC przy pełnym mózgu; łączne N wtedy nie obowiązuje; przed poprawką w nawiasach):
+
+| układ | lezja tylko mózg | lezja tylko VNC |
+|---|---|---|
+| 120, bez komp. | 6/10 (31–83 %) (4/10): sukces 6, wytoczenie 4 | **0/10** (0–28 %) (0/10): przepchnięcie 9, chybienie 1 |
+| 120, skalowanie | 4/10 (17–69 %) (5/10): przepchnięcie 3, sukces 3, chybienie 2, zgniecenie\* 1, upuszczenie 1 | 4/10 (17–69 %) (5/10): przepchnięcie 4, sukces 3, zgniecenie\* 1, upuszczenie 1, chybienie 1 |
+| 50, bez komp. | 5/10 (24–76 %) (6/10): sukces 5, wytoczenie 5 | **0/10** (0–28 %) (0/10): przepchnięcie 9, chybienie 1 |
+| 50, skalowanie | 6/10 (31–83 %) (4/10): sukces 6, wytoczenie 3, chybienie 1 | **0/10** (0–28 %) (3/10): przepchnięcie 7, upuszczenie 2, chybienie 1 |
+
+- **0/10 bez kompensacji wynika z lezji VNC, nie mózgu.** Przy lezji tylko VNC wynik to 0/10 (przepchnięcie 9, chybienie 1; klasa „przepchnięcie” = bez pewnego chwytu, piłeczka odepchnięta ruchem chwytaka), przy lezji tylko mózgu 6/10 i 5/10.
+- **Sam martwy mózg działa jak kontrola „zablokowana baza” z Etapu 3** (5/10 z 5 wytoczeniami): 6/10 i 5/10 mieszczą się w tym samym przedziale, a porażki to wytoczenia. Wynika to także z konstrukcji (martwe wzgórze → skręt = 0).
+- Skalowanie w VNC poprawia chwyt przy lezji tylko VNC przy 120 neuronach (0/10 → 4/10), ale **nie przy 50** (0/10: przepchnięcie 7, upuszczenie 2, chybienie 1; przed poprawką 3/10).
+  Zgniecenia pojawiają się tylko w wariantach ze skalowaniem (2/10 przy 120 w układzie łącznym, 1/10 przy 50 łącznym; po 1/10 w rozbiciu „120, tylko mózg” i „120, tylko VNC”); przyczyn nie badano.
+- **Komórki n = 10 są niestabilne.** Poprawka odczytu DN zmieniła wyniki także tam, gdzie wzgórze jest martwe i skręt powinien wynosić 0 (np. „120, bez komp., tylko mózg” 4/10 → 6/10; „50, skalowanie, tylko VNC” 3/10 → 0/10).
+  Przyczyny nie wyjaśniono; różnice o 2–3 próby między komórkami nie niosą informacji.
+
+### B1. Ucieczka (n = 10)
+
+| układ | sukces (spike DNp01 przed 0,10 m) | spike przed startem kuli | opóźnienie od 0,30 m |
+|---|---|---|---|
+| 292 | **10/10** (72–100 %) | 0/10 | 53 ± 16 ms |
+| 120, bez komp. | 10/10 | 0/10 | 53 ± 16 ms |
+| 120, skalowanie | 10/10 | 0/10 | 53 ± 16 ms |
+| 50, bez komp. | 10/10 | 0/10 | 55 ± 15 ms |
+| 50, skalowanie | 10/10 | 0/10 | 53 ± 16 ms |
+
+**Nie jest to dowód odporności ucieczki na lezje.** B1 przeżywa dlatego, że reguła warstwowa zostawia ≥ 1 LC4 i ≥ 1 LPLC2 na stronę, a DNp01 (warstwa jednoneuronowa) nigdy nie jest lezjonowany.
+Wejście loomingu jest dodatkowo wstrzykiwane modelowo prądem do LC4/LPLC2 (obliczenie loomingu robi algorytm w `vision.py`, a nie neurony), więc test sprawdza tylko transmisję LC4/LPLC2 → DNp01 przez jedną komórkę.
+Ucieczki przy lezji samego DNp01 lub wszystkich LC4/LPLC2 danej strony ta ablacja nie obejmuje.
+
+### Otwarta pętla: pierścień EPG (samo wzgórze, bez MuJoCo)
+
+Protokół Etapu 2 B (bodziec 0,3 s, 1,5 s ciemności, +45°/s przez 1 s, 0,5 s spoczynku, −30°/s przez 1 s); 10 losowań lezji × 5 ziaren szumu na poziomach 292/120/50 (n = 50 prób)
+i 10 × 3 na poziomach pośrednich (n = 30). „Wzgórze istnieje” = skupienie w oknie pamięci > 0,5 oraz EPG ≥ 5 Hz.
+Przedziały Wilsona w nawiasach traktują próby jak niezależne, a **nie są** (próby z tego samego losowania lezji są skorelowane); zależność od losowania widać niżej.
+
+| N (żywych EPG) | bez komp. [% prób z wzgórzem] | skalowanie [% prób z wzgórzem] |
+|---|---|---|
+| 292 (46) | 100 (50/50; 93–100 %) | 100 |
+| 270 (42) | 90 (27/30; 74–97 %) | 93 (28/30; 79–98 %) |
+| 250 (40) | 70 (21/30; 52–83 %) | 100 (30/30; 89–100 %) |
+| 230 (36) | 50 (15/30; 33–67 %) | 90 (27/30; 74–97 %) |
+| 210 (32) | 7 (2/30; 2–21 %) | 70 (21/30; 52–83 %) |
+| 190 (28) | 0 (0/30; 0–11 %) | 87 (26/30; 70–95 %) |
+| 160 (24) | 0 | 40 (12/30; 25–58 %) |
+| 120 (18) | 0 (0/50; 0–7 %) | 42 (21/50; 29–56 %) |
+| 90 (12) | 0 | 43 (13/30; 27–61 %) |
+| 70 (8) | 0 | 23 (7/30; 12–41 %) |
+| 50 (4) | 0 (0/50; 0–7 %) | 8 (4/50; 3–19 %) |
+
+- Bez kompensacji pierścień załamuje się między 250 a 210 neuronami łącznie (70 % → 7 %); ze skalowaniem utrzymuje się do ~190, a przy 160–90 jest w 40–43 % prób, przy 50 w 8 %.
+  Krzywa ze skalowaniem nie jest monotoniczna (np. 70 % przy 210 i 87 % przy 190; 40 % przy 160 i 42 % przy 120) — przy n = 30 to w granicach szumu.
+- Zależność od losowania lezji: przy 120 ze skalowaniem „odsetek istnienia na losowanie” to 42,0 ± 47,7 %, a wzgórze istnieje w ogóle w **5 z 10 losowań** (24–76 %);
+  przy 50 w **1 z 10** (2–40 %). Wynik zależy więc od tego, *które* neurony przeżyły, a nie tylko ile.
+- **Istnienie wzgórza nie oznacza sprawnego całkowania.** Przy 292: błąd pamięci 23,2 ± 13,4° (n = 50; w Etapie 2 było 16,0° na 6 ziarnach — inna próba i kalibracja), przesunięcie +55,8 ± 15,4° przy +45°/s i −17,6 ± 15,3° przy −30°/s,
+  poprawny znak obrotu w 84 % prób. Przy 120 ze skalowaniem (21 prób z wzgórzem): błąd pamięci 26,7 ± 14,3°, ale przesunięcie przy +45°/s wynosi **−1,0 ± 6,5°**, przy −30°/s −0,3 ± 5,0°, poprawny znak tylko w 14 % prób;
+  przy 50 (4 próby) przesunięcie 0,0 ± 0,0°. Ocalałe wzgórze utrzymuje kierunek, ale nie integruje obrotu. Przy 270 bez komp. i ze skalowaniem błąd pamięci w próbach z wzgórzem rośnie już do 65,8 ± 32,3° i 63,8 ± 38,2°,
+  a na wykresie (panel „przesunięcie przy +45°/s”) przesunięcie spada do ok. 0 przy ≤ 230 neuronach (odczyt z wykresu).
+- Przy 120 i 50 bez komp. wzgórza nie ma w żadnej próbie (0/50), więc „efektywny” błąd pamięci wynosi z definicji 90°.
+
+### Czego ablacja NIE pokazuje
+
+1. **Nie pokazuje odporności ucieczki B1.** Patrz wyżej: 10/10 wynika z reguły warstwowej (≥ 1 LC4/LPLC2 na stronę, DNp01 nigdy nie lezjonowany) i z wstrzykiwanego loomingu. Nie wolno z tego wnosić odporności biologicznej ani wniosku o redundancji LC4/LPLC2.
+2. **Nie wskazuje, które typy neuronów są niezbędne.** Lezje są losowe i proporcjonalne do rozmiaru warstw; nie wykonano nokautów pojedynczych typów (jak w ablacji v1–v3 w `../RESULTS.md`, która dotyczy innego układu, 352 neuronów, i nie jest z tą porównywalna).
+   Jedyny podział przyczynowy to mózg vs VNC w B2.
+3. **Nie rozdziela wpływu lezji od zmienności sceny i szumu.** Seed = lezja = szum = scena, po jednym losowaniu lezji na seed (10 losowań na poziom). Układ jest sparowany po scenie między poziomami, ale wariancji losowania lezji nie da się oddzielić od wariancji sceny.
+4. **Poziomy pośrednie istnieją tylko w otwartej pętli i tylko dla pierścienia.** Zamknięta pętla ma trzy poziomy (292, 120, 50); punkt załamania zadań w zamkniętej pętli (między 292 a 120) nie jest zmierzony.
+5. **Przy martwym wzgórzu brak skrętu jest założeniem, nie wynikiem.** Zabezpieczenie nachylenia ustawia skręt = 0, więc „lezja mózgu = zablokowana baza” wynika po części z konstrukcji dekodera.
+6. **Kompensacja „skalowaniem” nie jest tezą biologiczną.** To jedna z możliwych reguł (limit 10× w mózgu, brak limitu w VNC), niestrojona; wyniki zależą od niej (zgniecenia, błędy −134° do −136° w A).
+7. **Mała liczność** (n = 10 w zamkniętej pętli): przedziały Wilsona w większości zachodzą na siebie, np. B2 292 8/10 (49–94 %) i lezje ze skalowaniem 5/10 (24–76 %); wyraźne są tylko 0/10 (0–28 %) vs 8/10 (49–94 %) oraz 10/10 martwych wzgórz.
+8. **Kalibracja odczytu po lezji** (`calibrate_ring`, `calibrate_steer`) może poprawiać lub maskować skutki lezji; nie badano wyników bez niej.
+9. **Czas obliczeń**: otwarta pętla ok. 17 min, zamknięta ok. 16 min (po poprawce 2512 s CPU, 50 prób; z tego A 408 s, B1 81 s, B2 322 s), rozbicie B2 ok. 8 min.
+   Kalibracja po lezji zajmuje większość czasu: np. 402 z 636 s przy 292 neuronach i 309 z 469 s przy 120 bez kompensacji.
+10. **Wyniki zamkniętej pętli są po poprawce wprowadzonej po obejrzeniu wyników testowych** i komórki n = 10 zmieniają się o 2–3 próby między wersjami (np. B2, 120 skalowanie: 3/10 → 5/10; 50 skalowanie tylko VNC: 3/10 → 0/10), więc pojedyncze komórki nie niosą wiarygodnej informacji.
+
+## Jak uruchomić
+
+```bash
+uv venv -p 3.12 .venv && uv pip install -p .venv/bin/python mujoco numpy matplotlib scipy pandas pyarrow
+.venv/bin/python -I bio2/extract_bio2.py        # tylko po zmianie wyboru neuronów; wymaga danych w data/malecns/ (jak sim/extract_connectome.py)
+cd bio2
+../.venv/bin/python stage1_verify.py            # Etap 1 → results/stage1.png
+../.venv/bin/python stage2_test.py              # Etap 2 → results/stage2.png, stage2_retina.png
+../.venv/bin/python stage3.py testA             # Etap 3 A, seedy 0–9 → results/stage3_A.{txt,png}
+../.venv/bin/python stage3_b1.py final          # Etap 3 B1 → results/stage3_b1.{txt,png}  (tune | val | final)
+../.venv/bin/python stage3_b2.py report         # Etap 3 B2 → results/stage3_b2.{txt,png}  (tune 100 120 | val 120 140 | report)
+../.venv/bin/python vision_calib.py             # pomiar sygnałów widzenia, z których ustawiono progi vision.py
+../.venv/bin/python ablation.py                 # Etap 4, otwarta pętla (samotest + pomiar, ok. 17 min, 3 procesy; ABL_PROCS=n zmienia liczbę) → results/stage4_openloop.{txt,json,png}; --check = tylko samotest
+../.venv/bin/python stage4.py run               # Etap 4, zamknięta pętla (wznawialne, ok. 16 min, 3 procesy) → results/stage4_closed.jsonl
+../.venv/bin/python stage4.py parts             # rozbicie B2 mózg / VNC (ok. 8 min) → results/stage4_parts.jsonl
+../.venv/bin/python stage4.py report            # tabele i wykres → results/stage4.txt, results/explory_connectome_results.png
+../.venv/bin/python stage4.py one 120 1 3       # jedna próba: poziom N, wariant (0 = bez komp., 1 = skalowanie), seed
+```

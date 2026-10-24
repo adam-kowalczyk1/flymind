@@ -1,0 +1,23 @@
+== seedy 100 120
+pred  : sukces 11/20, |błąd| przy wyłonieniu: mediana 9.5°, zasłonięcie 1.61 s, błędy: [9.0, -7.0, -5.0, -12.0, -1.0, 6.0, 10.0, -24.0, -0.0, -17.0, -6.0, -33.0, -13.0, 14.0, -11.0, -25.0, -0.0, -32.0, -9.0, -9.0] ucieczki 0
+static: sukces 1/20, |błąd| przy wyłonieniu: mediana 26.2°, zasłonięcie 1.97 s, błędy: [-26.0, -15.0, -34.0, -45.0, -31.0, -11.0, 17.0, -50.0, -16.0, -26.0, -22.0, -4.0, -22.0, -66.0, -31.0, -46.0, -17.0, -26.0, -27.0, -28.0] ucieczki 0
+none  : sukces 0/20, |błąd| przy wyłonieniu: mediana 34.9°, zasłonięcie 2.13 s, błędy: [-35.0, -33.0, -26.0, -36.0, -35.0, -39.0, -22.0, -33.0, -33.0, -34.0, -33.0, -33.0, -40.0, -35.0, -33.0, -43.0, -38.0, -43.0, -35.0, -41.0] ucieczki 0
+== seedy 120 140
+pred  : sukces 5/20, |błąd| przy wyłonieniu: mediana 18.4°, zasłonięcie 1.81 s, błędy: [-17.0, -26.0, -2.0, -17.0, -24.0, 1.0, -23.0, -21.0, 13.0, -31.0, 25.0, -20.0, -21.0, -6.0, -36.0, -13.0, 15.0, -35.0, -1.0, -3.0] ucieczki 0
+static: sukces 3/20, |błąd| przy wyłonieniu: mediana 29.8°, zasłonięcie 2.07 s, błędy: [-32.0, -53.0, -17.0, -18.0, -17.0, -28.0, -33.0, -39.0, -7.0, -68.0, -62.0, -39.0, -30.0, -31.0, -56.0, -30.0, -2.0, -27.0, -24.0, 3.0] ucieczki 0
+none  : sukces 0/20, |błąd| przy wyłonieniu: mediana 34.4°, zasłonięcie 2.20 s, błędy: [-31.0, -24.0, -32.0, -32.0, -44.0, -34.0, -34.0, -22.0, -45.0, -19.0, -34.0, -46.0, -32.0, -47.0, -46.0, -28.0, -38.0, -47.0, -45.0, -46.0] ucieczki 0
+== test
+Etap 3 A — pamięć obiektu, test seedy [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (uruchomiony raz)
+błąd = azymut piłeczki − azymut paszczy (z osi bazy) w chwili wyjścia zza przesłony; sukces |błąd| < 10°
+pred  : sukces 3/10, |błąd| < 20°: 8/10, mediana |błąd| 12.0°, śr. błąd -12.4°, zasłonięcie 1.70 s, ucieczki 0
+        błędy: [11.0, -8.0, -67.0, -29.0, 13.0, -19.0, -11.0, -13.0, -9.0, 7.0]
+        w tym pamięć pierścienia (prawda − wzgórze): [30, -5, -64, -28, -8, -17, -13, -30, -9, 21]; ramię za wzgórzem: [-19, -3, -3, -1, 21, -3, 2, 16, 1, -14]
+static: sukces 1/10, |błąd| < 20°: 3/10, mediana |błąd| 27.0°, śr. błąd -30.0°, zasłonięcie 1.94 s, ucieczki 0
+        błędy: [-78.0, -33.0, -17.0, -24.0, -13.0, -45.0, 4.0, -30.0, -24.0, -38.0]
+none  : sukces 0/10, |błąd| < 20°: 1/10, mediana |błąd| 34.7°, śr. błąd -32.7°, zasłonięcie 2.08 s, ucieczki 0
+        błędy: [-38.0, -34.0, -31.0, -28.0, -17.0, -36.0, -44.0, -43.0, -21.0, -35.0]
+== po poprawce startu odczytu DN (agent.py: dn_f = trym poza stanem „polowanie + zatrzaśnięcie”); seedy 120 140
+(poprawka powstała PO obejrzeniu wyników testowych; strojenia 100–119 po poprawce NIE przeliczano; wartości wpisane z notatek sesji, nie z uruchomienia skryptu przy pisaniu raportu)
+pred  : sukces 9/20, |błąd| przy wyłonieniu: mediana 15.5°, błędy: [-19, -28, 1, 0, -9, 1, -4, -23, -9, 18, -33, -32, -5, -41, -23, -13, -21, 0, -25, -7]
+static: sukces 0/20, |błąd| przy wyłonieniu: mediana 27.2°
+none  : sukces 0/20, |błąd| przy wyłonieniu: mediana 33.9°

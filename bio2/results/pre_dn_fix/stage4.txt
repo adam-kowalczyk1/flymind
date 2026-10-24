@@ -1,0 +1,57 @@
+Etap 4 — ablacja w ZAMKNIĘTEJ pętli (MuJoCo), seedy 0–9; parametry Etapu 3 zamrożone, nic nie strojone.
+Seed próby = losowanie lezji = ziarno szumu. 292 = pełny układ (oba warianty identyczne, liczone raz). Wszystkie liczby surowe (bez wykluczeń):
+próba, w której piłeczka nie wyszła zza przesłony lub scenariusz zgłosił błąd techniczny, liczy się jako porażka.
+
+A. PAMIĘĆ PRZESTRZENNA (błąd azymutu przy wyłonieniu zza przesłony, [°]; sukces |błąd| < 10°)
+N / wariant                 |b|<10°  |b|<20°  mediana|b|     śr.|b| ± SD    śr. b    n wyłon.  ucieczki bez wzg.  błędy [°]
+pełny, bez pamięci (none)      0/10     1/10        34.7      32.7 ±  8.2    -32.7      10/10       0        0  [-38.0, -34.0, -31.0, -28.0, -17.0, -36.0, -44.0, -43.0, -21.0, -35.0]
+pełny 292 (pred)               3/10     8/10        12.0      18.6 ± 17.2    -12.4      10/10       0        0  [11.0, -8.0, -67.0, -29.0, 13.0, -19.0, -11.0, -13.0, -9.0, 7.0]
+120, bez komp. (pred)          0/10     2/10        30.8      33.7 ± 18.7    -33.7      10/10       0       10  [-30.0, -86.0, -34.0, -35.0, -27.0, -14.0, -19.0, -28.0, -32.0, -31.0]
+120, skalowanie (pred)         1/10     5/10        27.9      56.8 ± 52.7    -50.0      10/10       0        3  [-7.0, -136.0, -38.0, -52.0, -17.0, -134.0, 16.0, 18.0, -135.0, -15.0]
+50, bez komp. (pred)           0/10     2/10        24.1      31.4 ± 13.7    -31.4      10/10       0       10  [-22.0, -52.0, -52.0, -21.0, -25.0, -19.0, -23.0, -52.0, -19.0, -29.0]
+50, skalowanie (pred)          1/10     4/10        28.1      33.9 ± 20.5    -10.3      10/10       0       10  [-68.0, 73.0, -31.0, -10.0, -25.0, -18.0, 45.0, -32.0, -18.0, -20.0]
+
+B2. CHWYT (piłeczka z równi; sukces = uniesiona ≥ 3 cm i obie szczęki ≥ 1 s; zgniecenie = średnia 20 ms siły szczęki > 5 N)
+N / wariant                  sukces  zgniecenie  (szczyt 1 ms>5N)   reakcja (i) wykr.→ruch do celu [ms]  klasy porażek / sukcesu
+pełny 292                      6/10        0/10           4/10                     1590 ± 1778 (n=7)  sukces 6, przepchnięcie 3, upuszczenie 1
+120, bez komp.                 0/10        0/10           0/10                       853 ± 892 (n=7)  wytoczenie 10
+120, skalowanie                3/10        2/10           5/10                       537 ± 656 (n=7)  przepchnięcie 3, sukces 2, chybienie 2, zgniecenie* 1, wytoczenie 1, zgniecenie 1
+50, bez komp.                  0/10        0/10           0/10                        165 ± 15 (n=2)  wytoczenie 10
+50, skalowanie                 0/10        0/10           3/10                     1062 ± 1304 (n=4)  przepchnięcie 4, wytoczenie 4, chybienie 2
+
+B1. UCIECZKA (kula drapieżnika; sukces = spike DNp01 po starcie kuli, zanim jej środek zbliży się do kamery na ≤ 10 cm)
+N / wariant                  sukces  spike przed startem         opóźnienie od 0,30 m [ms]
+pełny 292                     10/10              0/10                    53 ± 16 (n=10)
+120, bez komp.                10/10              0/10                    53 ± 16 (n=10)
+120, skalowanie               10/10              0/10                    53 ± 16 (n=10)
+50, bez komp.                 10/10              0/10                    55 ± 15 (n=10)
+50, skalowanie                10/10              0/10                    53 ± 16 (n=10)
+
+błędy techniczne scenariuszy: brak
+
+CZAS OBLICZEŃ (suma po procesach, s): N=292: 622 (kalibracja 392), N=120: 450 (kalibracja 293), N=120/skal.: 461 (kalibracja 301), N=50: 462 (kalibracja 295), N=50/skal.: 453 (kalibracja 293)
+  w tym A 401, B1 83, B2 840; razem 2448 s CPU, 50 prób
+
+B2 — ROZBICIE (ta sama lezja tylko w mózgu przy pełnym VNC / tylko w VNC przy pełnym mózgu; diagnostyka, N łączne nie obowiązuje)
+N / wariant / część                  sukces  zgniecenie  klasy
+120, bez komp., lezja tylko mózg       4/10        0/10  wytoczenie 6, sukces 4
+120, bez komp., lezja tylko VNC        0/10        0/10  przepchnięcie 10
+120, skalowanie, lezja tylko mózg      5/10        1/10  sukces 4, przepchnięcie 2, chybienie 2, upuszczenie 1, zgniecenie* 1
+120, skalowanie, lezja tylko VNC       5/10        0/10  sukces 5, przepchnięcie 3, upuszczenie 1, wytoczenie 1
+50, bez komp., lezja tylko mózg        6/10        0/10  sukces 6, wytoczenie 4
+50, bez komp., lezja tylko VNC         0/10        0/10  przepchnięcie 10
+50, skalowanie, lezja tylko mózg       4/10        0/10  sukces 4, chybienie 2, wytoczenie 2, przepchnięcie 2
+50, skalowanie, lezja tylko VNC        3/10        1/10  przepchnięcie 7, sukces 2, zgniecenie* 1
+
+OTWARTA PĘTLA (wzgórze istnieje w oknie pamięci, % prób; ablation.py): N: bez komp. / skalowanie
+  N=292: 100 % / 100 %
+  N=270: 90 % / 93 %
+  N=250: 70 % / 100 %
+  N=230: 50 % / 90 %
+  N=210: 7 % / 70 %
+  N=190: 0 % / 87 %
+  N=160: 0 % / 40 %
+  N=120: 0 % / 42 %
+  N=90: 0 % / 43 %
+  N=70: 0 % / 23 %
+  N=50: 0 % / 8 %
