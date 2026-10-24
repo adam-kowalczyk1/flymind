@@ -71,7 +71,8 @@ def _first(t, mask):
     return (t[i[0]], int(i[0])) if len(i) else (np.nan, None)
 
 
-def run_trial(args):
+def run_trial(args, brain=None, vnc=None):
+    """brain/vnc opcjonalne (Etap 4, ablacja): gotowy, skalibrowany mózg i VNC zamiast domyślnych."""
     kind, seed, par, record = args
     par = dict(PAR, **(par or {}))
     vision.G_LOOM0, vision.G_LOOM1 = par.get("g0", V0["g0"]), par.get("g1", V0["g1"])
@@ -92,8 +93,11 @@ def run_trial(args):
     if kind.startswith("rot") or kind == "bare":         # nieruchoma przesłona w polu widzenia: krawędzie dają fałszywy looming przy obrocie
         scene2.set_mocap(m, d, "occluder", (scene2.OCC_X, 0.0, 0.05))
     mujoco.mj_forward(m, d)
-    brain = Brain(seed=seed, params={k: par[k] for k in ("loom_gain", "bias_dn_other") if k in par})
-    ag = Agent(m, d, seed=seed, memory="pred", efference=not kind.endswith("noeff"), q_catch=q, calib=_calib_ring(), brain=brain)
+    own = brain is None
+    if own:
+        brain = Brain(seed=seed, params={k: par[k] for k in ("loom_gain", "bias_dn_other") if k in par})
+    ag = Agent(m, d, seed=seed, memory="pred", efference=not kind.endswith("noeff"), q_catch=q, calib=_calib_ring() if own else None,
+               brain=brain, vnc=vnc)
     if kind == "pred":
         cam0 = d.cam("eye").xpos.copy()
         fwd = -d.cam("eye").xmat.reshape(3, 3)[:, 2]

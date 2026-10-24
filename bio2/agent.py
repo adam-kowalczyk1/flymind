@@ -160,6 +160,10 @@ class Agent:
             self.locked = True                           # wzgórze zatrzaśnięte na celu → można ruszać bazą
         if not hunting:
             self.locked = False
+        if not (hunting and self.locked):
+            # odczyt startuje od trymu (kąt 0): w spoczynku L−P DN ≈ 0 Hz, a trym stanu aktywnego to −3…−5 Hz — filtr
+            # startujący od spoczynku dawał przy zatrzaśnięciu impuls skrętu ~0,5 rad/s zawsze w lewo (wykryte w B2)
+            self.dn_f = np.array(off, float)
         if not (hunting and self.locked) or (self.memory == "none" and not self.seen) or contact or self.escape_t is not None:
             omega = 0.0
         w = np.clip(omega, -W_MAX, W_MAX)
