@@ -1,0 +1,43 @@
+Zapisano: 2026-10-24 21:42:12 CEST (przed jakimkolwiek pomiarem Etapu 5)
+
+PRZEWIDYWANIA Etapu 5 (testy autentyczności), przed jakimkolwiek pomiarem.
+Skala: A<10° = próby z |b|<10° (z 10); med|b| = mediana |błędu| przy wyłonieniu [°]; B2, B1 = sukcesy (z 10); wzgórze = % z 50 prób otwartej pętli.
+Odniesienia z Etapu 3/4: pełny mózg A 4/10 (med 15,9°), none: 0/10 (med 30,5°), B2 8/10, zablokowana baza B2 5/10, B1 10/10.
+
+  control      A<10°: 4..4  med|b|: 15.8..16°  B2: 8..8  B1: 10..10  wzgórze: 96..100%
+  rewire_all   A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 0..2  wzgórze: 0..30%
+  rewire_cx    A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 9..10  wzgórze: 0..40%
+  shuffle_all  A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 4..10  wzgórze: 0..30%
+  shuffle_cx   A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 9..10  wzgórze: 0..30%
+  les_PFL3     A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 9..10  wzgórze: 90..100%
+  les_EPG      A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 9..10  wzgórze: 0..2%
+  les_PEN      A<10°: 0..1  med|b|: 25..90°  B2: 4..9  B1: 9..10  wzgórze: 0..60%
+  les_D7       A<10°: 0..1  med|b|: 20..90°  B2: 0..6  B1: 9..10  wzgórze: 0..10%
+  les_LOOM     A<10°: 4..4  med|b|: 15.8..16°  B2: 7..9  B1: 0..0  wzgórze: 96..100%
+  les_DNa      A<10°: 0..1  med|b|: 15..45°  B2: 4..6  B1: 9..10  wzgórze: 96..100%
+  les_HS       A<10°: 2..6  med|b|: 10..25°  B2: 6..10  B1: 9..10  wzgórze: 96..100%
+
+Przewidywania „identyczne z kontrolą co do próby”: les_LOOM: ring, A; les_DNa: ring; les_HS: ring
+
+UZASADNIENIA
+  control: Ten sam kod co stage4 dla 292 (seedy, kolejność RNG, VNC) → odtworzenie wyniku co do próby: A 4/10, mediana 15,9°, B2 8/10, B1 10/10.
+  rewire_all: Wagi pierścienia (profile kątowe) lądują na losowych celach, więc brak wzgórza. DNp01 ma ~54 krawędzie wejściowe, a neurony LC4/LPLC2 to ~3 % krawędzi wychodzących, więc po przełączeniu dostaje ~1–2 wejścia z looming → ucieczka znika (B1 ≤ 2/10). Odczyt skrętu nie ma sygnału kierunku (nachylenie ≈ szum), więc bez celowania: B2 ≈ zablokowana baza lub gorzej.
+  rewire_cx: CX jest GĘSTY (69 % par, EPG→EPG 2070/2070), więc przełączenie przy stałych stopniach jest ograniczone i może być słabsze niż się zdaje (stąd szeroki EX 0..40 %). Zmienia się jednak przypisanie wag do celów → profil kątowy zaniknie. Szlak looming nietknięty: B1 10/10.
+  shuffle_all: Profile kątowe zniszczone → brak wzgórza i celowania. Wagi LC4/LPLC2→DNp01 (średnio ~20 mV) zastąpione losowymi z puli dodatnich (średnia ~1,3 mV, ogon do 51): looming słabszy, ale 24 wejścia na DNp01 mogą wystarczyć → B1 niepewne (4..10, spike później).
+  shuffle_cx: Topologia CX (gęsta) zostaje, ginie profil kątowy wag → brak wzgórza; szlak looming nietknięty: B1 10/10.
+  les_PFL3: PFL3 to jedyna droga EPG→DNa02/DNa01 (bezpośrednich krawędzi EPG→DN: 0). Pierścień działa (PFL3→EPG sumarycznie ≈ 0 mV), ale DNa02 widzą tylko szum: nachylenie dekodera jest skończone, choć losowe (strażnik łapie tylko dokładne 0), więc baza może się wić losowo (nie stać) → B2 ≤ zablokowana baza (≤ 6/10), A z dużym błędem.
+  les_EPG: Bez EPG nie ma wzgórza ani sygnału do PFL3 → jak PFL3: odczyt skrętu to szum. Wzgórze nie istnieje (0 %).
+  les_PEN: PEN→EPG jest największym szlakiem dodatnim w CX (3357 mV) — bez PEN wzgórze w pamięci może zaniknąć (EX niepewne). W B2 cel jest stale widoczny i napędza EPG wprost, więc B2 ≈ kontrola. W A wzgórze (jeśli trwa) nie jest przesuwane przez −prędkość bazy ani przez przewidywanie celu: ramię skręca dalej do zamrożonego kierunku (przestrzał, |b| ≥ 50°) albo, gdy wzgórze gaśnie, jak bez pamięci (~30°). Oba warianty: |b| ≥ 25°, brak sukcesów.
+  les_D7: Delta7 to całe hamowanie pierścienia (−4787 na EPG, −8017 na PEN): bez niego EPG/PEN się nasycają, wzgórze rozlane (skupienie < 0,5). PFL3 też traci hamowanie → odczyt skrętu bez sygnału kierunku.
+  les_LOOM: Z LC4/LPLC2 nie wychodzą krawędzie poza looming/DNp01, a do CX żadna. DNp01 dostaje tylko tło 2 mV + szum: brak ucieczki (B1 0/10). Reszta bez zmian: otwarta pętla i A identyczne z kontrolą co do próby; B2 ≈ kontrola (±1, bo kontrola mogła mieć fałszywe ucieczki — B2 ich nie raportuje).
+  les_DNa: Martwe DNa → różnica L−P ≡ 0 → nachylenie 0 → ∞ → odczyt skrętu = 0 dokładnie (jak zablokowana baza, tylko miękka). B2 ≈ 5/10 (zablokowana baza, seedy 1,2,3,6,8), A: baza stoi od startu, błąd = azymut piłeczki przy wyłonieniu względem pozy startowej (nie znam pozy, stąd szerokie 15..45°). Pierścień nietknięty.
+  les_HS: HS→DNa02: 6 krawędzi, suma wag 41 mV; HS wygaszone przy własnym obrocie. Niewielki wpływ na tło DNa02, więc wyniki w granicach szumu kontroli.
+
+Fakty o macierzy mózgu (odczyt Brain(seed=0).net.W, bez symulacji), na których oparto przewidywania:
+ - 16 823 niezerowych krawędzi w całej macierzy (10 813 dodatnich, 6 010 ujemnych) → 10 × = 168 230 wymian w rewire_all.
+ - CX (154 neurony): 16 169 krawędzi z 23 562 możliwych par (69 %), EPG→EPG 2070 z 2070 → topologia CX niesie mało informacji, informację niosą WARTOŚCI wag (profile kątowe z danych).
+ - Brak krawędzi z DN, looming i HS do CX; brak bezpośrednich krawędzi EPG→DNa02/DNa01 (jedyna droga: PFL3→DNa02, 24 krawędzie, suma wag 221; DNa01 to modelowa kopia).
+ - DNp01 dostaje 24 krawędzie z LC4 (suma 476) i 24 z LPLC2 (355) + 3 inne (DNp01, MDN).
+ - Strażnik nachylenia (ablation.LesionedBrain.calibrate_steer) łapie tylko nachylenie DOKŁADNIE 0 (|s| < 1e-9) albo nieskończone; szumowe nachylenie skończone przechodzi i
+   daje losowe sterowanie (±W_MAX) zamiast braku skrętu.
+ - Ocena „trafione” = wynik w przedziale lo..hi (włącznie); B2 ma 10 prób, więc B2 z zablokowaną bazą (5/10; 24–76 %) i kontrola (8/10; 49–94 %) nie są statystycznie rozdzielne.
