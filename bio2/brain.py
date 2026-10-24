@@ -29,9 +29,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 B = 16
 
 # --- nasze stałe (strojone w symulacji pierścienia, 2026-10-24) ---
-P = dict(J0_CX=0.14, G_INH=8.0, G_DD=0.3, J0_RAW=0.15, noise=2.0, rot_gain=2.0, cue_amp=12.0, cue_sigma=0.4,
+P = dict(J0_CX=0.14, G_INH=8.0, G_DD=0.3, J0_RAW=0.3, noise=2.0, rot_gain=2.0, cue_amp=12.0, cue_sigma=0.4,
          goal_amp=6.0, goal_phase=np.radians(45), loom_gain=30.0, mdn_gain=20.0, stop_gain=20.0, hs_gain=10.0,
-         bias_dn=5.0, tau_rate=50.0, dna01_frac=0.3)
+         bias_dn=10.0, bias_dn_other=2.0, tau_rate=50.0, dna01_frac=1.0, rest_inh=15.0)
 
 
 def _binof(d):
@@ -107,7 +107,7 @@ class Brain:
         W[np.ix_(ring, g["Delta7"])] *= self.p["G_INH"]
         W[np.ix_(g["Delta7"], g["Delta7"])] *= self.p["G_DD"]
         # DNa01 (wolne dokręcenie): w danych brak połączeń z tym podzbiorem → MODELOWA kopia ścieżki PFL3→DNa02
-        # (krzyżowo, ułamek DNA01_FRAC liczby synaps), odczyt z dłuższym filtrem (tau_rate_dna01)
+        # (krzyżowo, ułamek dna01_frac liczby synaps); w agent.py odczyt z dłuższym filtrem
         for s_pre, s_post in (("L", "R"), ("R", "L")):
             pre, post = g["PFL3_" + s_pre], g["DNa01_" + s_post]
             W[np.ix_(post, pre)] = W[np.ix_(g["DNa02_" + s_post], pre)] * self.p["dna01_frac"]
@@ -117,6 +117,7 @@ class Brain:
         self.penL = np.concatenate([g["PEN_a_L"], g["PEN_b_L"]])
         self.penR = np.concatenate([g["PEN_a_R"], g["PEN_b_R"]])
         self.calib = None
+        self.steer = None
         self.reset()
 
     # ---------------------------------------------------------------- dynamika
@@ -124,24 +125,28 @@ class Brain:
         self.net.reset()
         self.rate = np.zeros(self.N)
 
-    def inputs(self, cue=None, u=0.0, goal=0.0, loom=(0.0, 0.0), near=0.0, stop=0.0, flow=0.0):
+    def inputs(self, cue=None, u=0.0, goal=0.0, loom=(0.0, 0.0), near=0.0, stop=0.0, flow=0.0, rest=False):
         """cue: kąt celu widzianego [rad] (None = niewidoczny); u: komenda obrotu wzgórza (PEN, przed
         kalibracją); goal: cel PFL3 [rad]; loom: (L, P) siła loomingu z siatkówki; near: bliskość obiektu
-        (MDN); stop: zamrożenie (DNp09); flow: ruch obrazu w poziomie [rad/s], + w lewo (HS)."""
+        (MDN); stop: zamrożenie (DNp09); flow: ruch obrazu w poziomie [rad/s], + w lewo (HS); rest: spoczynek
+        (niska oktopamina) — pierścień EPG/PEN stłumiony, bez spontanicznego wzgórza (model)."""
         g, p = self.groups, self.p
         I = np.zeros(self.N)
         epg = g["EPG"]
         if cue is not None:
             d = np.angle(np.exp(1j * (self.theta[epg] - cue)))
             I[epg] += p["cue_amp"] * np.exp(-0.5 * (d / p["cue_sigma"]) ** 2)
+        if rest:
+            I[np.concatenate([epg, self.penL, self.penR])] -= p["rest_inh"]
         I[self.penL] += p["rot_gain"] * u
         I[self.penR] -= p["rot_gain"] * u
         for s, ph in (("L", p["goal_phase"]), ("R", -p["goal_phase"])):
             ids = g["PFL3_" + s]
             I[ids] += p["goal_amp"] * (1 + np.cos(self.theta[ids] - goal + ph))
-        for t in ("DNa02", "DNa01", "DNp01", "DNp09", "MDN"):
-            I[g[t + "_L"]] += p["bias_dn"]
-            I[g[t + "_R"]] += p["bias_dn"]
+        for t in ("DNa02", "DNa01", "DNp01", "DNp09", "MDN"):    # tło: DN skrętu wysokie, Giant Fiber/stop/MDN niskie
+            b_ = p["bias_dn"] if t.startswith("DNa") else p["bias_dn_other"]
+            I[g[t + "_L"]] += b_
+            I[g[t + "_R"]] += b_
         for s, lv in zip("LR", loom):
             I[g["LC4_" + s]] += p["loom_gain"] * lv
             I[g["LPLC2_" + s]] += p["loom_gain"] * lv
@@ -182,11 +187,14 @@ class Brain:
         return {k: float(self.rate[g[k]].mean()) for k in g if k.startswith(("DN", "MDN"))}
 
     # ---------------------------------------------------------------- kalibracja całkowania obrotu
-    def calibrate_ring(self, us=(-1.0, -0.75, -0.5, -0.35, -0.25, -0.1, 0.0, 0.25, 0.5, 1.0), seconds=1.5, reps=4):
+    def calibrate_ring(self, us=(-1.0, -0.75, -0.5, -0.45, -0.4, -0.35, -0.3, -0.25, -0.2, -0.15, -0.1, 0.0, 0.25, 0.5, 1.0),
+                       seconds=1.5, reps=12):
+        # gęsto wokół u ≈ −0,3 (tam wypada prędkość 0 — trym dryfu z asymetrii PEN L/P); 12 powtórzeń:
+        # przy 4 błąd średniej prędkości ~7°/s dawał ~13° błędu pamięci po 1,9 s zasłonięcia
         """Zmierz prędkość wzgórza [rad/s] dla komend u i zapisz odwrotność (prędkość → u). Odpowiednik
         kalibracji wzmocnienia całkowania ścieżki u muchy. Protokół jak w użyciu: bodziec 0,3 s, zaraz potem
         obrót przez `seconds` (prędkość zależy od siły wzgórza, która słabnie po zniknięciu bodźca).
-        Kąty startowe 0°, 90°, 180°, 270°. Po kalibracji reset."""
+        Kąty startowe równo rozłożone na okręgu (reps). Po kalibracji reset."""
         v = []
         for u in us:
             vr = []
@@ -204,6 +212,45 @@ class Brain:
         self.calib = (v[order], np.array(us)[order])
         self.reset()
         return np.array(us), v
+
+    def calibrate_steer(self, angles=(-30.0, 0.0, 30.0), seconds=1.5):
+        """Dla DNa02 i DNa01: różnica L−P [Hz] przy wzgórzu na kątach `angles` (bodziec trzymany) → trym zera
+        i nachylenie [Hz/rad]. Kompensuje asymetrię L/P danych PFL3→DN (przechył w prawo 2–9 Hz przy 0°)."""
+        g = self.groups
+        res = {}
+        for a in angles:
+            self.reset()
+            for _ in range(30):
+                self.step10(cue=np.radians(a))
+            acc = []
+            for _ in range(int(seconds * 100)):
+                self.step10(cue=np.radians(a))
+                r = self.rate
+                acc.append([r[g["DNa02_L"]].mean() - r[g["DNa02_R"]].mean(), r[g["DNa01_L"]].mean() - r[g["DNa01_R"]].mean()])
+            res[a] = np.mean(acc, axis=0)
+        lo, hi = res[min(angles)], res[max(angles)]
+        self.steer = dict(offset=res[0.0], slope=(hi - lo) / np.radians(max(angles) - min(angles)))
+        # stan pamięci (bez bodźca): wzgórze słabsze → inny trym (o 3–5 Hz) i ok. 2× większe nachylenie (zmierzone,
+        # seed 100) — osobna kalibracja: bodziec 0,3 s, potem swobodne wzgórze; regresja L−P na jego kąt
+        X, Y = [], []
+        if self.calib is not None:
+            for a0 in np.radians(np.linspace(-60, 60, 9)):
+                self.reset()
+                for _ in range(30):
+                    self.step10(cue=a0)
+                for k in range(int(seconds * 100)):
+                    spk = self.step10(u=self.u_for(0.0))
+                    r = self.rate
+                    X.append(self.bump(spk)[0])
+                    Y.append([r[g["DNa02_L"]].mean() - r[g["DNa02_R"]].mean(), r[g["DNa01_L"]].mean() - r[g["DNa01_R"]].mean()])
+            X, Y = np.array(X), np.array(Y)
+            ok = np.abs(X) < 1.0
+            c = np.linalg.lstsq(np.c_[np.ones(ok.sum()), X[ok]], Y[ok], rcond=None)[0]
+            self.steer.update(offset_mem=c[0], slope_mem=c[1])
+        else:
+            self.steer.update(offset_mem=self.steer["offset"], slope_mem=self.steer["slope"])
+        self.reset()
+        return self.steer
 
     def u_for(self, omega):
         """Komenda u dająca prędkość wzgórza omega [rad/s] (interpolacja kalibracji)."""
