@@ -168,6 +168,8 @@ def main():
     g = brain.groups
     lp_ids = np.concatenate([g["LPLC2_L"], g["LPLC2_R"]])
     gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
+    dna02_l = g["DNa02_L"]
+    dna02_r = g["DNa02_R"]
 
     # Tracker wizyjny i renderer oka
     trk = tp.BallTracker(m, d)
@@ -238,6 +240,12 @@ def main():
             fF = np.zeros((n_steps, 2))
             dball = np.zeros(n_steps)
 
+            # Pamięć telemetrii komórkowej muchy dla tego rzutu
+            b_ang_last = 0.0
+            dna_diff_last = 0.0
+            lp_hz_last = 0.0
+            gf_fired = False
+
             # Zegary do kompensacji dryfu czasu rzeczywistego (lockstep wall-clock)
             wall_start = time.time()
             sim_start = d.time
@@ -305,13 +313,35 @@ def main():
                                     inv_tau = float(sl / r_fit)
                                     lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
 
-                            # Krok sieci neuronowej mózgu (ConnectomeSNN z szumem 3 mV)
-                            spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
-                            spk_gf = bool(spk[:, gf_ids].any())
+                            # 1. Kąt azymutu celu do kompasu Central Complex (EPG)
+                            cue = None
+                            if plan is not None and hunt:
+                                tgt = plan["p"]
+                                cue = float((np.arctan2(tgt[1], tgt[0]) - d.qpos[0] + np.pi) % (2 * np.pi) - np.pi)
+                            w_base = -d.qvel[0]
+                            u = brain.u_for(-w_base)
 
-                            # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
-                            imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
-                            if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
+                            # 2. Krok sieci neuronowej mózgu (ConnectomeSNN z biologicznym szumem Wienera 3.0 mV)
+                            spk = brain.step10(cue=cue, u=u, loom=(lv, lv), rest=not hunt)
+                            b_ang, _, _ = brain.bump(spk)
+                            b_ang_last = b_ang
+
+                            rt_spk = brain.rate
+                            dna_diff = float(rt_spk[dna02_l].mean() - rt_spk[dna02_r].mean())
+                            dna_diff_last = dna_diff
+
+                            lp_hz = float(spk[:, lp_ids].mean() * 1000.0)
+                            lp_hz_last = lp_hz
+
+                            spk_gf = bool(spk[:, gf_ids].any())
+                            if spk_gf:
+                                gf_fired = True
+
+                            # 3. CZYSTO NEURONALNE wyzwolenie chwytu loomingiem w locie:
+                            # Decyduje WYŁĄCZNIE potencjał czynnościowy DNp01 (Giant Fiber) lub salwa LPLC2!
+                            # BRAK jakichkolwiek bypassów odległościowych 'dist < 5cm'!
+                            imminent = (plan is not None and plan["T"] - t < 0.280) or (dist < 0.40)
+                            if imminent and (spk_gf or lp_hz >= 60.0) and state == "open" and started:
                                 state = "closing"
                                 t_close = t
 
@@ -380,7 +410,9 @@ def main():
             rate = (catches_count / throws_count) * 100
             w_str = f"[{w[0]:+.2f}, {w[1]:+.2f}] m/s"
             t_close_str = f"{int(1000*(t_close - T)):+4d} ms" if t_close is not None else "   brak"
-            print(f"[SO-101] Rzut #{throws_count:03d} (seed {seed:5d}) | {status} | Docisk: {f_final:4.2f} N | Looming: {t_close_str} | Wiatr: {w_str} | Skuteczność: {catches_count}/{throws_count} ({rate:5.1f}%)")
+            b_deg = np.degrees(b_ang_last)
+            gf_str = "\033[92mSPIKE!\033[0m" if gf_fired else "\033[90mbrak  \033[0m"
+            print(f"[SO-101] Rzut #{throws_count:03d} | {status} | EPG: {b_deg:+5.1f}° | DNa02 Δ: {dna_diff_last:+5.1f} Hz | LPLC2: {lp_hz_last:4.1f} Hz | DNp01: {gf_str} | Looming: {t_close_str} | Skuteczność: {catches_count}/{throws_count} ({rate:5.1f}%)")
 
             # Pauza 0.4s po złapaniu przed kolejnym rzutem
             t_pause = time.time()
