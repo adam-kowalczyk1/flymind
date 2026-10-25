@@ -21,6 +21,7 @@ import throw_percept as tp
 import throw_scene as ts
 from brain import Brain
 from throw_catch_embodied import build_embodied_xml, Q_OPEN, Q_READY, Q_HOME, DIVERSE_RANGES, fast_plan_catch
+from watch_embodied import BioGripperController
 
 FFMPEG = "/Users/admin/miniforge3/bin/ffmpeg"
 DESKTOP_DIR = "/Users/admin/Desktop/Explory_Projekt_Mucha_SO101/wykresy_i_wideo"
@@ -62,6 +63,7 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
     brain.calibrate_ring()
     brain.calibrate_steer()
     g = brain.groups
+    lp_ids = np.concatenate([g["LPLC2_L"], g["LPLC2_R"]])
     gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
 
     thr = ts.make_throw(seed, m, d, ranges=DIVERSE_RANGES)
@@ -92,7 +94,7 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
     plan, z_prev, q_prev = None, None, q_rest.copy()
     started = False
 
-    state = "open"
+    gripper = BioGripperController(q_open=Q_OPEN, q_preshape=0.68)
     caught_t = None
     q_caught = None
     u_grip = 0.5
@@ -163,29 +165,24 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
                     lv = float(np.clip((inv_tau - 2.5) / 0.5, 0.0, 1.0))
 
             spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
+            lp_hz = float(spk[:, lp_ids].mean() * 1000.0)
             spk_gf = bool(spk[:, gf_ids].any())
 
-            # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
-            imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
-            if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
-                state = "closing"
-                print(f" >> [t={t:.3f} s, T-t={T-t:.3f} s] Wyzwolenie chwytu LOOMINGIEM w locie (DNp01={spk_gf}, inv_tau={inv_tau:.1f})!")
+            ttc = (plan["T"] - t) if plan is not None else (T - t)
+            u_grip = gripper.step(
+                t=t, dt=0.010,
+                q_grip=d.qpos[5], dq_grip=d.qvel[5],
+                lplc2_hz=lp_hz, gf_spike=spk_gf,
+                ttc=ttc, dist_to_jaw=dist,
+                contact_force=f_max
+            )
+            if gripper.latch_active and gripper.latch_time == t:
+                print(f" >> [t={t:.3f} s, T-t={T-t:.3f} s] ZATRZASK CHWYTNY: {gripper.snap_reason}!")
 
             if f_max > 0.15 and caught_t is None:
                 caught_t = t
                 q_caught = q_cmd.copy()
-                print(f" >> [t={t:.3f} s] KONTAKT: Pochłanianie energii uderzenia przez nadkrytyczne okładziny!")
-
-            if state == "open":
-                q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
-                u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
-            elif state == "closing":
-                if caught_t is None:
-                    u_grip = -0.75
-                else:
-                    target_f = 3.15
-                    f_err = target_f - f_max
-                    u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
+                print(f" >> [t={t:.3f} s] KONTAKT: Pochłanianie energii i docisk kutykularny (F={f_max:.1f} N)!")
 
             if caught_t is None:
                 if started:

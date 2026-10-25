@@ -25,6 +25,7 @@ from brain import Brain
 from vnc import vnc_controller
 import so101_base as sb
 from throw_catch_embodied import build_embodied_xml, Q_OPEN, Q_READY, Q_HOME, DIVERSE_RANGES, fast_plan_catch
+from watch_embodied import BioGripperController
 
 DESKTOP_DIR = "/Users/admin/Desktop/Explory_Projekt_Mucha_SO101/wykresy_i_wideo"
 PARENT_ARTIFACT_DIR = "/Users/admin/.gemini/antigravity/brain/a384d8fd-c23b-409b-be24-efe8fe71866f"
@@ -76,7 +77,7 @@ def record_neural_trial(seed=100):
     q_cmd = q_rest.copy()
     plan, z_prev, q_prev = None, None, q_rest.copy()
     started = False
-    state = "open"
+    gripper = BioGripperController(q_open=Q_OPEN, q_preshape=0.68)
     caught_t = None
     q_caught = None
     t_close = None
@@ -171,26 +172,21 @@ def record_neural_trial(seed=100):
             lp_hz = float(spk[:, lp_ids].mean() * 1000.0)
             spk_gf = bool(spk[:, gf_ids].any())
 
-            # Wyzwolenie chwytu WYNIKA WYŁĄCZNIE ze spajka DNp01 lub salwy LPLC2!
-            imminent = (plan is not None and plan["T"] - t < 0.280) or (dist < 0.40)
-            if imminent and (spk_gf or lp_hz >= 60.0) and state == "open" and started:
-                state = "closing"
-                t_close = t
+            # Biologiczne sterowanie chwytakiem BioGripperController (LPLC2 pre-shaping -> DNp01 snap -> docisk)
+            ttc = (plan["T"] - t) if plan is not None else (T - t)
+            u_grip = gripper.step(
+                t=t, dt=0.010,
+                q_grip=d.qpos[5], dq_grip=d.qvel[5],
+                lplc2_hz=lp_hz, gf_spike=spk_gf,
+                ttc=ttc, dist_to_jaw=dist,
+                contact_force=f_max
+            )
+            if gripper.latch_active and t_close is None:
+                t_close = gripper.latch_time
 
             if f_max > 0.15 and caught_t is None:
                 caught_t = t
                 q_caught = q_cmd.copy()
-
-            if state == "open":
-                q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
-                u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
-            elif state == "closing":
-                if caught_t is None:
-                    u_grip = -0.75
-                else:
-                    target_f = 3.15
-                    f_err = target_f - f_max
-                    u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
 
             if caught_t is None:
                 if started:
