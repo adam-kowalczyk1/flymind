@@ -1,11 +1,11 @@
-# bio2 — kontroler SO-101 z konektomu muchy, ze wzrokiem i pamięcią: wyniki Etapów 1–4
+# bio2 — kontroler SO-101 z konektomu muchy, ze wzrokiem i pamięcią: wyniki Etapów 1–5
 
 Kontynuacja projektu opisanego w [../RESULTS.md](../RESULTS.md) (v1–v3: pościg LC10a → AOTU → DNa02 i odruch chwytu nogi,
 bez kamery, z „okiem” na osi bazy). W **bio2** ramię SO-101 dostaje kamerę „oko w dłoni”, cyfrową siatkówkę muchy,
 pierścień kierunku głowy (komórki EPG) z kompleksu centralnego, neurony zstępujące (DNa01/02, DNp01, DNp09, MDN),
 detektory loomingu (LC4/LPLC2) i ruchu poziomego (HS), a chwyt realizuje rdzeń brzuszny (VNC) z v1–v3.
 Wszystko z podzbioru **MaleCNS v1.0** (Janelia FlyEM, CC-BY 4.0). Zadania Etapu 3: pamięć obiektu przy zasłonięciu (A),
-ucieczka przed zbliżającym się obiektem (B1) i chwyt piłeczki prowadzony wzrokiem (B2). Etap 4 to ablacja neuronów układu (292 → 120 → 50) w tych samych scenariuszach.
+ucieczka przed zbliżającym się obiektem (B1) i chwyt piłeczki prowadzony wzrokiem (B2). Etap 4 to ablacja neuronów układu (292 → 120 → 50) w tych samych scenariuszach, a Etap 5 to testy autentyczności konektomu i nowe zadanie: łapanie rzuconej piłeczki.
 
 Wszystkie liczby pochodzą z symulacji MuJoCo. **Nic nie było sprawdzane na prawdziwym ramieniu.** Próby mają n = 10 (rzadziej 20),
 więc większość różnic między wariantami mieści się w niepewności — patrz „Ograniczenia”.
@@ -22,6 +22,7 @@ Etapy 1–3 opisują stan z commita 4d10051 (2026-10-24) **z późniejszą popra
 | 3 B1 — ucieczka | spike DNp01 przed 0,10 m od kamery | **10/10**, spike średnio 0,214 m, 53 ± 16 ms po 0,30 m | odsunięcie o 2 cm przed 0,10 m: 6/10; obrót własny ±3 rad/s daje 100 % fałszywych ucieczek |
 | 3 B2 — chwyt | uniesienie ≥ 3 cm, trzymanie 1 s, bez zgniecenia | **8/10** (przed poprawką 6/10), 0 zgnieceń (średnia 20 ms); porażki: upuszczenie 1, chybienie 1 | kontrola z zablokowaną bazą 5/10, przedziały 49–94 % i 24–76 % zachodzą; wynik po obejrzeniu testu; reakcja (i) 920 ± 1675 ms z n = 5 z 10; baza czasem skręca od piłeczki (hipoteza: wysokość przecięcia ze stołem) |
 | 4 — ablacja (lezja, bez przestrajania; po poprawce odczytu DN) | A, B1, B2 w zamkniętej pętli przy 292 / 120 / 50 neuronach, seedy 0–9; pierścień EPG w otwartej pętli | **B2: 8/10 → 0/10** bez kompensacji przy 120 i 50 (rozbicie: winna lezja VNC, martwy mózg 6/10 i 5/10 ≈ zablokowana baza 5/10); **A:** pamięć znika (martwe wzgórze w 10/10 prób przy 120 bez komp.); **B1: 10/10 na wszystkich poziomach** | B1 nie dowodzi odporności (≥ 1 LC4/LPLC2 na stronę, DNp01 nigdy nie lezjonowany); skalowanie przy 120: B2 5/10 ze zgnieceniami (2/10), A gorsze niż bez pamięci; n = 10 |
+| 5 — autentyczność i rzucana piłeczka | (a) REWIRE, WEIGHT-SHUFFLE, lezje typów z przewidywaniami zapisanymi przed pomiarem; (b) łapanie piłeczki z lotu, warianty ENG / BIO / dotyk | (a) wzgórze EPG: 100 % → 0 % przy rozbiciu struktury, B1 0/10 przy REWIRE całego mózgu i lezji LC4+LPLC2 (10/10 przy SHUFFLE); trafione 63/64 przewidywań. (b) **ENG 94–98 %** (A i B), NO-CLOSE 98 % w A i 0 % w B, looming i dotyk w B **0/50** | 63/64 wynika z szerokich przedziałów; B2 przy n = 10 nie rozstrzyga; łapanie to inżynieria (tracker 320×240, nie siatkówka), looming z OFF nie widzi jasnej piłeczki, DNp01 odpala w 36/50 rzutów i bez modelowego tłumienia łapanie spada do 18 % |
 
 ## Architektura
 
@@ -402,6 +403,9 @@ Seedy 0–9, jeden przebieg, **po poprawce** (przed poprawką w nawiasach; plik:
 - Etap 4: B1 10/10 przy każdej lezji wynika z reguły (≥ 1 LC4/LPLC2 na stronę, DNp01 nigdy nie lezjonowany) i z modelowo wstrzykiwanego loomingu, więc nie świadczy o odporności; brak nokautów pojedynczych typów;
   seed = lezja = szum = scena (jedno losowanie lezji na seed); zamknięta pętla tylko dla 292/120/50; skalowanie synaptyczne to niestrojona reguła modelowa; przy martwym wzgórzu skręt = 0 z konstrukcji dekodera.
 
+- Etap 5, autentyczność: CX jest gęsty (69 % par, EPG → EPG 2070/2070), więc informację niosą profile wag, nie graf; REWIRE przestawia tylko 20–27 % krawędzi; looming jest wejściem modelowym (B1 testuje tylko istnienie krawędzi LC4/LPLC2 → DNp01); 63/64 trafionych przewidywań wynika w dużej mierze z szerokich przedziałów; B2 przy n = 10 nie rozstrzyga.
+- Etap 5, rzucana piłeczka: zakres rzutów to wąski pas (r 0,20–0,36 m, z 0,22–0,34 m, oś ≤ 20°; akceptowane 24,6 % losowań), nie dowolne miejsce; percepcja i planowanie to inżynieria (kamera 320×240, bo siatkówka 32×24 jest za słaba), wrażliwa na synchronizację rzędu 1 ms i kalibrację rzędu 0,25°; łapanie zawdzięczamy inżynierii (ENG 94–98 %), a mózg wnosi tylko z modelowymi łatkami (odczyt ON, tłumienie ucieczki w polowaniu, maska eferentna) i nie poprawia wyniku; wszystko w symulacji.
+
 ## Etap 4 — ablacja neuronów
 
 Pytanie: ile neuronów układu 292 (mózg 220 + VNC 72) można usunąć, zanim zadania Etapu 3 przestaną działać. Wyniki: `results/stage4.txt`
@@ -552,6 +556,172 @@ Przedziały Wilsona w nawiasach traktują próby jak niezależne, a **nie są** 
    Kalibracja po lezji zajmuje większość czasu: np. 402 z 636 s przy 292 neuronach i 309 z 469 s przy 120 bez kompensacji.
 10. **Wyniki zamkniętej pętli są po poprawce wprowadzonej po obejrzeniu wyników testowych** i komórki n = 10 zmieniają się o 2–3 próby między wersjami (np. B2, 120 skalowanie: 3/10 → 5/10; 50 skalowanie tylko VNC: 3/10 → 0/10), więc pojedyncze komórki nie niosą wiarygodnej informacji.
 
+## Etap 5 — testy autentyczności i rzucana piłeczka
+
+Etap 5 ma dwie niezależne części. **(1) Testy autentyczności**: czy zachowanie ramienia wynika z konkretnej struktury konektomu, a nie z dowolnej sieci albo z inżynierii wokół niej.
+**(2) Rzucana piłeczka**: nowe zadanie, w którym ramię ma złapać piłeczkę lecącą po paraboli, oraz rozbicie, co w sterowniku wnosi mózg muchy, a co inżynieria.
+Wyniki są zacommitowane (`results/stage5_*`), kod: `authenticity.py`, `throw_scene.py`, `throw_percept.py`, `throw_catch.py`. Wersja agenta jest ta po poprawce startu odczytu DN.
+
+### 5.1 Testy autentyczności (`authenticity.py`)
+
+![autentyczność](results/stage5_authenticity.png)
+
+**Protokół.** Seedy 0–9; seed próby = seed przetasowania = seed szumu; VNC zawsze pełny i nietknięty. Po każdej zmianie mózgu rekalibracja odczytu (`calibrate_ring` + `calibrate_steer` ze strażnikiem nachylenia z Etapu 4).
+Zamknięta pętla (A, B1, B2) po 10 prób na warunek, otwarta pętla (wzgórze EPG) po 50. Liczby surowe, bez wykluczeń; błędów technicznych brak.
+
+**Przewidywania zapisano przed pomiarem**: `results/stage5_predictions.txt` ma stempel „2026-10-24 21:42:12 CEST (przed jakimkolwiek pomiarem Etapu 5)”, a raport sprawdza, że jego treść zgadza się ze słownikiem PRED w kodzie (wynik: TAK).
+Przewidywanie to przedział „lo..hi”; „trafione” = wynik w przedziale (włącznie). Uzasadnienia per warunek są w pliku przewidywań.
+
+Warunki:
+- **REWIRE** (cały mózg / tylko CX): losowe przełączenie krawędzi (a→b, c→d ⇒ a→d, c→b) przy zachowaniu stopni wejścia i wyjścia każdego neuronu; waga i znak wędrują z neuronem presynaptycznym; liczba udanych wymian ≥ 10 × liczba krawędzi (16 823 krawędzie → 168 230 wymian; CX: 16 169 → 161 690).
+- **WEIGHT-SHUFFLE** (cały mózg / tylko CX): topologia zostaje, wartości wag permutowane między istniejącymi krawędziami tego samego znaku (zmienione 100 % wag).
+- **Lezje typów**: wszystkie neurony typu, obie strony (PFL3; EPG; PEN_a + PEN_b; Delta7; LC4 + LPLC2; DNa02 + DNa01; HS = HSN + HSE + HSS). Martwe neurony zostają w grupach odczytu (0 Hz), żeby uniknąć NaN w odczycie skrętu.
+
+Wyniki (w komórce: przewidywanie → wynik; ✗ = poza przedziałem):
+
+| warunek | A < 10° [z 10] | mediana \|b\| A [°] | B2 [z 10] | B1 [z 10] | wzgórze [% z 50] |
+|---|---|---|---|---|---|
+| kontrola (pełny mózg) | 4..4 → 4 | 15,8..16 → 15,9 | 8..8 → 8 | 10..10 → 10 | 96..100 → 100 |
+| REWIRE cały mózg | 0..1 → 0 | 20..90 → 34,7 | 0..6 → 6 | 0..2 → **0** | 0..30 → 0 |
+| REWIRE tylko CX | 0..1 → 0 | 20..90 → 37,1 | 0..6 → 5 | 9..10 → 10 | 0..40 → 0 |
+| WEIGHT-SHUFFLE cały mózg | 0..1 → 1 | 20..90 → 32,0 | 0..6 → 3 | 4..10 → 10 | 0..30 → 0 |
+| WEIGHT-SHUFFLE tylko CX | 0..1 → 0 | 20..90 → 25,8 | 0..6 → 5 | 9..10 → 10 | 0..30 → 0 |
+| lezja PFL3 | 0..1 → **2 ✗** | 20..90 → 78,8 | 0..6 → 4 | 9..10 → 10 | 90..100 → **100** |
+| lezja EPG | 0..1 → 0 | 20..90 → 24,8 | 0..6 → 5 | 9..10 → 10 | 0..2 → 0 |
+| lezja PEN_a + PEN_b | 0..1 → 0 | 25..90 → 50,5 | 4..9 → 5 | 9..10 → 10 | 0..60 → 0 |
+| lezja Delta7 | 0..1 → 1 | 20..90 → 23,6 | 0..6 → 3 | 9..10 → 10 | 0..10 → 0 |
+| lezja LC4 + LPLC2 | 4..4 → 4 | 15,8..16 → 15,9 | 7..9 → 8 | 0..0 → **0** | 96..100 → 100 |
+| lezja DNa02 + DNa01 | 0..1 → 0 | 15..45 → 31,0 | 4..6 → 5 | 9..10 → 10 | 96..100 → 100 |
+| lezja HS | 2..6 → 3 | 10..25 → 20,7 | 6..10 → 8 | 9..10 → 10 | 96..100 → 100 |
+
+Odniesienia: A bez pamięci (`none`) 0/10, mediana 30,5°; B2 z zablokowaną bazą 5/10. Trafionych przewidywań: **63/64** (59/60 przedziałowych + 4 przewidywania „identyczne z kontrolą co do próby”); jedyne chybienie to lezja PFL3, A < 10°: 2/10 przy przedziale 0..1.
+Przedziały Wilsona 95 % B2 (z 10): kontrola 49–94 %; REWIRE cały 31–83 %; REWIRE CX 24–76 %; SHUFFLE cały 11–60 %; SHUFFLE CX 24–76 %; lezje PFL3 17–69 %, EPG 24–76 %, PEN 24–76 %, Delta7 11–60 %, DNa 24–76 %, LC4+LPLC2 49–94 %, HS 49–94 %.
+
+**Co zależy od struktury konektomu.**
+- **Wzgórze EPG i pamięć A.** Wzgórze istnieje w 100 % prób (50/50) przy pełnym mózgu i **w 0 % przy REWIRE (cały i CX), SHUFFLE (cały i CX) oraz lezji EPG, PEN i Delta7** (przy Delta7 EPG nasyca się na 200 Hz; wzgórze rozlane).
+  W warunkach bez wzgórza A < 10° wynosi 0–1/10, a mediana błędu 23,6–50,5°, czyli na poziomie bez pamięci (30,5°) albo gorzej; z pełnym mózgiem 4/10 i 15,9°.
+  Samo przetasowanie wag przy zachowanej topologii (SHUFFLE) wystarcza, by wzgórze zniknęło.
+- **Droga pierścień → ramię przechodzi tylko przez PFL3.** Lezja PFL3 zostawia pierścień nietknięty (wzgórze 100 %, błąd pamięci 22,3 ± 11,9° wobec 17,7 ± 9,7°), a mimo to mediana błędu A rośnie do 78,8° (średnio |b| 66,8 ± 43,7°).
+  W macierzy nie ma bezpośrednich krawędzi EPG → DNa02/DNa01 (jedyna droga: 24 krawędzie PFL3 → DNa02; DNa01 jest modelową kopią tej ścieżki). Lezja DNa daje A ≈ zablokowana baza (średni |b| 31,1 ± 2,0°) i B2 5/10.
+- **Istnienie krawędzi LC4/LPLC2 → DNp01 (B1).** B1 wynosi 0/10 przy REWIRE całego mózgu (brak spike’a w 10/10 prób) i przy lezji LC4 + LPLC2, a 10/10 przy REWIRE tylko CX i obu SHUFFLE (opóźnienie od 0,30 m: 53–58 ms wobec 53 ms w kontroli).
+  Ucieczka zależy więc od **istnienia** krawędzi looming → DNp01, a nie od ich konkretnych wag (SHUFFLE całego mózgu, w tym tych wag, nie psuje B1).
+- **Rzeczy, które nie zależą od tej struktury**: lezja LC4 + LPLC2 nie zmienia pierścienia ani A (wynik identyczny z kontrolą co do próby: błędy A i otwarta pętla), a lezja HS nie zmienia pierścienia, daje A 3/10 (mediana 20,7°) i B2 8/10, czyli w granicach szumu kontroli.
+
+**Czego n = 10 nie rozstrzyga: B2.** Wszystkie zmiany struktury i lezje dają B2 3–6/10 (poza LC4+LPLC2 i HS: 8/10), a kontrola ma 8/10 (49–94 %), zablokowana baza 5/10 (24–76 %). Każdy przedział warunku zachodzi na przedział kontroli i na przedział zablokowanej bazy
+(najniższe: SHUFFLE cały i lezja Delta7 3/10, 11–60 %, zachodzą na kontrolę w 49–60 %). B2 nie pozwala więc stwierdzić, że chwyt zależy od struktury; widać tylko, że wyniki leżą w przedziale „kontrola … zablokowana baza”, zgodnie z przewidywaniem.
+Podobnie kryterium A < 20° nie rozróżnia: lezja Delta7 ma 5/10, tyle co kontrola (5/10), choć jej błędy są rozrzucone od −95° do +74°.
+
+**Zastrzeżenia.**
+1. **CX jest gęsty** (16 169 z 23 562 możliwych par = 69 %, EPG → EPG 2070 z 2070 par), więc sam graf niesie mało informacji; informację niosą **profile wag** (patrz Etap 2 B). REWIRE i SHUFFLE nie są więc testami „topologii” w sensie rzadkiego grafu.
+2. **REWIRE przestawia tylko część krawędzi** mimo ≥ 10 × tylu wymian: średnio 27 % krawędzi (cały mózg) i 20 % (CX) trafia w nowe miejsce, bo graf CX jest gęsty. REWIRE CX to więc łagodniejsza manipulacja, niż sugeruje nazwa.
+3. **Looming jest wejściem modelowym** (prąd wstrzykiwany do LC4/LPLC2, obliczenia loomingu robi algorytm w `vision.py`). Test B1 sprawdza więc tylko, czy istnieją krawędzie LC4/LPLC2 → DNp01, a nie czy konektom „oblicza” looming.
+4. **63/64 trafionych przewidywań wynika w dużej mierze z szerokich przedziałów** (np. mediana błędu A „20..90°”, B2 „0..6”). Informatywne są przewidywania wąskie: kontrola (4..4, 8..8, 10..10), lezja LC4+LPLC2 (B1 0..0, reszta identyczna z kontrolą) oraz wzgórze 0 % w warunkach z rozbitym pierścieniem. Wysoki odsetek trafień nie jest sam w sobie dowodem autentyczności.
+5. Lezja PFL3 nie spełniła przewidywania w A < 10° (2/10 wobec 0..1). Pozostałe dane nie pozwalają ocenić, czy to szum (n = 10), czy luka w rozumowaniu.
+6. Jedno losowanie przetasowania na seed (10 losowań na warunek); brak wielokrotnych losowań na tej samej scenie.
+7. Czas obliczeń: 9004 s CPU (w tym kalibracje 6389 s), 120 zadań, 3 procesy.
+
+### 5.2 Rzucana piłeczka: scena i wyrocznia (`throw_scene.py`)
+
+![scena rzutu](results/stage5_throw_scene.png)
+
+Scena: piłeczka 5 cm leci swobodnie po paraboli (bez oporu powietrza), ramię z kamerą „eye” ma ją złapać. Rzut losowany z zakresów: start p0 w odległości 1–2 m, azymut ±45°, wysokość 0,2–0,8 m; czas lotu T 0,6–1,0 s; punkt przechwycenia p\* w pasie **r 0,20–0,36 m, z 0,22–0,34 m, azymut ±30°**, z osią narzędzia nachyloną od kierunku lotu o ≤ **20°** (ang_max).
+Piłeczka wlatuje stromo (lot opada pod −55…−80°, prędkość w p\* 3,6–5,5 m/s, mediana 4,5 m/s; czas lotu 0,61–0,99 s), więc oś narzędzia musi iść w górę pod +55…+80°; SO-101 osiąga to tylko dla z\* ≥ ~0,22 m.
+
+**Ograniczenia osiągalnego pasa.** „Różne miejsca” to wąski pas, nie cała przestrzeń robocza: akceptowane jest **24,6 %** losowań (406 losowań na 100 rzutów; odrzucenia: kąt lotu poziomy > ang_max 235, oś narzędzia > ang_max 62, IK nie dociera 9, kolizja 0).
+W całym pudle p\* (1500 losowań) sama pozycja jest osiągalna w 100 %, ale pełne kryteria generatora (pozycja + oś w ang_max + kąt lotu + brak kolizji) tylko w 23 %. Ograniczenie ang_max wynika z kinematyki: 5 stawów, a wszystkie poza barkiem leżą w pionowej płaszczyźnie przez oś bazy, więc kierunek lotu można dopasować w poziomie tylko do kierunku radialnego.
+Strojenie ang_max na seedach 100–149: 12° → 48/50, 20° (końcowe) → 47/50, 30° → 41/50 (82 %).
+
+**Wyrocznia** (zna prawdę q\*, T; startuje po opóźnieniu D = 0,25 s; szczęki w „lejku” Q_OPEN = 0,6 rad, zamykanie stałym PWM −0,8 od T − 30 ms): seedy 0–49 **47/50 = 94 %** (wypadła 2, nie zdążył 1); strojenie 100–149 też 47/50. Wyrocznia jest górną granicą wykonalności sceny, ale nie jest nieomylna: na walidacji sterownika (seedy 150–199) ma 41/50 = 82 %.
+Wrażliwość wyroczni (seedy 100–149, jeśli nie napisano inaczej):
+- rozwarcie startowe: Q_OPEN = 1,2 rad z zamykaniem od T − 30 ms daje 1/50 (2 %), od T − 200 ms 47/50 (94 %); Q_OPEN = 0,9 → 20 %, 0,8 → 80 %, 0,4 → 94 % (zamykanie od T − 30 ms);
+- opóźnienie percepcji D (seedy 0–49): 0,35 s → 80 %, 0,45 s → 54 %, 0,55 s → 26 %, 0,7 s → 8 %;
+- błąd celowania (seedy 0–49): poprzecznie do szczęk (y) wystarcza ±5 mm (96 % i 88 %), a przy ±10 mm sukces spada do 6 % i 2 %; wzdłuż x (rozwieranie szczęk) −20 mm: 100 %, +10 mm: 86 %, +20 mm: 0 %; wzdłuż z (głębokość) −10 mm: 86 %, −20 mm: 38 %.
+Zadanie wymaga zatem precyzji rzędu **milimetrów** w osi y i czasu rzędu **dziesiątych sekundy**.
+
+Widoczność w locie (ramię rusza po D): piłeczka ≥ 1 px w 98 % klatek, ale > 20 px (próg z Etapu 3) tylko w 23 % klatek; widoczna od pierwszej klatki u 76 % rzutów.
+
+### 5.3 Percepcja 3D (`throw_percept.py`)
+
+![percepcja](results/stage5_percept.png)
+
+**To warstwa inżynierska, nie siatkówka muchy.** Kamera „eye” 320×240, detekcja po kolorze (zielona piłeczka; niezależna od ruchu kamery), model sfery w kamerze pinhole i dopasowanie paraboli balistycznej ważoną MNK, odświeżane co klatkę (100 Hz); predykcja punktu przecięcia toru z płaszczyzną z = 0,28 m.
+Siatkówka muchy 32×24 (768 punktów) jest do tego zadania **za słaba**: piłeczka 5 cm z 1,5 m daje mniej niż 1 komórkę, więc ułamek milimetra potrzebny przy chwycie jest poza jej zasięgiem (docstring `throw_percept.py`). Mózg muchy (looming, ucieczka, pierścień) dalej działa na 32×24; ten moduł dostarcza tylko liczby: gdzie i kiedy piłeczka będzie.
+
+Wyniki (seedy 0–49, ramię jedzie jak w wyroczni, błąd położenia p\* poprzecznie do szczęk, |e_y|; liczba prób z gotową predykcją w nawiasie):
+
+| T − t | mediana \|e_y\| / p90 [mm] | e_y < 5 mm | gotowe/rzuty |
+|---|---|---|---|
+| 0,6 s | 9,1 / 158,5 | 35 % | 43/50 |
+| 0,4 s | 1,5 / 5,3 | 86 % | 50/50 |
+| 0,3 s | 0,7 / 2,0 | 98 % | 50/50 |
+| **0,2 s** | **0,3 / 0,9** | **100 %** | 50/50 |
+| 0,1 s | 0,2 / 0,5 | 100 % | 50/50 |
+
+Detekcja: 99,2 % klatek z piłeczką w polu widzenia (ramię jedzie), 0 fałszywych przyjęć z 3784; 0 fałszywych wykryć w 3000 klatek bez piłeczki (losowe pozy ramienia). Koszt na klatkę: render 3,6 ms + detekcja i tracker 1,00 ms (p99 1,13 ms).
+Zależność od rozdzielczości (seedy 100–149, τ = 0,3 s): 128×96 → mediana |e_y| 2,0 mm i 82 % < 5 mm; 320×240 → 0,9 mm i 96 %.
+
+**Wrażliwość (seedy 100–149, 320×240, τ = 0,2 s, mediana |e_y| i % < 5 mm; badanie z parametrami trackera σ_c = 0,25 px, K_A = 0,8).** Błąd kąta kalibracji ręka–oko 0,25° → 2,1 mm i 96 %, 0,5° → 4,0 mm i 62 %; przesunięcie kamery (ręka–oko) o 5 mm → 3,4 mm i 80 %; poza kamery spóźniona o 1 ms względem obrazu → 2,6 mm i 80 %, o 3 ms → 8,0 mm i 32 %, o 5 ms → 27,0 mm i 19 %.
+Wynik w symulacji wymaga więc dokładnej synchronizacji obrazu z kinematyką (rząd 1 ms) i kalibracji kamery rzędu dziesiątych stopnia.
+Zastrzeżenie: wyniki dotyczą wyłącznie symulacji z idealnym renderem i znaną pozą kamery z kinematyki; na sprzęcie nie sprawdzano.
+
+### 5.4 Sterowniki łapania i rola mózgu (`throw_catch.py`)
+
+![sterowniki](results/stage5_catch.png)
+
+Wspólna warstwa położenia jest inżynierska (tracker z 5.3 → płaszczyzny z_c → IK → serwa z limitem prędkości, przeplanowanie co 10 ms, plan zamrożony w ostatnich 30 ms). Warianty różnią się **wyłącznie tym, co zamyka szczęki i kto trzyma siłę**:
+- ORACLE — odniesienie, zna prawdę; NO-CLOSE — szczęki się nie zamykają (kontrola: lejek sam trzyma piłeczkę);
+- ENG — zamknięcie w T_pred − lead (stały PWM), bez mózgu; ENG+VNC — jw., ale po dotyku siłę trzyma rdzeń brzuszny (VNC);
+- LOOM+PWM — zamknięcie wyzwala looming (modelowy odczyt ON, patrz niżej), siła stałym PWM;
+- BIO-ucieczka / BIO-polowanie — looming z siatkówki (OFF) → zamknięcie + VNC trzyma siłę; spike DNp01 uruchamia ucieczkę (BIO-ucieczka = porażka chwytu) albo jest gaszony w stanie „polowanie” (**modelowe założenie**: w pościgu ucieczka jest tłumiona, np. oktopaminą; w konektomie tego nie sprawdzono);
+- BIO-ON-ucieczka / BIO-ON-polowanie — jw., ale z modelowym odczytem loomingu jasnego (ON) z L1; „bez maski” = bez modelowego wyciszenia wejścia loomingu, gdy ramię jedzie;
+- BIO-dotyk — zamknięcie tylko po dotyku (jak v1–v3).
+
+Parametry strojone na seedach 100–149, **walidacja na 150–199 z parametrami zamrożonymi**, test seedy 0–49 (jeden przebieg). Przedziały Wilsona 95 % w nawiasach.
+**Warunek A**: lejek Q_OPEN = 0,6 rad, zamykanie od T − 30 ms. **Warunek B**: szczęki szeroko (1,2 rad) w locie, ENG zamyka 0,2 s przed T.
+
+| wariant | A test 0–49 | A walidacja 150–199 | DNp01 spike (A test / walid.) |
+|---|---|---|---|
+| ORACLE | 47/50 = 94 % (84–98) | 41/50 = 82 % (69–90) | 0 / 0 |
+| NO-CLOSE | 49/50 = 98 % (90–100) | 47/50 = 94 % (84–98) | 0 / 0 |
+| ENG | 47/50 = 94 % (84–98) | 46/50 = 92 % (81–97) | 0 / 0 |
+| ENG+VNC | 49/50 = 98 % (90–100) | 47/50 = 94 % (84–98) | 0 / 0 |
+| LOOM+PWM | 49/50 = 98 % (90–100) | 47/50 = 94 % (84–98) | 36/50 / 35/50 |
+| BIO-ucieczka | 43/50 = 86 % (74–93) | 40/50 = 80 % (67–89) | 0 / 0 |
+| BIO-polowanie | 43/50 = 86 % (74–93) | 40/50 = 80 % (67–89) | 0 / 0 |
+| BIO-ON-ucieczka | **9/50 = 18 %** (10–31) | 13/50 = 26 % (16–40) | 36/50 / 35/50 |
+| BIO-ON-polowanie | 43/50 = 86 % (74–93) | 40/50 = 80 % (67–89) | 36/50 / 35/50 |
+| BIO-ON-polowanie bez maski | 30/50 = 60 % (46–72) | 31/50 = 62 % (48–74) | 49/50 / 48/50 |
+| BIO-dotyk | 43/50 = 86 % (74–93) | 40/50 = 80 % (67–89) | 0 / 0 |
+
+| wariant | B test 0–49 | B walidacja 150–199 | DNp01 spike (B test / walid.) |
+|---|---|---|---|
+| ORACLE | 48/50 = 96 % (87–99) | 42/50 = 84 % (71–92) | 0 / 0 |
+| NO-CLOSE | **0/50** (0–7) | 0/50 (0–7) | 0 / 0 |
+| ENG | **48/50 = 96 %** (87–99) | 47/50 = 94 % (84–98) | 0 / 0 |
+| LOOM+PWM | **0/50** (0–7) | 0/50 (0–7) | 38/50 / 34/50 |
+| BIO-ON-polowanie | **0/50** (0–7) | 0/50 (0–7) | 38/50 / 34/50 |
+| BIO-dotyk | **0/50** (0–7) | 0/50 (0–7) | 0 / 0 |
+
+**Kluczowe wnioski (wprost).**
+1. **Łapanie zawdzięczamy inżynierii.** ENG (tracker + IK + zamknięcie w czasie przewidzianym z toru, bez mózgu) łapie 94 % (A) i 96 % (B) na teście oraz 92 % i 94 % na walidacji; ENG+VNC 98 % i 94 %. Zakres „ENG 94–98 %” to ENG i ENG+VNC w warunku A oraz ENG w B na teście.
+   Rdzeń brzuszny nie daje mierzalnej przewagi (ENG+VNC 98 % vs ENG 94 %; przedziały zachodzą).
+2. **W warunku A lejek sam trzyma piłeczkę** (NO-CLOSE 98 % na teście, 94 % na walidacji), więc **A nie rozróżnia wyzwalaczy** zamknięcia (ENG, looming, dotyk). Warianty z mózgiem i dotykiem są w A wręcz gorsze od niezamykania szczęk (86 % i 80 % wobec 98 % i 94 %), a ich porażki to głównie „zgniecenie” (6 na teście, 7 na walidacji).
+3. **W warunku B looming i dotyk dają 0 %**, bo sygnał przychodzi zbyt późno: zamknięcie następuje średnio 9 ms (LOOM+PWM), 2 ms (BIO-ON-polowanie) i 1 ms (BIO-dotyk) przed T, a szczęki rozwarte na 1,2 rad potrzebują startu ok. 200 ms przed T (ENG: zamknięcie 208 ms przed T daje 96 %; strojenie ENG: lead 0,1 s → 10 %, 0,15 s → 90 %, 0,2 s → 98 %, 0,25 s → 72 %, 0,3 s → 0 %).
+   Pierwszy spike DNp01 przypada mediana 18 ms przed T (p10 −31, p90 −8 ms). Piłeczka jest za blisko kamery na pomiar w ostatnich ~25 ms.
+4. **Looming z kanału OFF nie widzi jasnej piłeczki**: w wariantach z siatkówką OFF DNp01 odpala 0/50 (BIO-ucieczka, BIO-polowanie), więc zamknięcie zawsze wyzwala dotyk i wynik jest identyczny z BIO-dotyk (43/50). Wyzwalanie loomingiem zadziałało dopiero po dodaniu **modelowego odczytu ON** z L1 (próg komórki 0,1, przyrost obszaru ON od 10, pełna skala przy 10 + 24 komórkach w 50 ms): DNp01 odpala wtedy w 36/50 rzutów (72 %), a w warunku B w 38/50 (76 %).
+5. **DNp01 odpala w 36/50 rzutów, a bez modelowego tłumienia „polowania” łapanie spada do 18 %** (BIO-ON-ucieczka 9/50; 36 prób kończy się ucieczką; na walidacji 13/50 = 26 %). Bez modelowego wyciszenia wejścia loomingu przy jeździe ramienia (maska eferentna, v_self 0,3 rad/s) wynik spada z 86 % do 60 % (walidacja: 80 % → 62 %), a DNp01 odpala w 49/50 rzutów, w 25 przed T − 100 ms.
+   Wniosek: mózg muchy w tym układzie **pogarsza wynik**, o ile nie dołoży się trzech modelowych łatek (odczyt ON, tłumienie ucieczki w polowaniu, maska eferentna), a i po ich dodaniu nie dorównuje wariantom inżynierskim.
+6. Oracle (82 % i 84 % na walidacji) nie jest tu górną granicą (ENG 92 % i 94 %); wyrocznia i ENG różnią się szczegółami zamykania i ścieżki ramienia, a przedziały zachodzą na siebie.
+
+**Zastrzeżenia.** Parametry modelowe (próg 60 Hz populacji LPLC2, odczyt ON, maska eferentna, lead) były strojone na seedach 100–149 w tej samej scenie; walidacja 150–199 potwierdza ranking wariantów, ale wszystko jest jedną sceną symulacyjną z jednym zakresem rzutów (24,6 % akceptowanych losowań).
+W seedach strojenia wariant BIO-ON-polowanie miał 88 % (44/50), a ENG z bramką startu σ_y 0,003 – 42 % (bramka nie pomogła, wybrano 1,0 = bez bramki).
+
+### Na ile to jest mózg muchy
+
+Z konektomu MaleCNS pochodzą (i są testowane) trzy rzeczy: (1) **pierścień EPG** — pamięć kierunku, której istnienie zależy od struktury (znika po REWIRE, SHUFFLE, lezji EPG/PEN/Delta7), z drogą do skrętu wyłącznie przez PFL3; (2) **przekaz looming → DNp01**, zależny od istnienia krawędzi LC4/LPLC2 → DNp01 (ale samo wykrycie loomingu jest modelem wejściowym); (3) **odruch chwytu** z VNC (Henneman, bramka AND), opisany w Etapach 2–3.
+Wszystko, co wymaga **precyzji milimetrowej i trójwymiarowej** (3D, tor balistyczny, czas przechwycenia, kinematyka odwrotna, wybór płaszczyzny przechwycenia, synchronizacja obrazu z ramieniem), jest **inżynierią**, a nie mózgiem muchy. Do tego dochodzi kilka modelowych łatek, bez których mózg nie działa w nowym zadaniu (odczyt loomingu ON, tłumienie ucieczki w polowaniu, maska eferentna, dekodery i kalibracje).
+Sieć 292 neuronów to **mniej niż 0,2 % neuronów MaleCNS** (292 z 164 506 ciał z przypisanym typem ≈ 0,18 %; z 211 577 wszystkich ciał z adnotacją ≈ 0,14 %; policzone z `data/malecns/body-annotations-male-cns-v1.0-minconf-0.5.feather`). Uczciwie: ramię z mózgiem muchy prowadzi wzrokiem toczącą się piłeczkę i pamięta jej kierunek przez zasłonięcie (Etap 3), ale rzuconą piłeczkę łapie inżynieria; mózg w Etapie 5 niczego do wyniku nie dodaje (A: BIO-ON-polowanie 86 % wobec 98 % przy niezamykaniu szczęk), a bez modelowych łatek go psuje.
+
 ## Jak uruchomić
 
 ```bash
@@ -569,4 +739,8 @@ cd bio2
 ../.venv/bin/python stage4.py parts             # rozbicie B2 mózg / VNC (ok. 8 min) → results/stage4_parts.jsonl
 ../.venv/bin/python stage4.py report            # tabele i wykres → results/stage4.txt, results/explory_connectome_results.png
 ../.venv/bin/python stage4.py one 120 1 3       # jedna próba: poziom N, wariant (0 = bez komp., 1 = skalowanie), seed
+../.venv/bin/python authenticity.py --check     # Etap 5, samotest (bez MuJoCo); potem: run (wznawialne, 3 procesy, ok. 9000 s CPU) i report → results/stage5_authenticity.{txt,png}; predictions zapisuje przewidywania raz (odmawia nadpisania)
+../.venv/bin/python throw_scene.py              # Etap 5, scena rzutu i wyrocznia → results/stage5_throw_scene.{txt,png} (argument fig: tylko rysunek)
+../.venv/bin/python throw_percept.py            # Etap 5, percepcja 3D → results/stage5_percept.{txt,png} (argument test: szybki test)
+../.venv/bin/python throw_catch.py report       # Etap 5, sterowniki łapania, seedy 0–49 → results/stage5_catch.{txt,png} (też: one WARIANT SEED, grid, validate SEEDY)
 ```
