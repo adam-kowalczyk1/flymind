@@ -1,14 +1,6 @@
 """Renderuje demonstracyjne wideo MP4 oraz animowany GIF przedstawiający pełny
-wcielony, biologiczny pościg, wstępne kształtowanie, odruchowe przechwycenie i wycofanie
-dla ramienia SO-101 (Etap 5.5).
-
-Wyświetlane zjawiska:
-  1. Stochastyczny wiatr boczny OU i znoszenie toru lotu piłeczki.
-  2. Płynny pościg wzrokowy i naprowadzanie proporcjonalne (PN).
-  3. Pre-shaping chwytaka sterowany loomingiem (1.2 -> 0.42 rad).
-  4. Sprężyste ustąpienie (compliant yield, 18 mm) pochłaniające uderzenie.
-  5. Odruchowy chwyt Hennemana z tonicznym utrzymaniem (~3 N) bez zgniecenia.
-  6. Płynne wycofanie ramienia do pozy spoczynkowej (q_home).
+ucieleśniony, biologiczny pościg, wstępne kształtowanie, wyzwolenie chwytu loomingiem w locie,
+amortyzację uderzenia i płynną retrakcję dla ramienia SO-101.
 """
 
 import os
@@ -19,175 +11,214 @@ import sys
 import mujoco
 import numpy as np
 
-import throw_catch_embodied as tce
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(HERE)
+
+import scene2
+import so101_base as sb
+import throw_catch as tc
+import throw_percept as tp
+import throw_scene as ts
+from brain import Brain
+from throw_catch_embodied import build_embodied_xml, Q_OPEN, Q_READY, Q_HOME
 
 FFMPEG = "/Users/admin/miniforge3/bin/ffmpeg"
 DESKTOP_DIR = "/Users/admin/Desktop/Explory_Projekt_Mucha_SO101/wykresy_i_wideo"
 PARENT_ARTIFACT_DIR = "/Users/admin/.gemini/antigravity/brain/a384d8fd-c23b-409b-be24-efe8fe71866f"
-CURRENT_ARTIFACT_DIR = "/Users/admin/.gemini/antigravity/brain/9bd527f7-7d0f-403e-8f31-4c8f1d8eb64d"
 
 
 def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", out_gif="so101_thrown_catch_embodied.gif"):
-    print(f"Inicjalizacja modelu wcielonego MuJoCo dla seed {seed}...")
-    m, d = tce.make_embodied_model()
-    
+    print(f"Inicjalizacja modelu ucieleśnionego MuJoCo dla seed {seed}...")
+    xml_str = build_embodied_xml()
+    m = mujoco.MjModel.from_xml_string(xml_str)
+    d = mujoco.MjData(m)
+    ds = mujoco.MjData(m)
+
     sid = m.site("catch").id
-    ids = tce.ts._ids(m)
-    gid = ids["grip"]
+    gid = m.body("gripper").id
     bid = m.body("ball").id
     ball_geom = m.geom("ball").id
     pads = [m.geom("jaw_fixed").id, m.geom("jaw_moving").id]
+    ids = ts._ids(m)
     rob = set(ids["robot"].tolist())
-    
-    thr = tce.ts.make_throw(seed, m, d)
+
+    # Tracker oka
+    trk = tp.BallTracker(m, d)
+    rt, optt = trk.renderer()
+
+    # Struktura Rig dla plan_catch
+    rig = tc.Rig()
+    rig.m, rig.d, rig.ds = m, d, ds
+    rig.trk, rig.rt, rig.optt = trk, rt, optt
+    rig.sid = sid
+    rig.gid = gid
+    rig.bid = bid
+    rig.ball = ball_geom
+    rig.pads = pads
+    rig.rob = rob
+
+    # Mózg muchy (ConnectomeSNN ALIF)
+    brain = Brain(seed=42)
+    brain.calibrate_ring()
+    brain.calibrate_steer()
+    g = brain.groups
+    gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
+
+    thr = ts.make_throw(seed, m, d)
     T = thr["T"]
-    q_rest = tce.ts.rest_pose(m, d)
-    tce.ts.reset_throw(m, d, thr, q_rest, q_open=tce.Q_OPEN)
-    
-    # Konfiguracja renderera
+    q_rest = ts.rest_pose(m, d)
+    ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
+    trk.reset()
+
+    # Konfiguracja renderera HD (kamera zewnętrzna)
     width, height = 960, 720
     renderer = mujoco.Renderer(m, height, width)
     opt = mujoco.MjvOption()
     opt.sitegroup[:] = 1
-    
-    # Kamera overview pokazująca bazę, ramię, tor rzutu i stół
+
     cam = mujoco.MjvCamera()
     cam.lookat[:] = [0.35, 0.05, 0.35]
     cam.distance = 1.35
     cam.azimuth = 142
     cam.elevation = -24
-    
+
     w = np.zeros(3)
-    theta = 2.5
-    mu = np.array([0.0, 0.2, 0.0])
-    sigma = 1.2
+    theta_w, mu_w, sigma_w = 2.5, np.array([0.0, 0.15, 0.0]), 1.2
     dt = 0.001
     rng = np.random.default_rng(seed)
-    
-    q_cmd = d.qpos[:5].copy()
-    p_prev_ball = d.xpos[bid].copy()
-    p_prev_catch = d.site_xpos[sid].copy()
-    
-    total_time = T + 1.20
-    total_steps = int(round(total_time / dt))
-    
+
+    q_cmd = q_rest.copy()
+    q_target = q_rest.copy()
+    plan, z_prev, q_prev = None, None, q_rest.copy()
+    started = False
+
+    state = "open"
     caught_t = None
     q_caught = None
+    u_grip = 0.5
     yield_disp = np.zeros(3)
-    
+    r_hist = []
+
+    total_time = T + 1.20
+    total_steps = int(round(total_time / dt))
+
     frames = []
     fps_render = 30
-    frame_interval = int(round(1000 / fps_render))  # klatka co ~33 ms
-    
-    print(f"Renderowanie trajektorii i dynamiki fizycznej (T={T:.2f}s, łączny czas={total_time:.2f}s)...")
-    
+    frame_interval = int(round(1000 / fps_render))
+
+    print(f"Renderowanie trajektorii i fizyki biologicznej (T={T:.2f}s, łączny czas={total_time:.2f}s)...")
+
     for step in range(total_steps):
         t = d.time
-        
+
         # Wiatr stochastyczny
         xi = rng.standard_normal(3)
-        w += theta * (mu - w) * dt + sigma * np.sqrt(dt) * xi
+        w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
         m.opt.wind = w
-        
-        f, other = tce.ts._ball_contacts(m, d, ball_geom, pads, rob)
-        dball = np.linalg.norm(d.body("ball").xpos - d.site_xpos[sid])
-        f_contact = float(f.max())
-        
-        if (f_contact > 0.10 or (t >= T - 0.025 and dball < 0.035)) and caught_t is None:
-            caught_t = t
-            q_caught = q_cmd.copy()
-            print(f" >> [t={t:.3f} s] ZDARZENIE KONTAKTU: Wyzwolenie odruchu chwytu Hennemana i pochłaniania energii!")
-            
+
+        f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
+        f_max = float(f.max())
+
+        p_catch = d.site_xpos[sid].copy()
+        p_ball = d.xpos[bid].copy()
+        dist = np.linalg.norm(p_ball - p_catch)
+
+        # Amortyzacja lepkosprężysta po kontakcie
         R_tool = d.xmat[gid].reshape(3, 3)
-        
-        # Ustąpienie lepkosprężyste (compliant yield)
-        if caught_t is not None and t - caught_t < 0.060:
-            u_yield = R_tool[:, 2]
+        if caught_t is not None and t - caught_t < 0.080:
             tau_y = 0.025
-            target_yield = 0.018 * u_yield
+            target_yield = -R_tool[:, 2] * 0.018
             yield_disp += (dt / tau_y) * (target_yield - yield_disp)
         else:
             tau_y = 0.035
             yield_disp += (dt / tau_y) * (0.0 - yield_disp)
-            
-        # Pętla sterowania 100 Hz
+
+        # Pętla percepcji i sieci neuronowej (100 Hz)
         if step % 10 == 0:
-            p_catch = d.site_xpos[sid].copy()
-            p_ball = d.xpos[bid].copy()
-            r_rel = p_ball - p_catch
-            R_dist = np.linalg.norm(r_rel)
-            u_los = r_rel / (R_dist + 1e-6)
-            
-            v_ball = (p_ball - p_prev_ball) / 0.010 if step > 0 else thr["v0"]
-            v_catch = (p_catch - p_prev_catch) / 0.010 if step > 0 else np.zeros(3)
-            v_rel = v_ball - v_catch
-            p_prev_ball = p_ball.copy()
-            p_prev_catch = p_catch.copy()
-            
-            v_clos = -np.dot(v_rel, u_los)
-            v_rel_perp = v_rel - np.dot(v_rel, u_los) * u_los
-            d_lambda = v_rel_perp / (R_dist + 1e-6)
-            
-            u_cam = -R_tool[:, 2]
-            u_cam /= np.linalg.norm(u_cam)
-            e_ret = u_los - np.dot(u_los, u_cam) * u_cam
-            inv_tau = max(0.0, v_clos / (R_dist + 1e-6))
-            i_pre = np.clip((inv_tau - 1.2) / 3.0, 0.0, 1.0)
-            
-            if caught_t is not None and t > caught_t + 0.15:
-                # Płynne wycofanie ramienia
-                r_retract = np.clip((t - (caught_t + 0.15)) / 0.450, 0.0, 1.0)
-                s = r_retract * r_retract * (3.0 - 2.0 * r_retract)
-                q_home = np.array([0.0, -0.35, 0.85, 0.40, q_caught[4]])
-                q_target = (1.0 - s) * q_caught + s * q_home
-                max_step = tce.SERVO_SPEED * 0.010
-                q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
-            elif caught_t is None:
-                # Naprowadzanie PN
-                v_task = 0.0 * u_los + R_dist * (tce.N_PN * d_lambda + tce.K_FIX * e_ret)
-                Jp, Jr = tce.ts._jac(m, d, ids, sid)
-                J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + tce.LAM_DLS**2 * np.eye(3))
-                dq = J_dls @ v_task
-                max_step = tce.SERVO_SPEED * 0.010
-                q_cmd = np.clip(q_cmd + np.clip(dq * 0.010, -max_step, max_step), ids["lo"], ids["hi"])
-                
-            # Sterowanie chwytakiem
-            if caught_t is None:
-                q_des_grip = (1.0 - i_pre) * tce.Q_OPEN + i_pre * tce.Q_READY
-                torque_grip = 6.0 * (q_des_grip - d.qpos[5]) - 0.4 * d.qvel[5]
-                u_grip = np.clip(torque_grip / 3.35, -1.0, 1.0)
-            else:
-                dt_c = t - caught_t
-                if dt_c < 0.050:
-                    u_grip = -0.25
-                elif dt_c < 0.55:
-                    u_grip = -0.12
+            hunt = trk.n >= trk.n_min
+            o = None
+            if plan is None or plan["T"] - t > tc.STOP_PLAN:
+                rt.update_scene(d, camera="eye", scene_option=optt)
+                o = trk.step(rt.render(), t)
+                if o["ready"]:
+                    p, _ = tc.plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
+                    if p is not None:
+                        plan, z_prev, q_prev = p, p["z"], p["q"]
+                        if not started and p["sig_y"] < 1.0:
+                            started = True
+                        if started:
+                            q_target = p["q"].copy()
+
+            inv_tau, lv = 0.0, 0.0
+            blob = None if o is None else o["blob"]
+            if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
+                r_hist.append((t, float(np.sqrt(blob["A"] / np.pi) - trk.delta)))
+            r_hist = [h for h in r_hist if t - h[0] < 0.105]
+            if len(r_hist) >= 4:
+                tt_, rr_ = np.array(r_hist).T
+                sl, ic = np.polyfit(tt_, rr_, 1)
+                r_fit = sl * t + ic
+                if r_fit > 1.0:
+                    inv_tau = float(sl / r_fit)
+                    lv = float(np.clip((inv_tau - 2.5) / 0.5, 0.0, 1.0))
+
+            spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
+            spk_gf = bool(spk[:, gf_ids].any())
+
+            # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
+            imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
+            if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
+                state = "closing"
+                print(f" >> [t={t:.3f} s, T-t={T-t:.3f} s] Wyzwolenie chwytu LOOMINGIEM w locie (DNp01={spk_gf}, inv_tau={inv_tau:.1f})!")
+
+            if f_max > 0.15 and caught_t is None:
+                caught_t = t
+                q_caught = q_cmd.copy()
+                print(f" >> [t={t:.3f} s] KONTAKT: Pochłanianie energii uderzenia przez nadkrytyczne okładziny!")
+
+            if state == "open":
+                q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
+                u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
+            elif state == "closing":
+                if caught_t is None:
+                    u_grip = -0.75
                 else:
-                    if f_contact < 2.0:
-                        u_grip = -0.055
-                    elif f_contact > 3.8:
-                        u_grip = -0.020
-                    else:
-                        u_grip = -0.038
-                        
+                    target_f = 3.15
+                    f_err = target_f - f_max
+                    u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
+
+            if caught_t is None:
+                if started:
+                    max_step = ts.SERVO_SPEED * 0.010
+                    q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
+            else:
+                tau_ret = t - caught_t
+                if tau_ret > 0.080:
+                    s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
+                    alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
+                    q_ret = Q_HOME.copy()
+                    q_ret[4] = q_caught[4]
+                    q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
+
         if np.linalg.norm(yield_disp) > 1e-4:
-            Jp, _ = tce.ts._jac(m, d, ids, sid)
-            J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + tce.LAM_DLS**2 * np.eye(3))
+            Jp, _ = ts._jac(m, d, ids, sid)
+            J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
             dq_y = J_dls @ yield_disp
-            d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"], ids["hi"])
+            d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"][:5], ids["hi"][:5])
         else:
             d.ctrl[:5] = q_cmd
-            
+
         d.ctrl[5] = u_grip
         mujoco.mj_step(m, d)
-        
+
         # Zapis klatki wideo
         if step % frame_interval == 0:
             renderer.update_scene(d, camera=cam, scene_option=opt)
             frames.append(renderer.render().copy())
-            
+
+    rt.close()
     print(f"Wyrenderowano {len(frames)} klatek wideo. Kodowanie ffmpeg...")
-    
+
     # 1. Kodowanie MP4
     mp4_cmd = [
         FFMPEG, "-y",
@@ -209,7 +240,7 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
     p.stdin.close()
     p.wait()
     print(f"Zapisano wideo MP4: {out_mp4}")
-    
+
     # 2. Kodowanie GIF (wysokiej jakości paleta lanczos)
     gif_cmd = [
         FFMPEG, "-y",
@@ -219,18 +250,16 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
     ]
     subprocess.run(gif_cmd, check=True)
     print(f"Zapisano animację GIF: {out_gif}")
-    
+
     # 3. Kopiowanie do wymaganych lokalizacji
     os.makedirs(DESKTOP_DIR, exist_ok=True)
     os.makedirs(PARENT_ARTIFACT_DIR, exist_ok=True)
-    os.makedirs(CURRENT_ARTIFACT_DIR, exist_ok=True)
-    
+
     targets = [
         (os.path.join(DESKTOP_DIR, "so101_thrown_catch_embodied.mp4"), os.path.join(DESKTOP_DIR, "so101_thrown_catch_embodied.gif")),
         (os.path.join(PARENT_ARTIFACT_DIR, "so101_thrown_catch_embodied.mp4"), os.path.join(PARENT_ARTIFACT_DIR, "so101_thrown_catch_embodied.gif")),
-        (os.path.join(CURRENT_ARTIFACT_DIR, "so101_thrown_catch_embodied.mp4"), os.path.join(CURRENT_ARTIFACT_DIR, "so101_thrown_catch_embodied.gif")),
     ]
-    
+
     for dst_mp4, dst_gif in targets:
         shutil.copy2(out_mp4, dst_mp4)
         shutil.copy2(out_gif, dst_gif)

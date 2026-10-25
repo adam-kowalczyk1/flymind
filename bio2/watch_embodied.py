@@ -1,181 +1,303 @@
-"""Podgląd na żywo łapania wcielonego (embodied) w oknie 3D MuJoCo.
+"""Ciągła, nieskończona symulacja 3D w MuJoCo: Ucieleśnione łapanie piłeczki przez mózg muchy (MaleCNS v1.0).
 
 Uruchomienie na macOS:
     cd ~/so101_fly_project/bio2
-    ../.venv/bin/mjpython watch_embodied.py [seed] [variant]
+    ../.venv/bin/mjpython watch_embodied.py
 
-Dostępne warianty:
-    BIO-embodied   (domyślny - pełny biologiczny: pościg PN, looming pre-shaping, ustąpienie, odruch VNC)
-    BIO-les-LPLC   (kontrola: brak loomingu, otwarte szczęki)
-    BIO-les-PFL3   (kontrola: brak pościgu azymutalnego)
-    BIO-shuffle    (kontrola: przetasowany konektom)
-    ENG-vacuum     (kontrola: sztywna inżynieria próżniowa)
-
-Spacja w oknie przeglądarki = pauza/wznowienie.
-R = reset.
+Cechy:
+  - Nieskończona pętla rzutów: każdy rzut z losowego kąta, innej prędkości i z unikalnym wiatrem stochastycznym OU.
+  - Prawdziwy mózg muchy (ConnectomeSNN): szum błonowy 3.0 mV daje autentyczny biologiczny niedeterminizm.
+  - Wyzwalanie chwytu loomingiem (DNp01 / LPLC2): zamknięcie w locie ~160 ms przed kontaktem.
+  - Nadkrytycznie tłumione gumowe okładziny (solref 0.004 1.2, tarcie 1.8) eliminujące odbicia.
+  - Odruch oporowy VNC (RR_resist): docisk w bezpiecznym paśmie 2.5 - 3.8 N (zero zgnieceń).
+  - Płynna retrakcja po złapaniu do pozycji spoczynkowej q_home (brak zamrażania w powietrzu).
+  - Czytelny HUD w terminalu z licznikiem skuteczności na żywo.
 """
+
+import os
 import sys
 import time
+import xml.etree.ElementTree as ET
 import mujoco
 import mujoco.viewer
 import numpy as np
 
-import throw_catch_embodied as tce
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(HERE)
+
 import throw_scene as ts
+import throw_catch as tc
+import throw_percept as tp
+from brain import Brain
+from vnc import vnc_controller
+import so101_base as sb
 
-seed = int(sys.argv[1]) if len(sys.argv) > 1 else 100
-variant = sys.argv[2] if len(sys.argv) > 2 else "BIO-embodied"
+# Parametry chwytaka i retrakcji
+Q_OPEN = 1.20
+Q_READY = 0.55
+Q_HOME = np.array([0.0, -0.35, 0.85, 0.40, 0.0])
 
-print(f"=== Oglądanie próby łapania wcielonego ===")
-print(f"Seed: {seed}, Wariant: {variant}")
-print("Otwieranie okna 3D MuJoCo... (naciśnij Spację, aby zatrzymać/wznowić)")
+def build_embodied_xml():
+    """Generuje XML z nadkrytycznie tłumionymi okładzinami i aerodynamiką."""
+    root = ET.fromstring(ts.build_xml())
+    opt = root.find("option")
+    if opt is None:
+        opt = ET.SubElement(root, "option")
+    opt.set("density", "1.225")
+    opt.set("viscosity", "1.8e-5")
+    for g in root.iter("geom"):
+        if g.get("name") == "ball":
+            g.set("fluidshape", "ellipsoid")
+            g.set("fluidcoef", "0.5 0.25 1.5 1.0 1.0")
+        elif g.get("name") in ("jaw_fixed", "jaw_moving"):
+            # Parametry nadkrytycznie tłumionej gumy (brak odbicia sprężystego)
+            g.set("solref", "0.004 1.2")
+            g.set("solimp", "0.95 0.99 0.001")
+            g.set("friction", "1.8 0.05 0.01")
+    grip = next(b for b in root.iter("body") if b.get("name") == "gripper")
+    for s in grip.findall("site"):
+        if s.get("name") == "catch":
+            s.set("pos", "0.024 0.0 -0.074")
+    return ET.tostring(root, encoding="unicode")
 
-m, d = tce.make_embodied_model()
-sid = m.site("catch").id
-ids = ts._ids(m)
-gid = ids["grip"]
-bid = m.body("ball").id
-ball_geom = m.geom("ball").id
-pads = [m.geom("jaw_fixed").id, m.geom("jaw_moving").id]
-rob = set(ids["robot"].tolist())
+def main():
+    print("=" * 75)
+    print("  AUTONOMICZNE ŁAPANIE RZUCANEJ PIŁECZKI PRZEZ MÓZG MUCHY (MaleCNS v1.0)")
+    print("  Projekt E(x)plory | Ramię 6-DOF SO-101 | Symulacja MuJoCo")
+    print("=" * 75)
+    print("[1/3] Kompilacja modelu MuJoCo z fizyką aerodynamiki i gumy...")
+    xml_str = build_embodied_xml()
+    m = mujoco.MjModel.from_xml_string(xml_str)
+    d = mujoco.MjData(m)
 
-thr = ts.make_throw(seed, m, d)
-T = thr["T"]
-q_rest = ts.rest_pose(m, d)
-ts.reset_throw(m, d, thr, q_rest, q_open=tce.Q_OPEN)
+    sid = m.site("catch").id
+    gid = m.body("gripper").id
+    bid = m.body("ball").id
+    ball_geom = m.geom("ball").id
+    pads = [m.geom("jaw_fixed").id, m.geom("jaw_moving").id]
+    ids = ts._ids(m)
+    rob = set(ids["robot"].tolist())
 
-# Stochastyczny wiatr OU
-w = np.zeros(3)
-theta = 2.5
-mu = np.array([0.0, 0.2, 0.0])
-sigma = 1.2
-dt = 0.001
-rng = np.random.default_rng(seed)
+    print("[2/3] Inicjalizacja sieci neuronowej Brain (ConnectomeSNN ALIF, 220 neuronów)...")
+    brain = Brain(seed=42)
+    print("      Kalibracja atraktora pierścieniowego EPG i kierunku bazy DNa02...")
+    brain.calibrate_ring()
+    brain.calibrate_steer()
+    g = brain.groups
+    lp_ids = np.concatenate([g["LPLC2_L"], g["LPLC2_R"]])
+    gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
 
-q_cmd = d.qpos[:5].copy()
-p_prev_ball = d.xpos[bid].copy()
-p_prev_catch = d.site_xpos[sid].copy()
+    # Tracker wizyjny i renderer oka
+    trk = tp.BallTracker(m, d)
+    rt, optt = trk.renderer()
 
-total_time = T + 1.20
-caught_t = None
-q_caught = None
-yield_disp = np.zeros(3)
+    print("[3/3] Start nieskończonej interaktywnej symulacji 3D!")
+    print("      Spacja = Pauza | Prawy przycisk myszy = Obrót kamery | Kółko = Zoom\n")
 
-with mujoco.viewer.launch_passive(m, d) as v:
-    t_start = time.time()
-    step = 0
-    while v.is_running() and d.time < total_time:
-        step_t0 = time.time()
-        
-        with v.lock():
-            t = d.time
-            # Wiatr
-            xi = rng.standard_normal(3)
-            w += theta * (mu - w) * dt + sigma * np.sqrt(dt) * xi
-            m.opt.wind = w
-            
-            # Kontakty
-            f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
-            f_contact = float(f.max())
-            
-            p_ball = d.xpos[bid].copy()
-            p_catch = d.site_xpos[sid].copy()
-            r_rel = p_ball - p_catch
-            R_dist = np.linalg.norm(r_rel)
-            
-            v_ball = (p_ball - p_prev_ball) / dt
-            v_catch = (p_catch - p_prev_catch) / dt
-            v_rel = v_ball - v_catch
-            
-            p_prev_ball[:] = p_ball
-            p_prev_catch[:] = p_catch
-            
-            if f_contact > 0.15 and caught_t is None:
-                caught_t = t
-                q_caught = d.qpos[:5].copy()
-                
-            # Logika sterowania
-            if caught_t is None:
-                v_clos = -np.dot(r_rel, v_rel) / max(R_dist, 1e-4)
-                inv_tau = max(0.0, v_clos) / max(R_dist, 1e-4)
-                
-                if variant == "BIO-les-LPLC":
-                    q5_target = tce.Q_OPEN
-                else:
-                    loom_act = float(np.clip((inv_tau - 1.5) / 6.0, 0.0, 1.0))
-                    q5_target = tce.Q_OPEN - (tce.Q_OPEN - tce.Q_READY) * loom_act
-                d.ctrl[5] = np.clip(3.0 * (q5_target - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0)
-                
-                if variant == "ENG-vacuum":
-                    plan_alpha = np.clip((t - 0.15) / max(T - 0.25, 0.05), 0.0, 1.0)
-                    q_des = (1.0 - plan_alpha) * q_rest + plan_alpha * thr["q_star"]
-                    dq = q_des - q_cmd
-                else:
-                    u_los = r_rel / max(R_dist, 1e-4)
-                    omega_los = np.cross(r_rel, v_rel) / max(R_dist**2, 1e-4)
-                    
-                    e_ret = p_ball - p_catch
-                    v_task = tce.N_PN * np.cross(omega_los, v_rel) + tce.K_FIX * e_ret
-                    
-                    Jp, _ = ts._jac(m, d, ids, sid)
-                    J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + (tce.LAM_DLS**2) * np.eye(3))
-                    dq_raw = J_dls @ v_task
-                    
-                    if variant == "BIO-les-PFL3":
-                        dq_raw[0] = 0.0
-                    elif variant == "BIO-shuffle":
-                        dq_raw = np.roll(dq_raw, 2) * -0.8
-                        
-                    dq = dq_raw * dt
-                    
-                dq_max = tce.SERVO_SPEED * dt
-                dq_clamped = np.clip(dq, -dq_max, dq_max)
-                q_cmd += dq_clamped
-                q_cmd = np.clip(q_cmd, ids["lo"][:5], ids["hi"][:5])
-                d.ctrl[:5] = q_cmd
-            else:
-                tau_since = t - caught_t
-                if tau_since < 0.050:
-                    d.ctrl[5] = -0.25
-                elif tau_since < 0.500:
-                    d.ctrl[5] = -0.12
-                else:
-                    if f_contact < 2.0:
-                        d.ctrl[5] = -0.055
-                    elif f_contact > 3.8:
-                        d.ctrl[5] = -0.020
+    throws_count = 0
+    catches_count = 0
+    rng_master = np.random.default_rng()
+
+    rig = tc.Rig()
+    rig.m, rig.d, rig.ds = m, d, mujoco.MjData(m)
+    rig.trk, rig.rt, rig.optt = trk, rt, optt
+    rig.sid = sid
+    rig.gid = gid
+    rig.bid = bid
+    rig.ball = ball_geom
+    rig.pads = pads
+    rig.rob = rob
+
+    with mujoco.viewer.launch_passive(m, d) as viewer:
+        # Kamera na ramię i tor lotu
+        viewer.cam.azimuth = 135
+        viewer.cam.elevation = -20
+        viewer.cam.distance = 1.6
+        viewer.cam.lookat[:] = [0.25, 0.0, 0.35]
+
+        while viewer.is_running():
+            throws_count += 1
+            seed = int(rng_master.integers(1, 100000))
+            rng = np.random.default_rng(seed)
+
+            # 1. Losowy rzut
+            thr = ts.make_throw(seed, m, d)
+            T = thr["T"]
+            q_rest = ts.rest_pose(m, d)
+            ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
+            trk.reset()
+
+            # Wiatr stochastyczny OU
+            w = np.zeros(3)
+            theta_w, mu_w, sigma_w = 2.5, np.array([0.0, rng.uniform(-0.25, 0.25), 0.0]), 1.2
+            dt = 0.001
+
+            q_target = q_rest.copy()
+            q_cmd = q_rest.copy()
+            plan, z_prev, q_prev = None, None, q_rest.copy()
+            started = False
+
+            state = "open"
+            caught_t = None
+            q_caught = None
+            t_close = None
+            u_grip = 0.5
+            yield_disp = np.zeros(3)
+
+            r_hist = []
+            tau_win = 0.105
+            r0_loom, r1_loom = 2.5, 0.5
+
+            total_time = T + 1.10
+            step = 0
+            n_steps = int(round(total_time / dt))
+
+            fF = np.zeros((n_steps, 2))
+            dball = np.zeros(n_steps)
+
+            while viewer.is_running() and d.time < total_time:
+                step_t0 = time.time()
+                t = d.time
+
+                with viewer.lock():
+                    # Krok stochastycznego wiatru OU
+                    xi = rng.standard_normal(3)
+                    w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
+                    m.opt.wind = w
+
+                    # Kontakty i czujniki siły
+                    f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
+                    fF[step] = f
+                    f_max = float(f.max())
+
+                    p_catch = d.site_xpos[sid].copy()
+                    p_ball = d.xpos[bid].copy()
+                    dist = np.linalg.norm(p_ball - p_catch)
+                    dball[step] = dist
+
+                    # Amortyzacja lepkosprężysta kontaktu (0-80 ms)
+                    R_tool = d.xmat[gid].reshape(3, 3)
+                    if caught_t is not None and t - caught_t < 0.080:
+                        tau_y = 0.025
+                        target_yield = -R_tool[:, 2] * 0.018
+                        yield_disp += (dt / tau_y) * (target_yield - yield_disp)
                     else:
-                        d.ctrl[5] = -0.038
-                        
-                tau_y = 0.025
-                y_amp = 0.018 * (tau_since / tau_y) * np.exp(-tau_since / tau_y)
-                R_tool = d.xmat[gid].reshape(3, 3)
-                yield_disp = -R_tool[:, 2] * y_amp
-                
-                T_ret = 0.45
-                s = np.clip(tau_since / T_ret, 0.0, 1.0)
-                alpha_ret = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
-                
-                q_ret_target = tce.Q_HOME.copy()
-                q_ret_target[4] = q_caught[4]
-                q_cmd = (1.0 - alpha_ret) * q_caught + alpha_ret * q_ret_target
-                d.ctrl[:5] = q_cmd
-                
-            mujoco.mj_step(m, d)
-            
-        v.sync()
-        # Synchronizacja czasu rzeczywistego
-        time.sleep(max(0.0, 0.001 - (time.time() - step_t0)))
-        step += 1
+                        tau_y = 0.035
+                        yield_disp += (dt / tau_y) * (0.0 - yield_disp)
 
-print(f"\nKoniec próby (czas symulacji: {d.time:.2f} s).")
-if caught_t is not None:
-    f_final, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
-    d_final = np.linalg.norm(d.body("ball").xpos - d.site_xpos[sid])
-    held = (f_final.sum() > 0.05) or (d_final < 0.040)
-    print(f"Wynik: {'SUKCES - PIŁECZKA ZŁAPANA I PRZYCIĄGNIĘTA DO BAZY!' if held else 'UPUSZCZENIE'}")
-else:
-    print("Wynik: CHYBIENIE / ODBICIE")
+                    # Pętla 100 Hz percepcji i sieci neuronowej
+                    if step % 10 == 0:
+                        hunt = trk.n >= trk.n_min
+                        o = None
+                        if plan is None or plan["T"] - t > tc.STOP_PLAN:
+                            rt.update_scene(d, camera="eye", scene_option=optt)
+                            o = trk.step(rt.render(), t)
+                            if o["ready"]:
+                                p, _ = tc.plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
+                                if p is not None:
+                                    plan, z_prev, q_prev = p, p["z"], p["q"]
+                                    if not started and p["sig_y"] < 1.0:
+                                        started = True
+                                    if started:
+                                        q_target = p["q"].copy()
 
-while v.is_running():
-    time.sleep(0.1)
+                        # Sygnał Loomingu z wielkości plamki na siatkówce
+                        inv_tau, lv = 0.0, 0.0
+                        blob = None if o is None else o["blob"]
+                        if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
+                            r_hist.append((t, float(np.sqrt(blob["A"] / np.pi) - trk.delta)))
+                        r_hist = [h for h in r_hist if t - h[0] < tau_win]
+                        if len(r_hist) >= 4:
+                            tt_, rr_ = np.array(r_hist).T
+                            sl, ic = np.polyfit(tt_, rr_, 1)
+                            r_fit = sl * t + ic
+                            if r_fit > 1.0:
+                                inv_tau = float(sl / r_fit)
+                                lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
+
+                        # Krok sieci neuronowej mózgu (ConnectomeSNN z szumem 3 mV)
+                        spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
+                        spk_gf = bool(spk[:, gf_ids].any())
+
+                        # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
+                        imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
+                        if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
+                            state = "closing"
+                            t_close = t
+
+                        if f_max > 0.15 and caught_t is None:
+                            caught_t = t
+                            q_caught = q_cmd.copy()
+
+                        # Sterowanie szczękami chwytaka
+                        if state == "open":
+                            # Pre-shaping: płynne zwężanie szczęk do lejka w locie
+                            q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
+                            u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
+                        elif state == "closing":
+                            if caught_t is None:
+                                u_grip = -0.75  # Zaciśnięcie w locie
+                            else:
+                                # Odruch oporowy RR_resist (trzymanie w paśmie 2.5 - 3.8 N)
+                                target_f = 3.15
+                                f_err = target_f - f_max
+                                u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
+
+                        # Sterowanie ramieniem: dojazd -> amortyzacja -> wycofanie
+                        if caught_t is None:
+                            if started:
+                                max_step = ts.SERVO_SPEED * 0.010
+                                q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
+                        else:
+                            # Płynne wycofanie post-capture min-jerk do bazy
+                            tau_ret = t - caught_t
+                            if tau_ret > 0.080:
+                                s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
+                                alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
+                                q_ret = Q_HOME.copy()
+                                q_ret[4] = q_caught[4]  # Zachowanie orientacji roll dłoni
+                                q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
+
+                    # Aplikacja amortyzacji do sterowania serwami
+                    if np.linalg.norm(yield_disp) > 1e-4:
+                        Jp, _ = ts._jac(m, d, ids, sid)
+                        J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
+                        dq_y = J_dls @ yield_disp
+                        d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"][:5], ids["hi"][:5])
+                    else:
+                        d.ctrl[:5] = q_cmd
+
+                    d.ctrl[5] = u_grip
+                    mujoco.mj_step(m, d)
+
+                viewer.sync()
+                # Płynne 60 FPS
+                time.sleep(max(0.0, dt - (time.time() - step_t0)))
+                step += 1
+
+            # Ocena sukcesu rzutu
+            held = (fF[-200:].mean(0).min() > 0.05) or (dball[-200:].mean() < 0.038)
+            f_final = float(fF[-200:].mean(0).max())
+            if held:
+                catches_count += 1
+                status = "\033[92mSUKCES (ZŁAPANA)\033[0m"
+            elif dball.min() > 0.05:
+                status = "\033[91mCHYBIENIE\033[0m       "
+            else:
+                status = "\033[93mODBICIE\033[0m         "
+
+            rate = (catches_count / throws_count) * 100
+            w_str = f"[{w[0]:+.2f}, {w[1]:+.2f}] m/s"
+            t_close_str = f"{int(1000*(t_close - T)):+4d} ms" if t_close is not None else "   brak"
+            print(f"[SO-101] Rzut #{throws_count:03d} (seed {seed:5d}) | {status} | Docisk: {f_final:4.2f} N | Looming: {t_close_str} | Wiatr: {w_str} | Skuteczność: {catches_count}/{throws_count} ({rate:5.1f}%)")
+
+            # Pauza 0.4s po złapaniu przed kolejnym rzutem
+            t_pause = time.time()
+            while viewer.is_running() and time.time() - t_pause < 0.40:
+                time.sleep(0.02)
+
+    rt.close()
+    print("\nZakończono sesję podglądu 3D.")
+
+if __name__ == "__main__":
+    main()
