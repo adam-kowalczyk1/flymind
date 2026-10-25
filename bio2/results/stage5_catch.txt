@@ -1,0 +1,93 @@
+Etap 5 — sterowniki łapania rzuconej piłeczki (throw_catch.py), seedy 0–49, jeden przebieg
+
+parametry (strojone na seedach 100–149): sig_y_start = 1.0 m (1,0 = bez bramki), lead ENG = 0.03 s (warunek B: 0.2 s), loom_thr = 60.0 Hz (MODEL), próg ON t_on = 0.1, g_on0 = 10.0, g_on1 = 24.0 (MODEL), maska eferentna v_self = 0.3 rad/s (MODEL), U_CLOSE = 0.8, Q_OPEN = 0.6 (B: 1.2), F_TOUCH = 0.3 N
+
+== warunek A (lejek Q_OPEN = 0,6 rad, zamykanie od T − 30 ms) ==
+wariant                  sukces    % Wilson 95 %  klasy porażek                                DNp01  zamk.−T [ms] med (p10…p90)  błąd paszczy [mm] med/p90  |e_y| med  siła 20 ms [N]
+ORACLE                  47/50     94   84–98    wypadła 2, nie zdążył 1                       0/50    -30 (-30…-30)              0.2 /   0.4           -       60
+NO-CLOSE                49/50     98   90–100   wypadła 1                                     0/50    -                          1.2 /   2.3           0.4     34
+ENG                     47/50     94   84–98    zgniecenie 2, wypadła 1                       0/50    -35 (-46…-25)              1.2 /   2.3           0.4     60
+ENG+VNC                 49/50     98   90–100   wypadła 1                                     0/50    -35 (-46…-25)              1.2 /   2.3           0.4     38
+LOOM+PWM                49/50     98   90–100   wypadła 1                                    36/50     -9 (-19…4)                1.2 /   2.3           0.4     36
+BIO-ucieczka            43/50     86   74–93    zgniecenie 6, wypadła 1                       0/50     -8 (-21…5)                1.2 /   2.3           0.4     33
+BIO-polowanie           43/50     86   74–93    zgniecenie 6, wypadła 1                       0/50     -8 (-21…5)                1.2 /   2.3           0.4     33
+BIO-ON-ucieczka          9/50     18   10–31    ucieczka 36, zgniecenie 4, wypadła 1         36/50     -8 (-21…5)                1.2 /   2.8           0.3     32
+BIO-ON-polowanie        43/50     86   74–93    zgniecenie 6, wypadła 1                      36/50     -8 (-21…5)                1.2 /   2.3           0.4     33
+BIO-ON-pol. bez maski   30/50     60   46–72    odbicie 13, chybienie 4, zgniecenie 2, nie zdążył 1 49/50    -18 (-612…3)               1.5 /   2.2           0.4     31
+BIO-dotyk               43/50     86   74–93    zgniecenie 6, wypadła 1                       0/50     -8 (-21…5)                1.2 /   2.3           0.4     33
+
+== warunek B (szczęki szeroko 1,2 rad w locie) ==
+wariant                  sukces    % Wilson 95 %  klasy porażek                                DNp01  zamk.−T [ms] med (p10…p90)  błąd paszczy [mm] med/p90  |e_y| med  siła 20 ms [N]
+ORACLE                  48/50     96   87–99    wypadła 1, nie zdążył 1                       0/50   -200 (-200…-200)            0.2 /   0.4           -       62
+NO-CLOSE                 0/50      0    0–7     zgniecenie 34, odbicie 14, nie zdążył 2       0/50    -                          1.3 /   2.2           0.3     68
+ENG                     48/50     96   87–99    nie zdążył 2                                  0/50   -208 (-218…-197)            1.3 /   2.3           0.5     62
+LOOM+PWM                 0/50      0    0–7     zgniecenie 34, odbicie 14, nie zdążył 2      38/50     -9 (-20…3)                1.3 /   2.2           0.3     72
+BIO-ON-polowanie         0/50      0    0–7     zgniecenie 35, odbicie 13, nie zdążył 2      38/50     -2 (-17…8)                1.3 /   2.2           0.3     65
+BIO-dotyk                0/50      0    0–7     zgniecenie 35, odbicie 13, nie zdążył 2       0/50     -1 (-11…11)               1.3 /   2.2           0.3     65
+
+== DNp01 (Giant Fiber) w wariantach z mózgiem ==
+  [A] BIO-ucieczka: DNp01 nie odpala (0/50); ucieczek 0
+  [A] BIO-polowanie: DNp01 nie odpala (0/50); ucieczek 0
+  [A] BIO-ON-ucieczka: DNp01 odpala w 36/50 rzutów (72 %), 1. spike względem T: med -18 ms (p10 -34, p90 -7); odpalenia przed T − 100 ms: 1, w oknie ±30 ms wokół T: 29; spike'ów/rzut med 2; ucieczek wykonanych 36
+  [A] BIO-ON-polowanie: DNp01 odpala w 36/50 rzutów (72 %), 1. spike względem T: med -18 ms (p10 -34, p90 -7); odpalenia przed T − 100 ms: 1, w oknie ±30 ms wokół T: 29; spike'ów/rzut med 2; ucieczek wykonanych 0
+  [A] BIO-ON-pol. bez maski: DNp01 odpala w 49/50 rzutów (98 %), 1. spike względem T: med -236 ms (p10 -652, p90 -10); odpalenia przed T − 100 ms: 25, w oknie ±30 ms wokół T: 20; spike'ów/rzut med 3; ucieczek wykonanych 0
+  [B] BIO-ON-polowanie: DNp01 odpala w 38/50 rzutów (76 %), 1. spike względem T: med -18 ms (p10 -31, p90 -8); odpalenia przed T − 100 ms: 0, w oknie ±30 ms wokół T: 33; spike'ów/rzut med 2; ucieczek wykonanych 0
+
+== strojenie i walidacja (log z `grid` / `validate`) ==
+[A seedy 100–149] ORACLE {}: sukces 47/50 =  94 % [84–98]  bez zgniecenia  0  sukces 47, wypadła 3  | DNp01 0/50  zamk.−T med -30 ms  start ruchu T−514 ms  (4 s)
+[B seedy 100–149] ORACLE {'q_open': 1.2, 'lead': 0.2}: sukces 47/50 =  94 % [84–98]  bez zgniecenia  0  sukces 47, wypadła 3  | DNp01 0/50  zamk.−T med -200 ms  start ruchu T−514 ms  (4 s)
+[A seedy 100–149] NO-CLOSE {'u_close': 0.8}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  start ruchu T−678 ms  (53 s)
+[B seedy 100–149] NO-CLOSE {'q_open': 1.2}: sukces  0/50 =   0 % [0–7]  bez zgniecenia  0  zgniecenie 31, odbicie 15, nie zdążył 4  | DNp01 0/50  start ruchu T−678 ms  (51 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.003}: sukces 21/50 =  42 % [29–56]  bez zgniecenia  0  nie zdążył 29, sukces 21  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−280 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.006}: sukces 34/50 =  68 % [54–79]  bez zgniecenia  0  sukces 34, nie zdążył 16  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−385 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.01}: sukces 38/50 =  76 % [63–86]  bez zgniecenia  0  sukces 38, nie zdążył 11, zgniecenie 1  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−445 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.02}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, nie zdążył 5, odbicie 1  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−518 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.04}: sukces 45/50 =  90 % [79–96]  bez zgniecenia  0  sukces 45, nie zdążył 3, wypadła 1, zgniecenie 1  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−580 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 0.08}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 3, nie zdążył 2, wypadła 1  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−620 ms  (52 s)
+[A seedy 100–149] ENG {'sig_y_start': 1.0}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−678 ms  (53 s)
+[A seedy 100–149] ENG {'lead': 0.0}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  zamk.−T med -4 ms  start ruchu T−678 ms  (52 s)
+[A seedy 100–149] ENG {'lead': 0.03}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−678 ms  (52 s)
+[A seedy 100–149] ENG {'lead': 0.06}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  zamk.−T med -64 ms  start ruchu T−678 ms  (52 s)
+[B seedy 100–149] ENG {'q_open': 1.2, 'lead': 0.1}: sukces  5/50 =  10 % [4–21]  bez zgniecenia  0  odbicie 32, zgniecenie 9, sukces 5, nie zdążył 4  | DNp01 0/50  zamk.−T med -104 ms  start ruchu T−678 ms  (52 s)
+[B seedy 100–149] ENG {'q_open': 1.2, 'lead': 0.15}: sukces 45/50 =  90 % [79–96]  bez zgniecenia  0  sukces 45, zgniecenie 3, nie zdążył 1, odbicie 1  | DNp01 0/50  zamk.−T med -155 ms  start ruchu T−678 ms  (52 s)
+[B seedy 100–149] ENG {'q_open': 1.2, 'lead': 0.2}: sukces 49/50 =  98 % [90–100]  bez zgniecenia  0  sukces 49, nie zdążył 1  | DNp01 0/50  zamk.−T med -205 ms  start ruchu T−678 ms  (52 s)
+[B seedy 100–149] ENG {'q_open': 1.2, 'lead': 0.25}: sukces 36/50 =  72 % [58–83]  bez zgniecenia  0  sukces 36, odbicie 7, nie zdążył 4, zgniecenie 3  | DNp01 0/50  zamk.−T med -255 ms  start ruchu T−678 ms  (52 s)
+[B seedy 100–149] ENG {'q_open': 1.2, 'lead': 0.3}: sukces  0/50 =   0 % [0–7]  bez zgniecenia  0  odbicie 46, nie zdążył 4  | DNp01 0/50  zamk.−T med -306 ms  start ruchu T−678 ms  (52 s)
+[A seedy 100–149] BIO-ON-polowanie {'loom_thr': 20.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 36/50  zamk.−T med -9 ms  start ruchu T−678 ms  (63 s)
+[A seedy 100–149] BIO-ON-polowanie {'loom_thr': 60.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 36/50  zamk.−T med -8 ms  start ruchu T−678 ms  (63 s)
+[A seedy 100–149] BIO-ON-polowanie {'loom_thr': 120.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 36/50  zamk.−T med -8 ms  start ruchu T−678 ms  (64 s)
+[A seedy 100–149] BIO-ON-polowanie {'g_on0': 6.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 40/50  zamk.−T med -8 ms  start ruchu T−678 ms  (69 s)
+[A seedy 100–149] BIO-ON-polowanie {'g_on0': 16.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 21/50  zamk.−T med -8 ms  start ruchu T−678 ms  (78 s)
+[A seedy 100–149] BIO-ON-polowanie {'loom_mask': 0.0}: sukces 33/50 =  66 % [52–78]  bez zgniecenia  0  sukces 33, odbicie 6, chybienie 5, nie zdążył 4, zgniecenie 2  | DNp01 45/50  zamk.−T med -12 ms  start ruchu T−678 ms  (78 s)
+[B seedy 100–149] BIO-ON-polowanie {'q_open': 1.2, 'loom_thr': 20.0}: sukces  0/50 =   0 % [0–7]  bez zgniecenia  0  zgniecenie 30, odbicie 16, nie zdążył 4  | DNp01 39/50  zamk.−T med -10 ms  start ruchu T−678 ms  (79 s)
+[B seedy 100–149] BIO-ON-polowanie {'q_open': 1.2, 'loom_thr': 60.0}: sukces  0/50 =   0 % [0–7]  bez zgniecenia  0  zgniecenie 31, odbicie 15, nie zdążył 4  | DNp01 39/50  zamk.−T med -1 ms  start ruchu T−678 ms  (81 s)
+[B seedy 100–149] BIO-ON-polowanie {'q_open': 1.2, 'loom_thr': 120.0}: sukces  0/50 =   0 % [0–7]  bez zgniecenia  0  zgniecenie 31, odbicie 15, nie zdążył 4  | DNp01 39/50  zamk.−T med 0 ms  start ruchu T−678 ms  (79 s)
+[A seedy 100–149] BIO-ucieczka {'loom_thr': 60.0}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 0/50  zamk.−T med -8 ms  start ruchu T−678 ms  (89 s)
+[A seedy 100–149] BIO-ON-ucieczka {'loom_thr': 60.0}: sukces 13/50 =  26 % [16–40]  bez zgniecenia  0  ucieczka 33, sukces 13, nie zdążył 2, zgniecenie 2  | DNp01 36/50  zamk.−T med -8 ms  start ruchu T−678 ms  (82 s)
+[A seedy 100–149] LOOM+PWM {'loom_thr': 60.0}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 36/50  zamk.−T med -10 ms  start ruchu T−678 ms  (77 s)
+[A seedy 100–149] ENG+VNC {'lead': 0.03}: sukces 48/50 =  96 % [87–99]  bez zgniecenia  0  sukces 48, nie zdążył 2  | DNp01 0/50  zamk.−T med -34 ms  start ruchu T−678 ms  (62 s)
+[A seedy 100–149] BIO-dotyk {'u_close': 0.8}: sukces 44/50 =  88 % [76–94]  bez zgniecenia  0  sukces 44, zgniecenie 4, nie zdążył 2  | DNp01 0/50  zamk.−T med -8 ms  start ruchu T−678 ms  (62 s)
+--- walidacja, seedy 150–199 (parametry zamrożone po strojeniu na 100–149) ---
+  warunek A (lejek Q_OPEN = 0,6 rad, zamykanie od T − 30 ms)
+  wariant                  sukces    % Wilson 95 %  klasy porażek                                DNp01  zamk.−T [ms] med (p10…p90)  błąd paszczy [mm] med/p90  |e_y| med  siła 20 ms [N]
+  ORACLE                  41/50     82   69–90    wypadła 7, nie zdążył 2                       0/50    -30 (-30…-30)              0.2 /   0.8           -       60
+  NO-CLOSE                47/50     94   84–98    nie zdążył 2, wypadła 1                       0/50    -                          1.6 /   4.1           0.5     35
+  ENG                     46/50     92   81–97    nie zdążył 2, wypadła 1, zgniecenie 1         0/50    -34 (-47…-28)              1.6 /   4.1           0.5     60
+  ENG+VNC                 47/50     94   84–98    nie zdążył 2, wypadła 1                       0/50    -34 (-47…-28)              1.6 /   4.1           0.5     38
+  LOOM+PWM                47/50     94   84–98    nie zdążył 2, wypadła 1                      35/50     -8 (-14…-2)               1.6 /   4.1           0.5     36
+  BIO-ucieczka            40/50     80   67–89    zgniecenie 7, nie zdążył 2, wypadła 1         0/50     -9 (-20…0)                1.6 /   4.1           0.5     34
+  BIO-polowanie           40/50     80   67–89    zgniecenie 7, nie zdążył 2, wypadła 1         0/50     -9 (-20…0)                1.6 /   4.1           0.5     34
+  BIO-ON-ucieczka         13/50     26   16–40    ucieczka 34, nie zdążył 2, wypadła 1         35/50     -9 (-20…0)                1.4 /   4.1           0.5     32
+  BIO-ON-polowanie        40/50     80   67–89    zgniecenie 7, nie zdążył 2, wypadła 1        35/50     -9 (-20…0)                1.6 /   4.1           0.5     34
+  BIO-ON-pol. bez maski   31/50     62   48–74    odbicie 15, nie zdążył 2, chybienie 2        48/50    -15 (-605…-1)              1.6 /   3.9           0.4     29
+  BIO-dotyk               40/50     80   67–89    zgniecenie 7, nie zdążył 2, wypadła 1         0/50     -9 (-20…0)                1.6 /   4.1           0.5     34
+  warunek B (szczęki szeroko 1,2 rad w locie)
+  wariant                  sukces    % Wilson 95 %  klasy porażek                                DNp01  zamk.−T [ms] med (p10…p90)  błąd paszczy [mm] med/p90  |e_y| med  siła 20 ms [N]
+  ORACLE                  42/50     84   71–92    wypadła 6, nie zdążył 2                       0/50   -200 (-200…-200)            0.2 /   0.8           -       62
+  NO-CLOSE                 0/50      0    0–7     zgniecenie 33, odbicie 14, nie zdążył 3       0/50    -                          1.6 /   3.4           0.3     67
+  ENG                     47/50     94   84–98    nie zdążył 2, zgniecenie 1                    0/50   -207 (-217…-198)            1.6 /   3.9           0.6     62
+  LOOM+PWM                 0/50      0    0–7     zgniecenie 32, odbicie 15, nie zdążył 3      34/50     -9 (-20…-2)               1.6 /   3.4           0.3     71
+  BIO-ON-polowanie         0/50      0    0–7     zgniecenie 33, odbicie 14, nie zdążył 3      34/50     -2 (-14…8)                1.6 /   3.4           0.3     64
+  BIO-dotyk                0/50      0    0–7     zgniecenie 33, odbicie 14, nie zdążył 3       0/50     -2 (-12…8)                1.6 /   3.4           0.3     64
+
+[czas 1108 s]
