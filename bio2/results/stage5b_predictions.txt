@@ -1,0 +1,52 @@
+Zapisano: 2026-10-25 08:46:01 — PRZED jakimkolwiek pomiarem wariantów Etapu 5b (rola mózgu w łapaniu).
+(Znane wcześniej, z Etapu 5: ENG A 94 %, ENG B 96 % na seedach 0–49; BIO z Vision.loom: looming ślepy na jasną piłeczkę; w B zamknięcie z dotyku/loomingu ON = 0 %.
+ Niczego z poniższych wariantów — BIO-τ, BIO-yaw, BIO-full, NO-YAW, kontrole — jeszcze nie liczono.)
+
+DEFINICJE
+  Warunek A: lejek Q_OPEN 0,6 rad, zamykanie T_pred − 30 ms. Warunek B: szczęki 1,2 rad w locie (zamknięcie ~200 ms przed T).
+  NO-YAW     inżynieria bez skrętu bazy: staw 0 zamrożony w pozie spoczynkowej, IK 4 stawów do p_pred (zamknięcie jak ENG).
+  BIO-yaw    ω bazy z mózgu: azymut p_pred względem paszczy → EPG (cue) → PFL3 → DNa02/DNa01 → dekoder jak w agent.py (G_TURN 2,5, W_MAX 1,0);
+             IK 4 stawów do p_pred przy kącie bazy narzuconym przez mózg; zamknięcie jak ENG (izoluje rolę skrętu).
+  BIO-yaw+G  to samo z wzmocnieniem G_TURN dobranym na seedach 100–149 z {5, 10} (stała dekodera, MODEL; mucha 2–3,3).
+  BIO-τ(DN)  (B) zamknięcie z impulsów DNp01 (GF); wejście: 1/τ = θ̇/θ plamki 320×240 → loom → LC4/LPLC2 → (konektom) DNp01; ucieczka wygaszona (polowanie).
+  BIO-τ(LP)  (B) jw., odczyt = populacja LPLC2 w oknie 10 ms ≥ próg.
+  BIO-τ-ucieczka (B) jak BIO-τ(DN), ale ucieczka NIE wygaszona.
+  BIO-full   (B) BIO-τ(DN) + BIO-yaw(+G) + VNC po dotyku + DNp01 z tłumieniem „polowanie”.
+  Kontrole (te same warianty z uszkodzoną siecią, jak authenticity.py): τ: rewire_all, shuffle_all, les_LOOM (LC4+LPLC2); yaw: shuffle_cx, les_PFL3.
+
+PRZEWIDYWANIA (raport na seedach 0–49; „trafione” = wynik w [lo..hi], włącznie; sukces = trzymana 1 s jak w throw_catch.py)
+  ENG A                       94 %   [88..98]   (odniesienie)
+  ENG B                       96 %   [90..100]  (odniesienie)
+  NO-YAW A                    25 %   [10..40]   (rolka + IK pochłaniają tylko ~±6° skrętu; az p* ±30° jednostajnie)
+  NO-YAW B                    25 %   [10..40]
+  BIO-yaw A (G 2,5)           40 %   [20..60]   (błąd skrętu maleje jak e^{-2,5 t}: po ~0,6 s zostaje 15–40 % z 15°)
+  BIO-yaw B (G 2,5)           40 %   [20..60]
+  BIO-yaw+G A                 65 %   [40..90]
+  BIO-yaw+G B                 65 %   [40..90]
+  błąd azymutu bazy względem planu IK w T−30 ms (BIO-yaw G 2,5):  mediana 4° [2..8]; (BIO-yaw+G): 2° [0,5..4]
+  BIO-τ(DN) B                 75 %   [50..92]   (okno zamykania ±40 ms wokół 200 ms; jitter θ̇ ~25 ms)
+  BIO-τ(LP) B                 75 %   [50..92]
+  BIO-τ chwila zamknięcia względem T:  mediana −200 ms [−225..−175]; rozstęp p10–p90 ≤ 90 ms; zamknięcia przed T − 300 ms ≤ 5 % rzutów
+  BIO-τ(DN): odsetek rzutów z zamknięciem (spike DNp01 w locie)  ≥ 95 %
+  BIO-τ-ucieczka B             2 %   [0..10]    (ucieczka od GF w −200 ms)
+  BIO-full B                  30 %   [10..55]   (≈ iloczyn BIO-τ i BIO-yaw+G, niezależnie)
+  KONTROLE τ (B):
+    τ(DN) + rewire_all         5 %   [0..20]    (brak krawędzi LPLC2→DNp01 → brak odczytu)
+    τ(DN) + shuffle_all       20 %   [0..50]    (wagi LPLC2→DNp01 podmienione na inne tego samego znaku: nieprzewidywalny moment)
+    τ(DN) + les_LOOM           0 %   [0..2]
+    τ(LP) + rewire_all        70 %   [50..92]   (LPLC2 dostaje wejście jako prąd zewnętrzny, krawędzie przychodzące prawie nie istnieją — odczyt LPLC2 nie testuje konektomu)
+    τ(LP) + shuffle_all       70 %   [50..92]
+    τ(LP) + les_LOOM           0 %   [0..2]
+  KONTROLE yaw:
+    BIO-yaw + les_PFL3 A      25 %   [10..40]   (= NO-YAW)
+    BIO-yaw + shuffle_cx A    28 %   [8..45]
+    BIO-yaw+G + les_PFL3 A    25 %   [10..40]
+  KONTROLE full:
+    BIO-full + les_PFL3 B     20 %   [5..35]
+    BIO-full + les_LOOM B      0 %   [0..2]
+
+WERDYKTY PRZEWIDYWANE (rola „realna” = wynik dobry ORAZ psuje się po zepsuciu sieci)
+  τ (zamknięcie z loomingu 1/τ): realna przy odczycie DNp01 (wynik ≥ 50 % i kontrole ≤ 20 %), ale gorsza od ENG (T_pred) o 10–40 pp; przy odczycie LPLC2 wynik dobry,
+        lecz odporny na rewire/shuffle krawędzi — „pozorna” względem konektomu (rola LPLC2 sprowadza się do progu na prądzie wejściowym).
+  yaw (skręt bazy z DNa02/DNa01): częściowo realna — lepsza od NO-YAW o ≥ 10 pp i psuje się po les_PFL3 (do poziomu NO-YAW), ale wyraźnie gorsza od ENG;
+        przy G 2,5 różnica do NO-YAW mała (< 25 pp), przy G dobranym większa.
