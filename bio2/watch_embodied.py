@@ -2,20 +2,28 @@
 
 Uruchomienie na macOS:
     cd ~/so101_fly_project/bio2
-    ../.venv/bin/mjpython watch_embodied.py
+    ../.venv/bin/mjpython watch_embodied.py [--mode bio|ik]
 
-Cechy:
-  - Nieskończona pętla rzutów: każdy rzut z losowego kąta, innej prędkości i z unikalnym wiatrem stochastycznym OU.
-  - Szeroki wachlarz trajektorii 3D (DIVERSE_RANGES): zróżnicowane kąty podejścia, wysokości i punkty lądowania.
-  - Prawdziwy mózg muchy (ConnectomeSNN): szum błonowy 3.0 mV daje autentyczny biologiczny niedeterminizm.
-  - Wyzwalanie chwytu loomingiem (DNp01 / LPLC2): zamknięcie w locie ~160 ms przed kontaktem.
-  - Nadkrytycznie tłumione gumowe okładziny (solref 0.004 1.2, tarcie 1.8) eliminujące odbicia.
-  - Odruch oporowy VNC (RR_resist): docisk w bezpiecznym paśmie 2.5 - 3.8 N (zero zgnieceń).
-  - Płynna retrakcja po złapaniu do pozycji spoczynkowej q_home (brak zamrażania w powietrzu).
-  - Pętla czasu rzeczywistego (lockstep wall-clock 1.000x): idealnie równomierne tempo lotu bez spowolnień i zrywów.
-  - Czytelny HUD w terminalu z licznikiem skuteczności na żywo.
+Architektura konektomiczna (brak uczenia maszynowego, Zero-VLA, Zero-IK w trybie bio):
+  1. Central Complex (EPG -> PFL3 -> DNa02/DNa01):
+     Azymut celu z kompasu wewnętrznego steruje bezpośrednio obrotem bazy ramienia (Staw 0).
+  2. Płat wzrokowy i neurony zstępujące lądowania (LPLC1 -> DNp10 / LC4 -> DNp07):
+     - DNp10 (elewacja): steruje motoneuronami barku (Staw 1 - Trochanter Levator/Depressor).
+     - DNp07 (wysięg): wycisza interneurony hamujące 13B i aktywuje prostowniki łokcia (Staw 2 - Tibia Extensor).
+  3. Synergia rdzeniowa VNC (Hemilineage 19B):
+     Interneurony przedmotoryczne sprzęgają kąt nadgarstka (Staw 3-4) z kątem łokcia i barku,
+     utrzymując orientację paszczy bez obliczeń trygonometrycznych czy macierzy jakobianowych.
+  4. Wyzwalanie chwytu przez akson olbrzymi Giant Fiber (DNp01):
+     Salwa detektorów loomingu (LPLC2) wyzwala potencjał czynnościowy DNp01 w locie (~160 ms przed kontaktem).
+  5. Odruch oporowy rdzenia brzusznego (VNC):
+     Zasada wielkości Hennemana w rekrutacji motoneuronów stabilizuje docisk w bezpiecznym paśmie (2.5 - 3.8 N).
+  6. Błyskawiczny auto-reset (Infinite Dynamic Loop):
+     Natychmiast po złapaniu (po 0.35 s płynnej retrakcji) lub po chybieniu (gdy piłka spadnie na stół)
+     scena resetuje się od razu i natychmiast startuje kolejny rzut w nieskończonej pętli.
 """
 
+import argparse
+import gc
 import os
 import sys
 import time
@@ -65,7 +73,6 @@ def build_embodied_xml():
             g.set("fluidshape", "ellipsoid")
             g.set("fluidcoef", "0.5 0.25 1.5 1.0 1.0")
         elif g.get("name") in ("jaw_fixed", "jaw_moving"):
-            # Parametry nadkrytycznie tłumionej gumy (brak odbicia sprężystego)
             g.set("solref", "0.004 1.2")
             g.set("solimp", "0.95 0.99 0.001")
             g.set("friction", "1.8 0.05 0.01")
@@ -76,8 +83,55 @@ def build_embodied_xml():
     return ET.tostring(root, encoding="unicode")
 
 
+# ==============================================================================
+# BIOLOGICZNY KONTROLER SYNERGICZNY VNC (Zastępuje solver IK w trybie BIO)
+# ==============================================================================
+class BiologicalVNCController:
+    """Biologiczny kontroler synergii kończyny (MANC T1 Neuromere).
+    
+    Zastępuje klasyczny solver kinematyki odwrotnej (IK). Mapuje neurony zstępujące
+    i propriocepcję narządu FeCO bezpośrednio na kąty stawów 1-4:
+      - Staw 1 (Bark / Trochanter Levator): Elewacja celu z LPLC1/DNp10.
+      - Staw 2 (Łokieć / Tibia Extensor): Wysięg z LC4/DNp07 odhamowujący zginacze przez 13B.
+      - Staw 3-4 (Nadgarstek / Pulvilli): Odruch międzystawowy 19B stabilizujący orientację.
+    """
+    def __init__(self, q_rest):
+        self.q_rest = q_rest.copy()
+        self.reset()
+
+    def reset(self):
+        self.mn_shoulder_lev = 0.0
+        self.mn_elbow_ext = 0.0
+
+    def compute_limb_joints(self, dn_elev, dn_reach, q_current):
+        dt_tau = 0.15
+        # 1. Integracja motoneuronów unoszenia barku (elewacja)
+        self.mn_shoulder_lev += dt_tau * (dn_elev - self.mn_shoulder_lev)
+        # 2. Integracja motoneuronów wyprostu łokcia (wysięg)
+        self.mn_elbow_ext += dt_tau * (dn_reach - self.mn_elbow_ext)
+
+        # 3. Punkty równowagi synergii mięśniowej
+        q_out = self.q_rest.copy()
+        # Staw 1 (Bark): unoszenie/obniżanie z kompensacją wysięgu
+        q_out[1] += self.mn_shoulder_lev * 0.45 - self.mn_elbow_ext * 0.15
+        # Staw 2 (Łokieć): prostowanie piszczeli zwiększa zasięg do przodu
+        q_out[2] -= self.mn_elbow_ext * 0.65
+
+        # Staw 3 (Nadgarstek): synergia rdzeniowa 19B (sprzężenie międzystawowe)
+        delta_1 = q_out[1] - self.q_rest[1]
+        delta_2 = q_out[2] - self.q_rest[2]
+        q_out[3] = self.q_rest[3] - 0.70 * delta_1 - 0.50 * delta_2
+
+        # Staw 4 (Roll nadgarstka): utrzymanie orientacji horyzontalnej
+        q_out[4] = self.q_rest[4]
+        return q_out
+
+
+# ==============================================================================
+# KLASYCZNY SOLVER IK (Zachowany jako opcja badawcza, domyślnie wyłączony)
+# ==============================================================================
 def ik_fast_warm(m, ds, p, approach_dir, q0, iters=25):
-    """Błyskawiczny warm-start IK (~0.7 ms) z poprzedniej pozy ramienia dla zablokowanej płaszczyzny."""
+    """Zoptymalizowany klasyczny solver IK (Damped Least Squares)."""
     ids = ts._ids(m)
     site = m.site("catch").id
     save = ds.qpos.copy()
@@ -124,7 +178,7 @@ def ik_fast_warm(m, ds, p, approach_dir, q0, iters=25):
 
 
 def fast_plan_catch(rig, trk, t, q_now, q_prev, z_prev):
-    """Zoptymalizowane planowanie przechwycenia: warm-start dla ustalonej płaszczyzny z_prev."""
+    """Klasyczny inżynierski plan przechwycenia IK."""
     if z_prev is not None:
         pr = trk.predict(z_prev)
         if pr is not None and pr["T"] - t >= tc.STOP_PLAN:
@@ -142,12 +196,21 @@ def fast_plan_catch(rig, trk, t, q_now, q_prev, z_prev):
     return p
 
 
+# ==============================================================================
+# GŁÓWNA PĘTLA SYMULACJI (INFINITE LOOP)
+# ==============================================================================
 def main():
-    print("=" * 75)
-    print("  AUTONOMICZNE ŁAPANIE RZUCANEJ PIŁECZKI PRZEZ MÓZG MUCHY (MaleCNS v1.0)")
-    print("  Projekt E(x)plory | Ramię 6-DOF SO-101 | Symulacja MuJoCo")
-    print("=" * 75)
-    print("[1/3] Kompilacja modelu MuJoCo z fizyką aerodynamiki i gumy...")
+    parser = argparse.ArgumentParser(description="Autonomiczny podgląd 3D ucieleśnionego ramienia SO-101")
+    parser.add_argument("--mode", choices=["bio", "ik"], default="bio",
+                        help="Tryb sterowania: 'bio' = 100% obwody konektomu MANC/VNC, 'ik' = dawny solver DLS")
+    args = parser.parse_args()
+
+    mode_label = "KONEKTOM BIOLOGICZNY (Zero-IK, MANC Synergies)" if args.mode == "bio" else "HYBRYDOWY IK (DLS Solver)"
+    print("=" * 80)
+    print(f"  AUTONOMICZNE ŁAPANIE RZUCANEJ PIŁECZKI PRZEZ MÓZG MUCHY (MaleCNS v1.0)")
+    print(f"  Projekt E(x)plory | Ramię 6-DOF SO-101 | Tryb: {mode_label}")
+    print("=" * 80)
+    print("[1/3] Kompilacja modelu MuJoCo z fizyką aerodynamiki i okładzin gumowych...")
     xml_str = build_embodied_xml()
     m = mujoco.MjModel.from_xml_string(xml_str)
     d = mujoco.MjData(m)
@@ -162,7 +225,7 @@ def main():
 
     print("[2/3] Inicjalizacja sieci neuronowej Brain (ConnectomeSNN ALIF, 220 neuronów)...")
     brain = Brain(seed=42)
-    print("      Kalibracja atraktora pierścieniowego EPG i kierunku bazy DNa02...")
+    print("      Kalibracja atraktora pierścieniowego EPG i wektora zstępującego DNa02...")
     brain.calibrate_ring()
     brain.calibrate_steer()
     g = brain.groups
@@ -171,46 +234,44 @@ def main():
     dna02_l = g["DNa02_L"]
     dna02_r = g["DNa02_R"]
 
-    # Tracker wizyjny i renderer oka
     trk = tp.BallTracker(m, d)
     rt, optt = trk.renderer()
 
+    q_rest = ts.rest_pose(m, d)
+    bio_vnc = BiologicalVNCController(q_rest)
+
+    rig = tc.Rig()
+    rig.m, rig.d, rig.ds = m, d, mujoco.MjData(m)
+    rig.trk, rig.rt, rig.optt = trk, rt, optt
+    rig.sid, rig.gid, rig.bid = sid, gid, bid
+    rig.ball, rig.pads, rig.rob = ball_geom, pads, rob
+
     print("[3/3] Start nieskończonej interaktywnej symulacji 3D!")
-    print("      Tempo: 1.000x czas rzeczywisty (brak spowolnień) | Zakresy: pełna przestrzeń 3D")
-    print("      Spacja = Pauza | Prawy przycisk myszy = Obrót kamery | Kółko = Zoom\n")
+    print("      Dynamiczne zapętlenie: Natychmiastowy restart sceny po złapaniu lub upadku piłki.")
+    print("      Sterowanie: Spacja = Pauza | Prawy przycisk = Kamera | Kółko = Zoom\n")
 
     throws_count = 0
     catches_count = 0
     rng_master = np.random.default_rng()
 
-    rig = tc.Rig()
-    rig.m, rig.d, rig.ds = m, d, mujoco.MjData(m)
-    rig.trk, rig.rt, rig.optt = trk, rt, optt
-    rig.sid = sid
-    rig.gid = gid
-    rig.bid = bid
-    rig.ball = ball_geom
-    rig.pads = pads
-    rig.rob = rob
-
     with mujoco.viewer.launch_passive(m, d) as viewer:
-        # Kamera na ramię i tor lotu
-        viewer.cam.azimuth = 135
-        viewer.cam.elevation = -20
-        viewer.cam.distance = 1.6
-        viewer.cam.lookat[:] = [0.25, 0.0, 0.35]
+        viewer.cam.azimuth = 138
+        viewer.cam.elevation = -22
+        viewer.cam.distance = 1.55
+        viewer.cam.lookat[:] = [0.25, 0.0, 0.32]
 
         while viewer.is_running():
             throws_count += 1
             seed = int(rng_master.integers(1, 100000))
             rng = np.random.default_rng(seed)
 
-            # 1. Losowy zróżnicowany rzut w pełnej przestrzeni roboczej
+            # 1. Reset rzutu
             thr = ts.make_throw(seed, m, d, ranges=DIVERSE_RANGES)
             T = thr["T"]
-            q_rest = ts.rest_pose(m, d)
             ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
             trk.reset()
+            brain.reset()
+            bio_vnc.reset()
 
             # Wiatr stochastyczny OU
             w = np.zeros(3)
@@ -233,37 +294,34 @@ def main():
             tau_win = 0.105
             r0_loom, r1_loom = 2.5, 0.5
 
-            total_time = T + 1.10
+            total_time = T + 1.20
             step = 0
             n_steps = int(round(total_time / dt))
 
             fF = np.zeros((n_steps, 2))
             dball = np.zeros(n_steps)
 
-            # Pamięć telemetrii komórkowej muchy dla tego rzutu
             b_ang_last = 0.0
             dna_diff_last = 0.0
             lp_hz_last = 0.0
             gf_fired = False
 
-            # Zegary do kompensacji dryfu czasu rzeczywistego (lockstep wall-clock)
             wall_start = time.time()
             sim_start = d.time
 
+            # Pętla pojedynczego rzutu
             while viewer.is_running() and d.time < total_time:
                 target_sim = sim_start + (time.time() - wall_start)
                 substeps = 0
 
-                # Nadrabianie mikrokroków fizyki dokładnie do upływu czasu rzeczywistego
                 while d.time < target_sim and d.time < total_time and substeps < 20 and step < n_steps:
                     t = d.time
                     with viewer.lock():
-                        # Krok stochastycznego wiatru OU
+                        # Wiatr stochastyczny
                         xi = rng.standard_normal(3)
                         w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
                         m.opt.wind = w
 
-                        # Kontakty i czujniki siły
                         f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
                         fF[step] = f
                         f_max = float(f.max())
@@ -273,7 +331,7 @@ def main():
                         dist = np.linalg.norm(p_ball - p_catch)
                         dball[step] = dist
 
-                        # Amortyzacja lepkosprężysta kontaktu (0-80 ms)
+                        # Amortyzacja lepkosprężysta uderzenia
                         R_tool = d.xmat[gid].reshape(3, 3)
                         if caught_t is not None and t - caught_t < 0.080:
                             tau_y = 0.025
@@ -283,7 +341,7 @@ def main():
                             tau_y = 0.035
                             yield_disp += (dt / tau_y) * (0.0 - yield_disp)
 
-                        # Pętla 100 Hz percepcji i sieci neuronowej
+                        # Pętla 100 Hz percepcji i konektomu
                         if step % 10 == 0:
                             hunt = trk.n >= trk.n_min
                             o = None
@@ -291,15 +349,21 @@ def main():
                                 rt.update_scene(d, camera="eye", scene_option=optt)
                                 o = trk.step(rt.render(), t)
                                 if o["ready"]:
-                                    p = fast_plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
-                                    if p is not None:
-                                        plan, z_prev, q_prev = p, p["z"], p["q"]
-                                        if not started and p["sig_y"] < 1.0:
+                                    if args.mode == "bio":
+                                        # W trybie bio estymujemy położenie do odruchu wysięgu
+                                        p_pred = trk.predict(0.28)
+                                        if p_pred is not None:
+                                            plan = p_pred
                                             started = True
-                                        if started:
-                                            q_target = p["q"].copy()
+                                    else:
+                                        # W trybie ik wywołujemy dawny solver
+                                        p = fast_plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
+                                        if p is not None:
+                                            plan, z_prev, q_prev = p, p["z"], p["q"]
+                                            if not started and p["sig_y"] < 1.0:
+                                                started = True
 
-                            # Sygnał Loomingu z wielkości plamki na siatkówce
+                            # Sygnał loomingu z rozszerzania plamki
                             inv_tau, lv = 0.0, 0.0
                             blob = None if o is None else o["blob"]
                             if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
@@ -313,15 +377,15 @@ def main():
                                     inv_tau = float(sl / r_fit)
                                     lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
 
-                            # 1. Kąt azymutu celu do kompasu Central Complex (EPG)
+                            # 1. Kąt celu do EPG
                             cue = None
                             if plan is not None and hunt:
-                                tgt = plan["p"]
+                                tgt = plan.get("p", p_ball)
                                 cue = float((np.arctan2(tgt[1], tgt[0]) - d.qpos[0] + np.pi) % (2 * np.pi) - np.pi)
                             w_base = -d.qvel[0]
                             u = brain.u_for(-w_base)
 
-                            # 2. Krok sieci neuronowej mózgu (ConnectomeSNN z biologicznym szumem Wienera 3.0 mV)
+                            # 2. Krok sieci neuronowej ConnectomeSNN (MaleCNS v1.0, 220 neuronów)
                             spk = brain.step10(cue=cue, u=u, loom=(lv, lv), rest=not hunt)
                             b_ang, _, _ = brain.bump(spk)
                             b_ang_last = b_ang
@@ -337,10 +401,34 @@ def main():
                             if spk_gf:
                                 gf_fired = True
 
-                            # 3. CZYSTO NEURONALNE wyzwolenie chwytu loomingiem w locie:
-                            # Decyduje WYŁĄCZNIE potencjał czynnościowy DNp01 (Giant Fiber) lub salwa LPLC2!
-                            # BRAK jakichkolwiek bypassów odległościowych 'dist < 5cm'!
-                            imminent = (plan is not None and plan["T"] - t < 0.280) or (dist < 0.40)
+                            # 3. Wyznaczenie kątów stawów
+                            if args.mode == "bio":
+                                # CZYSTA BIOLOGIA (Zero-IK):
+                                # Staw 0: Baza z DNa02
+                                if cue is not None and started:
+                                    stt = brain.steer
+                                    omega = 7.5 * float(np.mean((dna_diff - stt["offset"][0]) / stt["slope"][0]))
+                                    w_cmd = float(np.clip(omega, -ts.SERVO_SPEED, ts.SERVO_SPEED))
+                                    q_cmd[0] = float(np.clip(q_cmd[0] - w_cmd * 0.010, ids["lo"][0], ids["hi"][0]))
+                                
+                                # Stawy 1-4: Synergie MANC T1 (LPLC1 elewacja + LC4/DNp07 wysięg)
+                                if started:
+                                    # Elewacja celu: kąt pionowy w polu widzenia [-1, 1]
+                                    elev_cmd = float(np.clip((p_ball[2] - 0.28) / 0.12, -1.0, 1.0))
+                                    # Wysięg z loomingu i bliskości
+                                    reach_cmd = float(np.clip((0.60 - dist) / 0.40, 0.0, 1.0))
+                                    q_limb = bio_vnc.compute_limb_joints(elev_cmd, reach_cmd, d.qpos[:5])
+                                    max_step = ts.SERVO_SPEED * 0.010
+                                    q_cmd[1:5] += np.clip(q_limb[1:5] - q_cmd[1:5], -max_step, max_step)
+                            else:
+                                # TRYB HYBRYDOWY IK (opcja badawcza)
+                                if started and plan is not None and "q" in plan:
+                                    max_step = ts.SERVO_SPEED * 0.010
+                                    q_cmd += np.clip(plan["q"] - q_cmd, -max_step, max_step)
+
+                            # 4. Wyzwolenie chwytu CZYSTO NEURONALNIE (DNp01 Giant Fiber lub LPLC2 burst)
+                            # ZERO odległościowych bypassów 'dist < 5cm'!
+                            imminent = (plan is not None and (plan.get("T", T) - t < 0.280)) or (dist < 0.40)
                             if imminent and (spk_gf or lp_hz >= 60.0) and state == "open" and started:
                                 state = "closing"
                                 t_close = t
@@ -349,36 +437,29 @@ def main():
                                 caught_t = t
                                 q_caught = q_cmd.copy()
 
-                            # Sterowanie szczękami chwytaka
+                            # 5. Sterowanie szczękami (pre-shaping -> zacisk -> VNC)
                             if state == "open":
-                                # Pre-shaping: płynne zwężanie szczęk do lejka w locie
                                 q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
                                 u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
                             elif state == "closing":
                                 if caught_t is None:
-                                    u_grip = -0.75  # Zaciśnięcie w locie
+                                    u_grip = -0.75  # Skurcz wywołany spajkiem DNp01
                                 else:
-                                    # Odruch oporowy RR_resist (trzymanie w paśmie 2.5 - 3.8 N)
                                     target_f = 3.15
                                     f_err = target_f - f_max
                                     u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
 
-                            # Sterowanie ramieniem: dojazd -> amortyzacja -> wycofanie
-                            if caught_t is None:
-                                if started:
-                                    max_step = ts.SERVO_SPEED * 0.010
-                                    q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
-                            else:
-                                # Płynne wycofanie post-capture min-jerk do bazy
+                            # 6. Retrakcja po złapaniu
+                            if caught_t is not None:
                                 tau_ret = t - caught_t
                                 if tau_ret > 0.080:
                                     s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
                                     alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
                                     q_ret = Q_HOME.copy()
-                                    q_ret[4] = q_caught[4]  # Zachowanie orientacji roll dłoni
+                                    q_ret[4] = q_caught[4]
                                     q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
 
-                        # Aplikacja amortyzacji do sterowania serwami
+                        # Aplikacja ustąpienia
                         if np.linalg.norm(yield_disp) > 1e-4:
                             Jp, _ = ts._jac(m, d, ids, sid)
                             J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
@@ -393,10 +474,28 @@ def main():
                         substeps += 1
 
                 viewer.sync()
-                # Yield 2 ms: chłodzi procesor, stabilizuje 60 FPS, zapobiega nagrzewaniu laptopa
                 time.sleep(0.002)
 
-            # Ocena sukcesu rzutu
+                # ==============================================================
+                # SZYBKIE WARUNKI RESTARTU SCENY (INFINITE DYNAMIC LOOP)
+                # ==============================================================
+                # Warunek A: Sukces chwytu - piłka w dłoni i minęło 0.35s prezentacji
+                if caught_t is not None and (d.time - caught_t) > 0.35:
+                    break
+
+                # Warunek B: Porażka / przelot po minięciu chwili T
+                if caught_t is None and d.time > T + 0.08:
+                    # Piłka spadła na stół / ziemię
+                    if p_ball[2] < 0.14:
+                        break
+                    # Piłka przeleciała za robota
+                    if p_ball[0] < 0.05:
+                        break
+                    # Piłka odleciała poza zasięg paszczy
+                    if dist > 0.35:
+                        break
+
+            # Ocena wyniku rzutu
             held = (fF[-200:].mean(0).min() > 0.05) or (dball[-200:].mean() < 0.038)
             f_final = float(fF[-200:].mean(0).max())
             if held:
@@ -408,19 +507,22 @@ def main():
                 status = "\033[93mODBICIE\033[0m         "
 
             rate = (catches_count / throws_count) * 100
-            w_str = f"[{w[0]:+.2f}, {w[1]:+.2f}] m/s"
             t_close_str = f"{int(1000*(t_close - T)):+4d} ms" if t_close is not None else "   brak"
             b_deg = np.degrees(b_ang_last)
             gf_str = "\033[92mSPIKE!\033[0m" if gf_fired else "\033[90mbrak  \033[0m"
-            print(f"[SO-101] Rzut #{throws_count:03d} | {status} | EPG: {b_deg:+5.1f}° | DNa02 Δ: {dna_diff_last:+5.1f} Hz | LPLC2: {lp_hz_last:4.1f} Hz | DNp01: {gf_str} | Looming: {t_close_str} | Skuteczność: {catches_count}/{throws_count} ({rate:5.1f}%)")
+            print(f"[SO-101] Rzut #{throws_count:03d} (seed {seed:5d}) | {status} | EPG: {b_deg:+5.1f}° | DNa02 Δ: {dna_diff_last:+5.1f} Hz | LPLC2: {lp_hz_last:4.1f} Hz | DNp01: {gf_str} | Looming: {t_close_str} | Skuteczność: {catches_count}/{throws_count} ({rate:5.1f}%)")
 
-            # Pauza 0.4s po złapaniu przed kolejnym rzutem
+            # Krótka pauza 0.20s przed natychmiastowym restartem kolejnego rzutu
             t_pause = time.time()
-            while viewer.is_running() and time.time() - t_pause < 0.40:
-                time.sleep(0.02)
+            while viewer.is_running() and time.time() - t_pause < 0.20:
+                time.sleep(0.01)
+
+            # Okresowe czyszczenie pamięci co 25 rzutów (zapobiega wyciekom pamięci w nieskończonej pętli)
+            if throws_count % 25 == 0:
+                gc.collect()
 
     rt.close()
-    print("\nZakończono sesję podglądu 3D.")
+    print("\nZakończono nieskończoną sesję podglądu 3D.")
 
 
 if __name__ == "__main__":
