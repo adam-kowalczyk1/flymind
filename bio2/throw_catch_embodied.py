@@ -50,6 +50,84 @@ Q_READY = 0.55
 Q_HOME = np.array([0.0, -0.35, 0.85, 0.40, 0.0])
 CATCH_SITE_POS = "0.024 0.0 -0.074"
 
+# Zróżnicowane zakresy rzutów w pełnej przestrzeni roboczej SO-101
+DIVERSE_RANGES = dict(
+    az_star=np.radians((-38.0, 38.0)),   # Szeroki wachlarz azymutów lądowania (-38° do +38°)
+    r_star=(0.18, 0.38),                 # Odległości od bliskiego (18 cm) do dalekiego wysięgu (38 cm)
+    z_star=(0.20, 0.36),                 # Wysokość lądowania: od niskich (20 cm) do wysokich (36 cm)
+    d0=(0.9, 2.3),                       # Odległość wyrzutu (od 0.9 m do 2.3 m)
+    az0=np.radians((-52.0, 52.0)),       # Rzuty z szerokich kątów bocznych (-52° do +52°)
+    z0=(0.18, 0.95),                     # Rzuty od niskich płaskich po wysokie parabole lobowe
+    T=(0.55, 1.05),                      # Czasy lotu od dynamicznych 550 ms po 1050 ms
+    ang_max=np.radians(24.0),            # Maksymalny dopuszczalny kąt natarcia
+)
+
+
+def ik_fast_warm(m, ds, p, approach_dir, q0, iters=25):
+    """Błyskawiczny warm-start IK (~0.7 ms) z poprzedniej pozy ramienia dla zablokowanej płaszczyzny."""
+    ids = ts._ids(m)
+    site = m.site("catch").id
+    save = ds.qpos.copy()
+    ds.qpos[5] = Q_OPEN
+    p = np.asarray(p, float)
+    Rd = ts._desired_frame(approach_dir)
+    n = len(ids["qa"])
+    q = np.clip(np.asarray(q0, float), ids["lo"], ids["hi"])
+    lam = 0.01
+    for it in range(iters):
+        ts._fk(m, ds, ids, q)
+        ep = p - ds.site_xpos[site]
+        Jp, Jr = ts._jac(m, ds, ids, site)
+        R = ds.xmat[ids["grip"]].reshape(3, 3)
+        eo = 0.5 * sum(np.cross(R[:, i], Rd[:, i]) for i in range(3))
+        free = np.ones(n, bool)
+        for _ in range(3):
+            f = np.where(free)[0]
+            jp, jr = Jp[:, f], Jr[:, f]
+            jpp = jp.T @ np.linalg.inv(jp @ jp.T + lam ** 2 * np.eye(3))
+            dqf = jpp @ ep
+            if eo is not None:
+                N = np.eye(len(f)) - jpp @ jp
+                jrn = jr @ N
+                dqf = dqf + N @ (jrn.T @ np.linalg.solve(jrn @ jrn.T + 0.05 ** 2 * np.eye(3), eo - jr @ dqf)) * 0.5
+            dq = np.zeros(n)
+            dq[f] = dqf
+            bad = ((q + dq > ids["hi"]) & (dq > 0)) | ((q + dq < ids["lo"]) & (dq < 0))
+            if not (bad & free).any():
+                break
+            free &= ~bad
+        nm = np.abs(dq).max()
+        if nm > 0.15:
+            dq *= 0.15 / nm
+        q = np.clip(q + dq, ids["lo"], ids["hi"])
+        if nm < 1e-5 and it > 5:
+            break
+    ts._fk(m, ds, ids, q)
+    err = float(np.linalg.norm(p - ds.site_xpos[site]))
+    tool = -ds.xmat[ids["grip"]].reshape(3, 3)[:, 2]
+    ang = float(np.arccos(np.clip(tool @ (-approach_dir / np.linalg.norm(approach_dir)), -1, 1)))
+    ds.qpos[:] = save
+    return q, err, ang
+
+
+def fast_plan_catch(rig, trk, t, q_now, q_prev, z_prev):
+    """Zoptymalizowane planowanie przechwycenia: warm-start dla ustalonej płaszczyzny z_prev."""
+    if z_prev is not None:
+        pr = trk.predict(z_prev)
+        if pr is not None and pr["T"] - t >= tc.STOP_PLAN:
+            a = pr["v"] / np.linalg.norm(pr["v"])
+            q, err, ang = ik_fast_warm(rig.m, rig.ds, pr["p"], a, q_prev, iters=25)
+            if err <= 1.8e-3 and ang <= np.radians(26.0):
+                ds = rig.ds
+                ds.qpos[rig.ids["qa"]] = q
+                mujoco.mj_kinematics(rig.m, ds)
+                R = ds.xmat[rig.gid].reshape(3, 3)
+                sy = float(np.sqrt(max((R.T @ pr["cov_p"] @ R)[1, 1], 0)))
+                travel = float(np.abs(q - q_now).max() / ts.SERVO_SPEED)
+                return dict(z=z_prev, q=q, p=pr["p"], T=pr["T"], ang=float(np.degrees(ang)), sig_y=sy, slack=pr["T"] - t - travel - 0.03)
+    p, _ = tc.plan_catch(rig, trk, t, q_now, q_prev, z_prev)
+    return p
+
 
 def build_embodied_xml():
     """Tworzy model XML MuJoCo ze zintegrowaną aerodynamiką i nadkrytycznie tłumionymi okładzinami."""
@@ -101,8 +179,9 @@ class EmbodiedRig:
         self.gid = self.m.body("gripper").id
         self.bid = self.m.body("ball").id
 
-    def throw(self, seed):
-        return ts.make_throw(seed, self.m, self.d)
+    def throw(self, seed, ranges=None):
+        rg = ranges or DIVERSE_RANGES
+        return ts.make_throw(seed, self.m, self.d, ranges=rg)
 
     def close(self):
         self.rt.close()
@@ -233,7 +312,7 @@ def run_trial(seed, variant="BIO-embodied", rig=None, record=False):
                     rig.rt.update_scene(d, camera="eye", scene_option=rig.optt)
                     o = rig.trk.step(rig.rt.render(), t)
                     if o["ready"]:
-                        p, _ = tc.plan_catch(rig, rig.trk, t, d.qpos[:5], q_prev, z_prev)
+                        p = fast_plan_catch(rig, rig.trk, t, d.qpos[:5], q_prev, z_prev)
                         if p is not None:
                             plan, z_prev, q_prev = p, p["z"], p["q"]
                             if not started and p["sig_y"] < 1.0:

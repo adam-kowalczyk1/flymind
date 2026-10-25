@@ -20,7 +20,7 @@ import throw_catch as tc
 import throw_percept as tp
 import throw_scene as ts
 from brain import Brain
-from throw_catch_embodied import build_embodied_xml, Q_OPEN, Q_READY, Q_HOME
+from throw_catch_embodied import build_embodied_xml, Q_OPEN, Q_READY, Q_HOME, DIVERSE_RANGES, fast_plan_catch
 
 FFMPEG = "/Users/admin/miniforge3/bin/ffmpeg"
 DESKTOP_DIR = "/Users/admin/Desktop/Explory_Projekt_Mucha_SO101/wykresy_i_wideo"
@@ -64,7 +64,7 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
     g = brain.groups
     gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
 
-    thr = ts.make_throw(seed, m, d)
+    thr = ts.make_throw(seed, m, d, ranges=DIVERSE_RANGES)
     T = thr["T"]
     q_rest = ts.rest_pose(m, d)
     ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
@@ -141,7 +141,7 @@ def render_embodied_video(seed=100, out_mp4="so101_thrown_catch_embodied.mp4", o
                 rt.update_scene(d, camera="eye", scene_option=optt)
                 o = trk.step(rt.render(), t)
                 if o["ready"]:
-                    p, _ = tc.plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
+                    p = fast_plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
                     if p is not None:
                         plan, z_prev, q_prev = p, p["z"], p["q"]
                         if not started and p["sig_y"] < 1.0:
