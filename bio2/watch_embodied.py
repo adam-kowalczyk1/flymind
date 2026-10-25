@@ -6,11 +6,13 @@ Uruchomienie na macOS:
 
 Cechy:
   - Nieskończona pętla rzutów: każdy rzut z losowego kąta, innej prędkości i z unikalnym wiatrem stochastycznym OU.
+  - Szeroki wachlarz trajektorii 3D (DIVERSE_RANGES): zróżnicowane kąty podejścia, wysokości i punkty lądowania.
   - Prawdziwy mózg muchy (ConnectomeSNN): szum błonowy 3.0 mV daje autentyczny biologiczny niedeterminizm.
   - Wyzwalanie chwytu loomingiem (DNp01 / LPLC2): zamknięcie w locie ~160 ms przed kontaktem.
   - Nadkrytycznie tłumione gumowe okładziny (solref 0.004 1.2, tarcie 1.8) eliminujące odbicia.
   - Odruch oporowy VNC (RR_resist): docisk w bezpiecznym paśmie 2.5 - 3.8 N (zero zgnieceń).
   - Płynna retrakcja po złapaniu do pozycji spoczynkowej q_home (brak zamrażania w powietrzu).
+  - Pętla czasu rzeczywistego (lockstep wall-clock 1.000x): idealnie równomierne tempo lotu bez spowolnień i zrywów.
   - Czytelny HUD w terminalu z licznikiem skuteczności na żywo.
 """
 
@@ -37,6 +39,19 @@ Q_OPEN = 1.20
 Q_READY = 0.55
 Q_HOME = np.array([0.0, -0.35, 0.85, 0.40, 0.0])
 
+# Zróżnicowane zakresy rzutów w pełnej przestrzeni roboczej SO-101
+DIVERSE_RANGES = dict(
+    az_star=np.radians((-38.0, 38.0)),   # Szeroki wachlarz azymutów lądowania (-38° do +38°)
+    r_star=(0.18, 0.38),                 # Odległości od bliskiego (18 cm) do dalekiego wysięgu (38 cm)
+    z_star=(0.20, 0.36),                 # Wysokość lądowania: od niskich (20 cm) do wysokich (36 cm)
+    d0=(0.9, 2.3),                       # Odległość wyrzutu (od 0.9 m do 2.3 m)
+    az0=np.radians((-52.0, 52.0)),       # Rzuty z szerokich kątów bocznych (-52° do +52°)
+    z0=(0.18, 0.95),                     # Rzuty od niskich płaskich po wysokie parabole lobowe
+    T=(0.55, 1.05),                      # Czasy lotu od dynamicznych 550 ms po 1050 ms
+    ang_max=np.radians(24.0),            # Maksymalny dopuszczalny kąt natarcia
+)
+
+
 def build_embodied_xml():
     """Generuje XML z nadkrytycznie tłumionymi okładzinami i aerodynamiką."""
     root = ET.fromstring(ts.build_xml())
@@ -59,6 +74,73 @@ def build_embodied_xml():
         if s.get("name") == "catch":
             s.set("pos", "0.024 0.0 -0.074")
     return ET.tostring(root, encoding="unicode")
+
+
+def ik_fast_warm(m, ds, p, approach_dir, q0, iters=25):
+    """Błyskawiczny warm-start IK (~0.7 ms) z poprzedniej pozy ramienia dla zablokowanej płaszczyzny."""
+    ids = ts._ids(m)
+    site = m.site("catch").id
+    save = ds.qpos.copy()
+    ds.qpos[5] = Q_OPEN
+    p = np.asarray(p, float)
+    Rd = ts._desired_frame(approach_dir)
+    n = len(ids["qa"])
+    q = np.clip(np.asarray(q0, float), ids["lo"], ids["hi"])
+    lam = 0.01
+    for it in range(iters):
+        ts._fk(m, ds, ids, q)
+        ep = p - ds.site_xpos[site]
+        Jp, Jr = ts._jac(m, ds, ids, site)
+        R = ds.xmat[ids["grip"]].reshape(3, 3)
+        eo = 0.5 * sum(np.cross(R[:, i], Rd[:, i]) for i in range(3))
+        free = np.ones(n, bool)
+        for _ in range(3):
+            f = np.where(free)[0]
+            jp, jr = Jp[:, f], Jr[:, f]
+            jpp = jp.T @ np.linalg.inv(jp @ jp.T + lam ** 2 * np.eye(3))
+            dqf = jpp @ ep
+            if eo is not None:
+                N = np.eye(len(f)) - jpp @ jp
+                jrn = jr @ N
+                dqf = dqf + N @ (jrn.T @ np.linalg.solve(jrn @ jrn.T + 0.05 ** 2 * np.eye(3), eo - jr @ dqf)) * 0.5
+            dq = np.zeros(n)
+            dq[f] = dqf
+            bad = ((q + dq > ids["hi"]) & (dq > 0)) | ((q + dq < ids["lo"]) & (dq < 0))
+            if not (bad & free).any():
+                break
+            free &= ~bad
+        nm = np.abs(dq).max()
+        if nm > 0.15:
+            dq *= 0.15 / nm
+        q = np.clip(q + dq, ids["lo"], ids["hi"])
+        if nm < 1e-5 and it > 5:
+            break
+    ts._fk(m, ds, ids, q)
+    err = float(np.linalg.norm(p - ds.site_xpos[site]))
+    tool = -ds.xmat[ids["grip"]].reshape(3, 3)[:, 2]
+    ang = float(np.arccos(np.clip(tool @ (-approach_dir / np.linalg.norm(approach_dir)), -1, 1)))
+    ds.qpos[:] = save
+    return q, err, ang
+
+
+def fast_plan_catch(rig, trk, t, q_now, q_prev, z_prev):
+    """Zoptymalizowane planowanie przechwycenia: warm-start dla ustalonej płaszczyzny z_prev."""
+    if z_prev is not None:
+        pr = trk.predict(z_prev)
+        if pr is not None and pr["T"] - t >= tc.STOP_PLAN:
+            a = pr["v"] / np.linalg.norm(pr["v"])
+            q, err, ang = ik_fast_warm(rig.m, rig.ds, pr["p"], a, q_prev, iters=25)
+            if err <= 1.8e-3 and ang <= np.radians(26.0):
+                ds = rig.ds
+                ds.qpos[rig.ids["qa"]] = q
+                mujoco.mj_kinematics(rig.m, ds)
+                R = ds.xmat[rig.gid].reshape(3, 3)
+                sy = float(np.sqrt(max((R.T @ pr["cov_p"] @ R)[1, 1], 0)))
+                travel = float(np.abs(q - q_now).max() / ts.SERVO_SPEED)
+                return dict(z=z_prev, q=q, p=pr["p"], T=pr["T"], ang=float(np.degrees(ang)), sig_y=sy, slack=pr["T"] - t - travel - 0.03)
+    p, _ = tc.plan_catch(rig, trk, t, q_now, q_prev, z_prev)
+    return p
+
 
 def main():
     print("=" * 75)
@@ -92,6 +174,7 @@ def main():
     rt, optt = trk.renderer()
 
     print("[3/3] Start nieskończonej interaktywnej symulacji 3D!")
+    print("      Tempo: 1.000x czas rzeczywisty (brak spowolnień) | Zakresy: pełna przestrzeń 3D")
     print("      Spacja = Pauza | Prawy przycisk myszy = Obrót kamery | Kółko = Zoom\n")
 
     throws_count = 0
@@ -120,8 +203,8 @@ def main():
             seed = int(rng_master.integers(1, 100000))
             rng = np.random.default_rng(seed)
 
-            # 1. Losowy rzut
-            thr = ts.make_throw(seed, m, d)
+            # 1. Losowy zróżnicowany rzut w pełnej przestrzeni roboczej
+            thr = ts.make_throw(seed, m, d, ranges=DIVERSE_RANGES)
             T = thr["T"]
             q_rest = ts.rest_pose(m, d)
             ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
@@ -155,125 +238,133 @@ def main():
             fF = np.zeros((n_steps, 2))
             dball = np.zeros(n_steps)
 
+            # Zegary do kompensacji dryfu czasu rzeczywistego (lockstep wall-clock)
+            wall_start = time.time()
+            sim_start = d.time
+
             while viewer.is_running() and d.time < total_time:
-                step_t0 = time.time()
-                t = d.time
+                target_sim = sim_start + (time.time() - wall_start)
+                substeps = 0
 
-                with viewer.lock():
-                    # Krok stochastycznego wiatru OU
-                    xi = rng.standard_normal(3)
-                    w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
-                    m.opt.wind = w
+                # Nadrabianie mikrokroków fizyki dokładnie do upływu czasu rzeczywistego
+                while d.time < target_sim and d.time < total_time and substeps < 20 and step < n_steps:
+                    t = d.time
+                    with viewer.lock():
+                        # Krok stochastycznego wiatru OU
+                        xi = rng.standard_normal(3)
+                        w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
+                        m.opt.wind = w
 
-                    # Kontakty i czujniki siły
-                    f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
-                    fF[step] = f
-                    f_max = float(f.max())
+                        # Kontakty i czujniki siły
+                        f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
+                        fF[step] = f
+                        f_max = float(f.max())
 
-                    p_catch = d.site_xpos[sid].copy()
-                    p_ball = d.xpos[bid].copy()
-                    dist = np.linalg.norm(p_ball - p_catch)
-                    dball[step] = dist
+                        p_catch = d.site_xpos[sid].copy()
+                        p_ball = d.xpos[bid].copy()
+                        dist = np.linalg.norm(p_ball - p_catch)
+                        dball[step] = dist
 
-                    # Amortyzacja lepkosprężysta kontaktu (0-80 ms)
-                    R_tool = d.xmat[gid].reshape(3, 3)
-                    if caught_t is not None and t - caught_t < 0.080:
-                        tau_y = 0.025
-                        target_yield = -R_tool[:, 2] * 0.018
-                        yield_disp += (dt / tau_y) * (target_yield - yield_disp)
-                    else:
-                        tau_y = 0.035
-                        yield_disp += (dt / tau_y) * (0.0 - yield_disp)
-
-                    # Pętla 100 Hz percepcji i sieci neuronowej
-                    if step % 10 == 0:
-                        hunt = trk.n >= trk.n_min
-                        o = None
-                        if plan is None or plan["T"] - t > tc.STOP_PLAN:
-                            rt.update_scene(d, camera="eye", scene_option=optt)
-                            o = trk.step(rt.render(), t)
-                            if o["ready"]:
-                                p, _ = tc.plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
-                                if p is not None:
-                                    plan, z_prev, q_prev = p, p["z"], p["q"]
-                                    if not started and p["sig_y"] < 1.0:
-                                        started = True
-                                    if started:
-                                        q_target = p["q"].copy()
-
-                        # Sygnał Loomingu z wielkości plamki na siatkówce
-                        inv_tau, lv = 0.0, 0.0
-                        blob = None if o is None else o["blob"]
-                        if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
-                            r_hist.append((t, float(np.sqrt(blob["A"] / np.pi) - trk.delta)))
-                        r_hist = [h for h in r_hist if t - h[0] < tau_win]
-                        if len(r_hist) >= 4:
-                            tt_, rr_ = np.array(r_hist).T
-                            sl, ic = np.polyfit(tt_, rr_, 1)
-                            r_fit = sl * t + ic
-                            if r_fit > 1.0:
-                                inv_tau = float(sl / r_fit)
-                                lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
-
-                        # Krok sieci neuronowej mózgu (ConnectomeSNN z szumem 3 mV)
-                        spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
-                        spk_gf = bool(spk[:, gf_ids].any())
-
-                        # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
-                        imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
-                        if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
-                            state = "closing"
-                            t_close = t
-
-                        if f_max > 0.15 and caught_t is None:
-                            caught_t = t
-                            q_caught = q_cmd.copy()
-
-                        # Sterowanie szczękami chwytaka
-                        if state == "open":
-                            # Pre-shaping: płynne zwężanie szczęk do lejka w locie
-                            q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
-                            u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
-                        elif state == "closing":
-                            if caught_t is None:
-                                u_grip = -0.75  # Zaciśnięcie w locie
-                            else:
-                                # Odruch oporowy RR_resist (trzymanie w paśmie 2.5 - 3.8 N)
-                                target_f = 3.15
-                                f_err = target_f - f_max
-                                u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
-
-                        # Sterowanie ramieniem: dojazd -> amortyzacja -> wycofanie
-                        if caught_t is None:
-                            if started:
-                                max_step = ts.SERVO_SPEED * 0.010
-                                q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
+                        # Amortyzacja lepkosprężysta kontaktu (0-80 ms)
+                        R_tool = d.xmat[gid].reshape(3, 3)
+                        if caught_t is not None and t - caught_t < 0.080:
+                            tau_y = 0.025
+                            target_yield = -R_tool[:, 2] * 0.018
+                            yield_disp += (dt / tau_y) * (target_yield - yield_disp)
                         else:
-                            # Płynne wycofanie post-capture min-jerk do bazy
-                            tau_ret = t - caught_t
-                            if tau_ret > 0.080:
-                                s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
-                                alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
-                                q_ret = Q_HOME.copy()
-                                q_ret[4] = q_caught[4]  # Zachowanie orientacji roll dłoni
-                                q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
+                            tau_y = 0.035
+                            yield_disp += (dt / tau_y) * (0.0 - yield_disp)
 
-                    # Aplikacja amortyzacji do sterowania serwami
-                    if np.linalg.norm(yield_disp) > 1e-4:
-                        Jp, _ = ts._jac(m, d, ids, sid)
-                        J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
-                        dq_y = J_dls @ yield_disp
-                        d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"][:5], ids["hi"][:5])
-                    else:
-                        d.ctrl[:5] = q_cmd
+                        # Pętla 100 Hz percepcji i sieci neuronowej
+                        if step % 10 == 0:
+                            hunt = trk.n >= trk.n_min
+                            o = None
+                            if plan is None or plan["T"] - t > tc.STOP_PLAN:
+                                rt.update_scene(d, camera="eye", scene_option=optt)
+                                o = trk.step(rt.render(), t)
+                                if o["ready"]:
+                                    p = fast_plan_catch(rig, trk, t, d.qpos[:5], q_prev, z_prev)
+                                    if p is not None:
+                                        plan, z_prev, q_prev = p, p["z"], p["q"]
+                                        if not started and p["sig_y"] < 1.0:
+                                            started = True
+                                        if started:
+                                            q_target = p["q"].copy()
 
-                    d.ctrl[5] = u_grip
-                    mujoco.mj_step(m, d)
+                            # Sygnał Loomingu z wielkości plamki na siatkówce
+                            inv_tau, lv = 0.0, 0.0
+                            blob = None if o is None else o["blob"]
+                            if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
+                                r_hist.append((t, float(np.sqrt(blob["A"] / np.pi) - trk.delta)))
+                            r_hist = [h for h in r_hist if t - h[0] < tau_win]
+                            if len(r_hist) >= 4:
+                                tt_, rr_ = np.array(r_hist).T
+                                sl, ic = np.polyfit(tt_, rr_, 1)
+                                r_fit = sl * t + ic
+                                if r_fit > 1.0:
+                                    inv_tau = float(sl / r_fit)
+                                    lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
+
+                            # Krok sieci neuronowej mózgu (ConnectomeSNN z szumem 3 mV)
+                            spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
+                            spk_gf = bool(spk[:, gf_ids].any())
+
+                            # Wyzwolenie chwytu loomingiem w locie (~160 ms przed kontaktem)
+                            imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
+                            if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
+                                state = "closing"
+                                t_close = t
+
+                            if f_max > 0.15 and caught_t is None:
+                                caught_t = t
+                                q_caught = q_cmd.copy()
+
+                            # Sterowanie szczękami chwytaka
+                            if state == "open":
+                                # Pre-shaping: płynne zwężanie szczęk do lejka w locie
+                                q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
+                                u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
+                            elif state == "closing":
+                                if caught_t is None:
+                                    u_grip = -0.75  # Zaciśnięcie w locie
+                                else:
+                                    # Odruch oporowy RR_resist (trzymanie w paśmie 2.5 - 3.8 N)
+                                    target_f = 3.15
+                                    f_err = target_f - f_max
+                                    u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
+
+                            # Sterowanie ramieniem: dojazd -> amortyzacja -> wycofanie
+                            if caught_t is None:
+                                if started:
+                                    max_step = ts.SERVO_SPEED * 0.010
+                                    q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
+                            else:
+                                # Płynne wycofanie post-capture min-jerk do bazy
+                                tau_ret = t - caught_t
+                                if tau_ret > 0.080:
+                                    s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
+                                    alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
+                                    q_ret = Q_HOME.copy()
+                                    q_ret[4] = q_caught[4]  # Zachowanie orientacji roll dłoni
+                                    q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
+
+                        # Aplikacja amortyzacji do sterowania serwami
+                        if np.linalg.norm(yield_disp) > 1e-4:
+                            Jp, _ = ts._jac(m, d, ids, sid)
+                            J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
+                            dq_y = J_dls @ yield_disp
+                            d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"][:5], ids["hi"][:5])
+                        else:
+                            d.ctrl[:5] = q_cmd
+
+                        d.ctrl[5] = u_grip
+                        mujoco.mj_step(m, d)
+                        step += 1
+                        substeps += 1
 
                 viewer.sync()
-                # Płynne 60 FPS
-                time.sleep(max(0.0, dt - (time.time() - step_t0)))
-                step += 1
+                # Yield 2 ms: chłodzi procesor, stabilizuje 60 FPS, zapobiega nagrzewaniu laptopa
+                time.sleep(0.002)
 
             # Ocena sukcesu rzutu
             held = (fF[-200:].mean(0).min() > 0.05) or (dball[-200:].mean() < 0.038)
@@ -298,6 +389,7 @@ def main():
 
     rt.close()
     print("\nZakończono sesję podglądu 3D.")
+
 
 if __name__ == "__main__":
     main()
