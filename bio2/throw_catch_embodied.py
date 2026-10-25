@@ -1,31 +1,28 @@
-"""Etap 5.5 (bio2): Wcielony (embodied), biologiczny kontroler ramienia SO-101 do łapania rzucanej piłeczki.
+"""Etap 5.5 (bio2): Ucieleśniony (embodied), w pełni biologiczny kontroler ramienia SO-101 (MaleCNS v1.0).
 
-Eliminuje sztuczne uproszczenia (brak analitycznych parabol w próżni, brak skokowego PWM d.ctrl[5] = -0.8,
-brak nienaturalnego zamrażania w powietrzu przy 70°).
-
-Cechy układu wcielonego:
-  1. Realistyczna aerodynamika MuJoCo: gęstość powietrza 1.225 kg/m^3, lepkość 1.8e-5 Pa*s, opór płynu na piłeczce
-     (fluidshape='ellipsoid', fluidcoef='0.5 0.25 1.5 1.0 1.0').
-  2. Stochastyczny wiatr boczny (proces Ornsteina-Uhlenbecka: theta=2.5, mu=[0, 0.2, 0], sigma=1.2 m/s^1.5),
+Architektura oparta na konektomie muchy i zasadach ucieleśnionej biomechaniki:
+  1. Realistyczna aerodynamika MuJoCo: gęstość powietrza 1.225 kg/m^3, lepkość 1.8e-5 Pa*s,
+     aerodynamiczny opór płynu na piłeczce (ellipsoid, drag).
+  2. Stochastyczny boczny wiatr (proces Ornsteina-Uhlenbecka: theta=2.5, mu_y w [-0.25, 0.25], sigma=1.2 m/s^1.5),
      generujący dryf toru lotu rzędu 50-70 mm.
-  3. Ciągły pościg wzrokowy przez nawigację proporcjonalną (PN):
-     v_task = R_dist * (N_PN * dlambda/dt + K_fix * e_ret), N_PN = 3.6, K_fix = 14.0.
-     Ruch realizowany przez różniczkową kinematykę DLS (lambda = 0.04) i dynamikę serw.
-  4. Płynne wstępne kształtowanie chwytaka (pre-shaping) sterowane loomingiem wzrokowym (1/tau = v_clos / R_dist):
-     mięsień zginacz powolny (Ti flexor slow) płynnie domyka szczęki z q_open = 1.2 rad do q_ready = 0.42 rad
-     przed zderzeniem, tworząc lejek hamujący na padach gumowych.
-  5. Łuk odruchowy wg zasady wielkości Hennemana z czuciem z narządów dzwonkowatych (campaniform sensilla):
-     - Lepkosprężyste ustąpienie (compliant yield, tau_y = 25 ms, 18 mm w głąb dłoni) pochłaniające energię zderzenia.
-     - Odruchowy docisk i toniczne utrzymanie uścisku (u_grip = -0.16, siła trzymania ~2.5-3.5 N, brak zgniecenia < 5 N).
-  6. Płynne wycofanie ramienia po przechwycie (post-capture retraction):
-     płynna interpolacja sześcienna w czasie 450 ms do pozy spoczynkowej (q_home), z zachowaniem uścisku.
+  3. Ciągły pościg wzrokowy z kamery pokładowej "eye" (320x240, 100 Hz) z estymacją toru lotu w czasie rzeczywistym.
+  4. Prawdziwa sieć neuronowa mózgu muchy (ConnectomeSNN ALIF, 220 neuronów z szumem Wienera 3.0 mV):
+     - Zespół detektorów loomingu (LC4, LPLC2) sprzężonych z neuronem zstępującym DNp01 (Giant Fiber).
+     - Zespół Central Complex (atraktor pierścieniowy EPG -> PFL3 -> DNa02/DNa01) wyznaczający kierunek pościgu.
+  5. Biomechanika chwytaka i adaptacyjny odruch uścisku:
+     - Wstępne formowanie chwytaka (pre-shaping): płynne zwężanie szczęk z q_open=1.20 rad do q_ready=0.55 rad w locie.
+     - Wyzwolenie chwytu loomingiem w locie: zamknięcie szczęk ~160 ms przed kontaktem, eliminujące odbicia.
+     - Nadkrytycznie tłumione gumowe okładziny (solref 0.004 1.2, tarcie 1.8, brak odbicia sprężystego).
+     - Lepkosprężyste ustąpienie biomechaniczne (compliant yield, tau_y=25 ms, 18 mm w głąb narzędzia) pochłaniające pęd zderzenia.
+     - Odruch oporowy VNC (RR_resist): docisk regulowany w bezpiecznym paśmie 2.5 - 3.8 N (zero zgnieceń, brak upuszczenia).
+     - Płynna retrakcja min-jerk (450 ms) do pozycji spoczynkowej q_home z zachowaniem uścisku.
 
-Warianty przyczynowe (causality controls):
-  - BIO-embodied: pełny biologiczny model wcielony.
-  - BIO-les-LPLC: ablacja loomingu (brak pre-shapingu, szczęki otwarte na 1.2 rad, spóźnione zamknięcie).
-  - BIO-les-PFL3: ablacja pościgu azymutalnego (baza zamrożona, chybienie poprzeczne).
-  - BIO-shuffle: tasowanie wag synaptycznych (brak koordynacji, rozbieżność ruchu).
-  - ENG-vacuum: inżynierska sztywna trajektoria wyliczona w próżni (chybia przez dryf wiatru).
+Warianty przyczynowe (kontrole biologiczne):
+  - BIO-embodied: pełny biologiczny model ucieleśniony.
+  - BIO-les-LPLC: ablacja loomingu (brak pre-shapingu i wyzwolenia w locie -> odbicie).
+  - BIO-les-PFL3: ablacja Central Complex (brak skrętu bazy -> chybienie poprzeczne).
+  - BIO-shuffle: przetasowany konektom (brak skoordynowanej odpowiedzi -> rozbieżność).
+  - ENG-vacuum: inżynierska sztywna trajektoria z próżni (brak adaptacji do wiatru -> chybienie).
 """
 
 import argparse
@@ -36,27 +33,26 @@ import xml.etree.ElementTree as ET
 import mujoco
 import numpy as np
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(HERE)
+
+import scene2
 import so101_base as sb
 import throw_catch as tc
+import throw_percept as tp
 import throw_scene as ts
+from authenticity import AuthBrain
+from brain import Brain
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-
-# Parametry kontrolera wcielonego
-N_PN = 3.6
-K_FIX = 14.0
-LAM_DLS = 0.04
-SERVO_SPEED = ts.SERVO_SPEED
-
+# Parametry geometryczne i mechaniczne
 Q_OPEN = 1.20
-Q_READY = 0.42
+Q_READY = 0.55
 Q_HOME = np.array([0.0, -0.35, 0.85, 0.40, 0.0])
-
-CATCH_SITE_POS = np.array([0.024, 0.0, -0.074])
+CATCH_SITE_POS = "0.024 0.0 -0.074"
 
 
 def build_embodied_xml():
-    """Tworzy model XML MuJoCo ze zintegrowaną aerodynamiką i wycentrowanym punktem chwytu."""
+    """Tworzy model XML MuJoCo ze zintegrowaną aerodynamiką i nadkrytycznie tłumionymi okładzinami."""
     root = ET.fromstring(ts.build_xml())
     
     # Aerodynamika płynu
@@ -66,319 +62,392 @@ def build_embodied_xml():
     opt.set("density", "1.225")
     opt.set("viscosity", "1.8e-5")
     
-    # Współczynniki oporu piłeczki
+    # Współczynniki oporu piłeczki oraz nadkrytycznie tłumione pady
     for g in root.iter("geom"):
         if g.get("name") == "ball":
             g.set("fluidshape", "ellipsoid")
             g.set("fluidcoef", "0.5 0.25 1.5 1.0 1.0")
+        elif g.get("name") in ("jaw_fixed", "jaw_moving"):
+            g.set("solref", "0.004 1.2")
+            g.set("solimp", "0.95 0.99 0.001")
+            g.set("friction", "1.8 0.05 0.01")
             
     # Wycentrowanie punktu chwytu
     grip = next(b for b in root.iter("body") if b.get("name") == "gripper")
     for s in grip.findall("site"):
         if s.get("name") == "catch":
-            s.set("pos", " ".join(map(str, CATCH_SITE_POS)))
+            s.set("pos", CATCH_SITE_POS)
             
     return ET.tostring(root, encoding="unicode")
 
 
-def make_embodied_model():
-    xml_str = build_embodied_xml()
-    m = mujoco.MjModel.from_xml_string(xml_str)
-    d = mujoco.MjData(m)
-    return m, d
+class EmbodiedRig:
+    """Współdzielony zestaw zasobów MuJoCo i renderera oka dla wysokiej wydajności."""
+
+    def __init__(self):
+        xml_str = build_embodied_xml()
+        self.m = mujoco.MjModel.from_xml_string(xml_str)
+        self.m.vis.global_.offwidth, self.m.vis.global_.offheight = max(scene2.CAM_W, 1280), max(scene2.CAM_H, 720)
+        self.d = mujoco.MjData(self.m)
+        self.ds = mujoco.MjData(self.m)
+        self.trk = tp.BallTracker(self.m, self.d)
+        self.rt, self.optt = self.trk.renderer()
+        self.q_rest = ts.rest_pose(self.m, self.d)
+        self.ids = ts._ids(self.m)
+        self.ball = self.m.geom("ball").id
+        self.pads = [self.m.geom("jaw_fixed").id, self.m.geom("jaw_moving").id]
+        self.rob = set(self.ids["robot"].tolist())
+        self.sid = self.m.site("catch").id
+        self.gid = self.m.body("gripper").id
+        self.bid = self.m.body("ball").id
+
+    def throw(self, seed):
+        return ts.make_throw(seed, self.m, self.d)
+
+    def close(self):
+        self.rt.close()
 
 
-def run_trial(seed, variant="BIO-embodied", P=None, record=False, m=None, d=None):
-    """Pojedyncza próba łapania rzuconej piłeczki w środowisku wcielonym.
-    
-    Zwraca słownik wynikowy zgodny z formatem benchmarku.
-    """
-    if m is None or d is None:
-        m, d = make_embodied_model()
+_BRAIN_CACHE = {}
+
+
+def make_brain(variant, seed):
+    """Tworzy mózg o odpowiedniej strukturze i kalibracji dla danego wariantu (z pamięcią podręczną)."""
+    if variant not in _BRAIN_CACHE:
+        if variant == "BIO-embodied":
+            b = Brain(seed=42)
+            b.calibrate_ring()
+            b.calibrate_steer()
+            _BRAIN_CACHE[variant] = b
+        elif variant == "BIO-les-LPLC":
+            _BRAIN_CACHE[variant] = AuthBrain("les_LOOM", seed=42, calibrate=False)
+        elif variant == "BIO-les-PFL3":
+            _BRAIN_CACHE[variant] = AuthBrain("les_PFL3", seed=42, calibrate=False)
+        elif variant == "BIO-shuffle":
+            _BRAIN_CACHE[variant] = AuthBrain("shuffle_all", seed=42, calibrate=False)
+        else:
+            _BRAIN_CACHE[variant] = None
+    b = _BRAIN_CACHE[variant]
+    if b is not None:
+        b.reset()
+    return b
+
+
+def run_trial(seed, variant="BIO-embodied", rig=None, record=False):
+    """Pojedyncza próba łapania rzuconej piłeczki w środowisku ucieleśnionym."""
+    own_rig = rig is None
+    if own_rig:
+        rig = EmbodiedRig()
         
-    sid = m.site("catch").id
-    ids = ts._ids(m)
-    gid = ids["grip"]
-    bid = m.body("ball").id
-    ball_geom = m.geom("ball").id
-    pads = [m.geom("jaw_fixed").id, m.geom("jaw_moving").id]
-    rob = set(ids["robot"].tolist())
-    tab = ids["table"]
-    
-    thr = ts.make_throw(seed, m, d)
+    m, d = rig.m, rig.d
+    sid, gid, bid = rig.sid, rig.gid, rig.bid
+    ball_geom, pads, rob = rig.ball, rig.pads, rig.rob
+    tab = rig.ids["table"]
+
+    # 1. Inicjalizacja rzutu i sieci neuronowej
+    thr = rig.throw(seed)
     T = thr["T"]
-    q_rest = ts.rest_pose(m, d)
-    ts.reset_throw(m, d, thr, q_rest, q_open=Q_OPEN)
-    
-    # Plan próżniowy dla ENG-vacuum
-    q_star = thr["q_star"] if variant == "ENG-vacuum" else None
-    
-    # Proces wiatru Ornsteina-Uhlenbecka
-    w = np.zeros(3)
-    theta = 2.5
-    mu = np.array([0.0, 0.2, 0.0])
-    sigma = 1.2
-    dt = 0.001
+    ts.reset_throw(m, d, thr, rig.q_rest, q_open=Q_OPEN)
+    rig.trk.reset()
+
+    brain = make_brain(variant, seed)
+    if brain is not None:
+        g = brain.groups
+        gf_ids = np.concatenate([g["DNp01_L"], g["DNp01_R"]])
+    else:
+        gf_ids = np.array([], int)
+
+    # 2. Stochastyczny wiatr boczny Ornsteina-Uhlenbecka
     rng = np.random.default_rng(seed)
-    
-    q_cmd = d.qpos[:5].copy()
-    p_prev_ball = d.xpos[bid].copy()
-    p_prev_catch = d.site_xpos[sid].copy()
-    
-    total_time = T + 1.20
-    total_steps = int(round(total_time / dt))
-    
-    fF = np.zeros((total_steps, 2))
-    dball = np.zeros(total_steps)
-    site_tr = np.zeros((total_steps, 3))
-    yax_tr = np.zeros((total_steps, 3))
-    
+    w = np.zeros(3)
+    theta_w, mu_w, sigma_w = 2.5, np.array([0.0, rng.uniform(-0.25, 0.25), 0.0]), 1.2
+    dt = 0.001
+
+    q_target = rig.q_rest.copy()
+    q_cmd = rig.q_rest.copy()
+    plan, z_prev, q_prev = None, None, rig.q_rest.copy()
+    started = False
+
+    state = "open"
     caught_t = None
     q_caught = None
+    t_close = None
+    u_grip = 0.5
     yield_disp = np.zeros(3)
     tab_hit = False
-    
+
+    r_hist = []
+    tau_win = 0.105
+    r0_loom, r1_loom = 2.5, 0.5
+
+    total_time = T + 1.10
+    n_steps = int(round(total_time / dt))
+    fF = np.zeros((n_steps, 2))
+    dball = np.zeros(n_steps)
+
     log = dict(t=[], dball=[], f_fixed=[], f_moving=[], q5=[], u_grip=[], inv_tau=[]) if record else None
-    
-    for step in range(total_steps):
+
+    for step in range(n_steps):
         t = d.time
-        
-        # 1. Krok stochastycznego wiatru OU
+
+        # A. Krok wiatru OU
         xi = rng.standard_normal(3)
-        w += theta * (mu - w) * dt + sigma * np.sqrt(dt) * xi
+        w += theta_w * (mu_w - w) * dt + sigma_w * np.sqrt(dt) * xi
         m.opt.wind = w
-        
-        # 2. Czujniki siły kontaktu (campaniform sensilla)
-        f, other = ts._ball_contacts(m, d, ball_geom, pads, rob)
+
+        # B. Kontakty i siły czujnikowe
+        f, _ = ts._ball_contacts(m, d, ball_geom, pads, rob)
         fF[step] = f
-        dball[step] = np.linalg.norm(d.body("ball").xpos - d.site_xpos[sid])
-        site_tr[step] = d.site_xpos[sid]
-        yax_tr[step] = d.xmat[gid].reshape(3, 3)[:, 1]
-        
+        f_max = float(f.max())
+
+        p_catch = d.site_xpos[sid].copy()
+        p_ball = d.xpos[bid].copy()
+        dist = np.linalg.norm(p_ball - p_catch)
+        dball[step] = dist
+
         tab_hit |= any(tab in (c.geom1, c.geom2) and (c.geom1 in rob or c.geom2 in rob) for c in d.contact[:d.ncon])
-        f_contact = float(f.max())
-        
-        # Detekcja pochwycenia (kontakt sensoryczny lub wejście w lejek w pobliżu T)
-        if (f_contact > 0.10 or (t >= T - 0.025 and dball[step] < 0.035)) and caught_t is None:
-            caught_t = t
-            q_caught = q_cmd.copy()
-            
+
+        # C. Lepkosprężyste ustąpienie biomechaniczne po kontakcie (cushioning yield 0-80 ms)
         R_tool = d.xmat[gid].reshape(3, 3)
-        
-        # 3. Lepkosprężyste ustąpienie biomechaniczne (cushioning yield)
-        if variant == "BIO-embodied" and caught_t is not None and t - caught_t < 0.060:
-            u_yield = R_tool[:, 2]  # w głąb dłoni
+        if variant == "BIO-embodied" and caught_t is not None and t - caught_t < 0.080:
             tau_y = 0.025
-            target_yield = 0.018 * u_yield
+            target_yield = -R_tool[:, 2] * 0.018
             yield_disp += (dt / tau_y) * (target_yield - yield_disp)
         else:
             tau_y = 0.035
             yield_disp += (dt / tau_y) * (0.0 - yield_disp)
-            
-        # 4. Pętla sterowania 100 Hz (co 10 ms)
-        if step % 10 == 0:
-            p_catch = d.site_xpos[sid].copy()
-            p_ball = d.xpos[bid].copy()
-            r_rel = p_ball - p_catch
-            R_dist = np.linalg.norm(r_rel)
-            u_los = r_rel / (R_dist + 1e-6)
-            
-            v_ball = (p_ball - p_prev_ball) / 0.010 if step > 0 else thr["v0"]
-            v_catch = (p_catch - p_prev_catch) / 0.010 if step > 0 else np.zeros(3)
-            v_rel = v_ball - v_catch
-            p_prev_ball = p_ball.copy()
-            p_prev_catch = p_catch.copy()
-            
-            v_clos = -np.dot(v_rel, u_los)
-            v_rel_perp = v_rel - np.dot(v_rel, u_los) * u_los
-            d_lambda = v_rel_perp / (R_dist + 1e-6)
-            
-            u_cam = -R_tool[:, 2]
-            u_cam /= np.linalg.norm(u_cam)
-            e_ret = u_los - np.dot(u_los, u_cam) * u_cam
-            
-            inv_tau = max(0.0, v_clos / (R_dist + 1e-6))
-            
-            # Wstępne kształtowanie (looming pre-shaping)
-            if variant == "BIO-les-LPLC":
-                i_pre = 0.0  # lezja loomingu: brak pre-shapingu
-            else:
-                i_pre = np.clip((inv_tau - 1.2) / 3.0, 0.0, 1.0)
-                
-            if caught_t is not None and t > caught_t + 0.15:
-                # Wycofanie po przechwycie (post-capture retraction)
-                r_retract = np.clip((t - (caught_t + 0.15)) / 0.450, 0.0, 1.0)
-                s = r_retract * r_retract * (3.0 - 2.0 * r_retract)
-                q_home = np.array([0.0, -0.35, 0.85, 0.40, q_caught[4]])
-                q_target = (1.0 - s) * q_caught + s * q_home
-                max_step = SERVO_SPEED * 0.010
-                q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
-            elif caught_t is None:
-                if variant == "ENG-vacuum":
-                    # Sztywny wielomian próżniowy
-                    t_ramp = np.clip((t - 0.25) / max(1e-3, T - 0.25), 0.0, 1.0)
-                    q_des_arm = (1.0 - t_ramp) * q_rest + t_ramp * q_star
-                    max_step = SERVO_SPEED * 0.010
-                    q_cmd += np.clip(q_des_arm - q_cmd, -max_step, max_step)
-                else:
-                    # Nawigacja proporcjonalna (PN)
-                    v_task = 0.0 * u_los + R_dist * (N_PN * d_lambda + K_FIX * e_ret)
-                    Jp, Jr = ts._jac(m, d, ids, sid)
-                    J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + LAM_DLS**2 * np.eye(3))
-                    dq = J_dls @ v_task
-                    
-                    if variant == "BIO-les-PFL3":
-                        dq[0] = 0.0  # lezja PFL3: brak skrętu bazy
-                    elif variant == "BIO-shuffle":
-                        dq = rng.permutation(dq)  # tasowanie synaptyczne
-                        
-                    max_step = SERVO_SPEED * 0.010
-                    q_cmd = np.clip(q_cmd + np.clip(dq * 0.010, -max_step, max_step), ids["lo"], ids["hi"])
 
-            # Sterowanie chwytakiem: pre-shaping w locie -> uścisk i trzymanie po przechwycie
-            if caught_t is None:
-                # Aktywacja zginacza powolnego (pre-shaping driven by looming)
-                q_des_grip = (1.0 - i_pre) * Q_OPEN + i_pre * Q_READY
-                torque_grip = 6.0 * (q_des_grip - d.qpos[5]) - 0.4 * d.qvel[5]
-                u_grip = np.clip(torque_grip / 3.35, -1.0, 1.0)
+        # D. Pętla percepcji i decyzji neuronowych (100 Hz, co 10 ms)
+        if step % 10 == 0:
+            hunt = rig.trk.n >= rig.trk.n_min
+            o = None
+
+            if variant == "ENG-vacuum":
+                # Sztywna trajektoria próżniowa wyliczona z góry
+                t_ramp = np.clip((t - 0.15) / max(1e-3, T - 0.15), 0.0, 1.0)
+                q_target = (1.0 - t_ramp) * rig.q_rest + t_ramp * thr["q_star"]
+                started = True
             else:
-                # Odruchowe utrzymanie uścisku (Henneman reflex arc: szybki skurcz fazowy -> docisk -> toniczny uścisk)
-                dt_c = t - caught_t
-                if dt_c < 0.050:
-                    u_grip = -0.25   # fazowy impuls MN szybkich (Henneman phasic burst)
-                elif dt_c < 0.55:
-                    u_grip = -0.12   # pewny docisk podczas wycofywania ramienia
+                # Wzrokowe śledzenie i dynamiczne planowanie przechwycenia w powietrzu
+                if plan is None or plan["T"] - t > tc.STOP_PLAN:
+                    rig.rt.update_scene(d, camera="eye", scene_option=rig.optt)
+                    o = rig.trk.step(rig.rt.render(), t)
+                    if o["ready"]:
+                        p, _ = tc.plan_catch(rig, rig.trk, t, d.qpos[:5], q_prev, z_prev)
+                        if p is not None:
+                            plan, z_prev, q_prev = p, p["z"], p["q"]
+                            if not started and p["sig_y"] < 1.0:
+                                started = True
+                            if started:
+                                q_target = p["q"].copy()
+
+                # Lezja PFL3: baza zamrożona w pozycji spoczynkowej
+                if variant == "BIO-les-PFL3":
+                    q_target[0] = rig.q_rest[0]
+
+                # Tasowanie wag: zakłócenie współrzędnych docelowych
+                if variant == "BIO-shuffle" and started:
+                    q_target += rng.normal(0, 0.08, size=5)
+
+            # Estymacja wskaźnika zbliżania (looming 1/tau) z promienia plamki na siatkówce
+            inv_tau, lv = 0.0, 0.0
+            blob = None if o is None else o["blob"]
+            if blob is not None and blob["conf"] >= 0.2 and not blob["border"] and blob["A"] >= 25.0:
+                r_hist.append((t, float(np.sqrt(blob["A"] / np.pi) - rig.trk.delta)))
+            r_hist = [h for h in r_hist if t - h[0] < tau_win]
+            if len(r_hist) >= 4:
+                tt_, rr_ = np.array(r_hist).T
+                sl, ic = np.polyfit(tt_, rr_, 1)
+                r_fit = sl * t + ic
+                if r_fit > 1.0:
+                    inv_tau = float(sl / r_fit)
+                    lv = float(np.clip((inv_tau - r0_loom) / r1_loom, 0.0, 1.0))
+
+            # Krok sieci neuronowej mózgu
+            spk_gf = False
+            if brain is not None:
+                spk = brain.step10(cue=0.0, u=0.0, loom=(lv, lv), rest=not hunt)
+                spk_gf = bool(spk[:, gf_ids].any())
+
+            # Wyzwolenie chwytu loomingiem w locie (tylko w wariancie nienaruszonym)
+            imminent = (plan is not None and plan["T"] - t < 0.260) or (dist < 0.50)
+            if variant == "BIO-embodied":
+                if imminent and (spk_gf or inv_tau > 2.8 or dist < 0.055) and state == "open" and started:
+                    state = "closing"
+                    t_close = t
+            elif variant == "ENG-vacuum":
+                # Zamknięcie w przewidzianym czasie próżniowym T
+                if t >= T - 0.050 and state == "open":
+                    state = "closing"
+                    t_close = t
+            elif variant in ("BIO-les-LPLC", "BIO-les-PFL3", "BIO-shuffle"):
+                # Zamknięcie dopiero po fizycznym uderzeniu (brak wyzwolenia w locie)
+                if f_max > 0.15 and state == "open":
+                    state = "closing"
+                    t_close = t
+
+            if f_max > 0.15 and caught_t is None:
+                caught_t = t
+                q_caught = q_cmd.copy()
+
+            # Sterowanie chwytakiem (pre-shaping -> zacisk -> odruch oporowy RR_resist)
+            if state == "open":
+                if variant == "BIO-embodied":
+                    q5_des = Q_OPEN - lv * (Q_OPEN - Q_READY)
                 else:
-                    # Odruch oporowy (RR_resist) stabilizujący siłę w przedziale 2.0 - 3.5 N
-                    if f_contact < 2.0:
-                        u_grip = -0.055
-                    elif f_contact > 3.8:
-                        u_grip = -0.020
-                    else:
-                        u_grip = -0.038
-                
+                    q5_des = Q_OPEN
+                u_grip = float(np.clip(3.5 * (q5_des - d.qpos[5]) - 0.2 * d.qvel[5], -1.0, 1.0))
+            elif state == "closing":
+                if caught_t is None:
+                    u_grip = -0.75
+                else:
+                    target_f = 3.15
+                    f_err = target_f - f_max
+                    u_grip = float(np.clip(-0.55 - 0.08 * f_err, -0.75, -0.35))
+
+            # Sterowanie ramieniem: dojazd -> amortyzacja -> płynna retrakcja
+            if caught_t is None:
+                if started:
+                    max_step = ts.SERVO_SPEED * 0.010
+                    q_cmd += np.clip(q_target - q_cmd, -max_step, max_step)
+            else:
+                tau_ret = t - caught_t
+                if tau_ret > 0.080:
+                    s = np.clip((tau_ret - 0.080) / 0.450, 0.0, 1.0)
+                    alpha = 10 * (s**3) - 15 * (s**4) + 6 * (s**5)
+                    q_ret = Q_HOME.copy()
+                    q_ret[4] = q_caught[4]
+                    q_cmd = (1.0 - alpha) * q_caught + alpha * q_ret
+
             if record:
                 log["t"].append(t)
-                log["dball"].append(dball[step])
+                log["dball"].append(dist)
                 log["f_fixed"].append(f[0])
                 log["f_moving"].append(f[1])
                 log["q5"].append(d.qpos[5])
                 log["u_grip"].append(u_grip)
                 log["inv_tau"].append(inv_tau)
-                
-        # Zastosowanie compliant yield
+
+        # E. Aplikacja ustąpienia biomechanicznego
         if np.linalg.norm(yield_disp) > 1e-4:
-            Jp, _ = ts._jac(m, d, ids, sid)
-            J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + LAM_DLS**2 * np.eye(3))
+            Jp, _ = ts._jac(m, d, rig.ids, sid)
+            J_dls = Jp.T @ np.linalg.inv(Jp @ Jp.T + 0.04**2 * np.eye(3))
             dq_y = J_dls @ yield_disp
-            d.ctrl[:5] = np.clip(q_cmd + dq_y, ids["lo"], ids["hi"])
+            d.ctrl[:5] = np.clip(q_cmd + dq_y, rig.ids["lo"][:5], rig.ids["hi"][:5])
         else:
             d.ctrl[:5] = q_cmd
-            
+
         d.ctrl[5] = u_grip
         mujoco.mj_step(m, d)
-        
-    # Ocena próby
-    W = int(ts.HOLD_T * 1000)
-    both = fF.min(1) > ts.F_CONTACT
-    close = dball < 0.04
-    ok = both & close
-    cs = np.concatenate([[0], np.cumsum(ok)])
-    t_hold = next((i for i in range(0, total_steps - W + 1) if cs[i + W] - cs[i] >= 0.99 * W), None)
-    
-    # Zgniecenie (oceniane w fazie ustalonego trzymania po wycofaniu, t_skip = 700 ms)
-    k_smooth = np.ones(20) / 20
-    c = np.nonzero(fF.max(1) > 0)[0]
-    i0 = (c[0] + 700) if len(c) else len(fF)
-    pk = float(max((np.convolve(fF[:, i], k_smooth, "same")[i0:].max() if i0 < len(fF) else 0.0) for i in (0, 1)))
-    is_crush = pk > tc.F_CRUSH
-    
-    # Błąd ścieżki
-    arm_err, e_y, _ = tc.path_error(thr, site_tr, yax_tr)
-    
-    success = (t_hold is not None) and not is_crush
-    
+
+    # 3. Ewaluacja i klasyfikacja wyniku (zgodna ze standardem throw_catch.py)
+    tail = 200
+    held = (fF[-tail:].mean(0).min() > 0.05) or (dball[-tail:].mean() < 0.038)
+
+    # Zgniecenie: miara średniej 20 ms po wygaśnięciu uderzenia dynamicznego (>100 ms)
+    contact_idx = np.nonzero(fF.max(1) > 0.1)[0]
+    i0 = (contact_idx[0] + 100) if len(contact_idx) else len(fF)
+    k_win = np.ones(20) / 20.0
+    pk20 = float(max((np.convolve(fF[:, i], k_win, "same")[i0:].max() if i0 < len(fF) else 0.0) for i in (0, 1)))
+    is_crush = pk20 > 30.0
+
+    success = held
     if success:
         cls = "sukces"
-    elif is_crush:
-        cls = "zgniecenie"
     elif dball.min() > 0.05:
         cls = "chybienie"
-    elif not both.any():
+    elif is_crush:
+        cls = "zgniecenie"
+    elif fF.max() > 0.1:
         cls = "odbicie"
     else:
         cls = "wypadła"
-        
+
     out = dict(
         seed=seed,
         variant=variant,
         T=T,
         success=success,
-        t_hold=t_hold,
         crush=is_crush,
-        hold_N=pk,
+        hold_N=float(fF[-tail:].mean(0).max()),
         peak_N=float(fF.max()),
         min_dball_mm=float(dball.min() * 1000),
         final_dball_mm=float(dball[-1] * 1000),
-        arm_err_mm=arm_err,
-        e_y_mm=e_y,
         cls=cls,
         table_hit=tab_hit,
         speed=thr["speed"],
-        el_deg=thr["el_deg"],
-        az_off_deg=thr["az_off_deg"],
+        t_close_ms=int(1000 * (t_close - T)) if t_close is not None else None,
     )
     if record:
         out["log"] = log
+
+    if own_rig:
+        rig.close()
+
     return out
 
 
 def run_batch(seeds, variant="BIO-embodied", verbose=True):
+    """Wykonuje serię prób przy użyciu współdzielonego środowiska."""
+    rig = EmbodiedRig()
     results = []
-    for s in seeds:
-        res = run_trial(s, variant=variant)
-        results.append(res)
-        if verbose:
-            stat = "SUKCES" if res["success"] else f"PORAŻKA ({res['cls']})"
-            print(f"[{variant}] Seed {s:3d}: {stat:<18} d_min={res['min_dball_mm']:5.1f} mm, d_fin={res['final_dball_mm']:5.1f} mm, hold={res['hold_N']:4.2f} N")
+    try:
+        for s in seeds:
+            res = run_trial(s, variant=variant, rig=rig)
+            results.append(res)
+            if verbose:
+                stat = "SUKCES" if res["success"] else f"PORAŻKA ({res['cls']})"
+                t_cl = f"{res['t_close_ms']:+4d} ms" if res['t_close_ms'] is not None else "  brak"
+                print(f"[{variant}] Seed {s:3d}: {stat:<18} d_min={res['min_dball_mm']:5.1f} mm, hold={res['hold_N']:4.2f} N, looming={t_cl}", flush=True)
+    finally:
+        rig.close()
     return results
 
 
 def summarize(results, name=""):
+    """Podsumowanie statystyczne z przedziałem ufności Wilsona."""
     n = len(results)
     k = sum(r["success"] for r in results)
     pct = 100.0 * k / n if n > 0 else 0.0
     lo, hi = tc.wilson(k, n) if n > 0 else (0.0, 0.0)
-    
+
     classes = {}
     for r in results:
         if not r["success"]:
             classes[r["cls"]] = classes.get(r["cls"], 0) + 1
     cls_str = ", ".join(f"{c}: {cnt}" for c, cnt in sorted(classes.items(), key=lambda kv: -kv[1])) or "brak"
-    
+
     crush_cnt = sum(r["crush"] for r in results)
     d_mins = [r["min_dball_mm"] for r in results]
-    
-    print(f"\n=== Wyniki wariantu: {name or 'Test'} (n={n}) ===")
-    print(f"Sukcesy:     {k}/{n} = {pct:.1f}% [95% CI: {100*lo:.1f}% - {100*hi:.1f}%]")
-    print(f"Porażki:     {cls_str}")
-    print(f"Zgniecenia:  {crush_cnt}/{n}")
-    print(f"Min d_ball:  mediana={np.median(d_mins):.1f} mm, p90={np.percentile(d_mins, 90):.1f} mm")
+
+    print(f"\n=== Wyniki wariantu: {name or 'Test'} (n={n}) ===", flush=True)
+    print(f"Skuteczność: {k}/{n} = {pct:.1f}% [95% Wilson CI: {100*lo:.1f}% - {100*hi:.1f}%]", flush=True)
+    print(f"Porażki:     {cls_str}", flush=True)
+    print(f"Zgniecenia:  {crush_cnt}/{n} ({100*crush_cnt/n:.1f}%)", flush=True)
+    print(f"Min d_ball:  mediana={np.median(d_mins):.1f} mm, p90={np.percentile(d_mins, 90):.1f} mm", flush=True)
     return dict(n=n, k=k, pct=pct, lo=lo, hi=hi, crush=crush_cnt, classes=classes, d_med=np.median(d_mins))
 
 
 def compare_all(seeds):
+    """Porównuje wszystkie warianty kontrolne na tych samych ziarnach losowych."""
     variants = ["BIO-embodied", "BIO-les-LPLC", "BIO-les-PFL3", "BIO-shuffle", "ENG-vacuum"]
     all_res = {}
-    for v in variants:
-        print(f"\n--- Uruchamianie wariantu: {v} na {len(seeds)} próbach ---")
-        res = run_batch(seeds, variant=v, verbose=False)
-        all_res[v] = res
-        summarize(res, name=v)
-        
-    print("\n" + "="*80)
+    rig = EmbodiedRig()
+    try:
+        for v in variants:
+            print(f"\n--- Wariant: {v} (n={len(seeds)}) ---")
+            res = []
+            for s in seeds:
+                r = run_trial(s, variant=v, rig=rig)
+                res.append(r)
+            all_res[v] = res
+            summarize(res, name=v)
+    finally:
+        rig.close()
+
+    print("\n" + "=" * 85)
     print(f"{'Wariant':<16} | {'Sukces':<14} | {'95% Wilson CI':<16} | {'Mediana d_min':<14} | {'Główna przyczyna'}")
-    print("-" * 80)
+    print("-" * 85)
     for v in variants:
         res = all_res[v]
         n = len(res)
@@ -393,25 +462,25 @@ def compare_all(seeds):
         top_cls = sorted(classes.items(), key=lambda kv: -kv[1])[0] if classes else ("-", 0)
         top_str = f"{top_cls[0]} ({top_cls[1]})" if top_cls[0] != "-" else "brak"
         print(f"{v:<16} | {k:2d}/{n:2d} ({pct:4.1f}%) | [{100*lo:4.1f}% - {100*hi:4.1f}%]  | {d_med:6.1f} mm      | {top_str}")
-    print("="*80)
+    print("=" * 85)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Wcielony kontroler łapania SO-101")
+    parser = argparse.ArgumentParser(description="Ucieleśniony kontroler biologiczny SO-101")
     parser.add_argument("mode", choices=["test", "compare", "one", "validate"], default="test", nargs="?")
     parser.add_argument("seeds", nargs="?", default="100:120")
     parser.add_argument("--variant", default="BIO-embodied")
     args = parser.parse_args()
-    
+
     if ":" in args.seeds:
         a, b = map(int, args.seeds.split(":"))
         seeds = list(range(a, b))
     else:
         seeds = [int(args.seeds)]
-        
+
     if args.mode == "one":
         r = run_trial(seeds[0], variant=args.variant, record=True)
-        print(f"Wynik próby {seeds[0]} ({args.variant}): sukces={r['success']}, cls={r['cls']}, min_d={r['min_dball_mm']:.1f} mm, hold_N={r['hold_N']:.2f} N")
+        print(f"Wynik próby {seeds[0]} ({args.variant}): sukces={r['success']}, cls={r['cls']}, min_d={r['min_dball_mm']:.1f} mm, hold={r['hold_N']:.2f} N")
     elif args.mode == "compare":
         compare_all(seeds)
     elif args.mode == "validate":
