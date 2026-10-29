@@ -1,0 +1,399 @@
+{
+ "bench": "b3",
+ "started": "2026-10-28T20:51:22",
+ "env": {
+  "python": "3.12.13",
+  "implementation": "CPython",
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "cpu_count": 10,
+  "ram_bytes": 34359738368,
+  "packages": {
+   "numpy": "2.5.4",
+   "mujoco": "3.17.0",
+   "pandas": "3.1.0",
+   "pyarrow": "26.0.0"
+  },
+  "blas_threads_env": {
+   "OMP_NUM_THREADS": null,
+   "OPENBLAS_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null
+  },
+  "gc_enabled": true,
+  "gc_counts": [
+   76,
+   1,
+   0
+  ],
+  "dont_write_bytecode": 1,
+  "clock_info": {
+   "implementation": "mach_absolute_time()",
+   "monotonic": true,
+   "adjustable": false,
+   "resolution": 4.166666666666667e-08
+  }
+ },
+ "argv": [
+  "--zgoda-bench",
+  "--which",
+  "b1,b3",
+  "--out",
+  "/private/tmp/claude-501/-Users-admin-so101-fly-project/6454b16d-a7f4-423a-a824-4d37dc6a0832/scratchpad/bench2"
+ ],
+ "result": {
+  "kind": "B3 test komponentu (skok prądu PFL3) — NIE pętla zamknięta, NIE reakcja na obraz",
+  "network": {
+   "neurons": 220,
+   "populations": {
+    "PFL3_L": 12,
+    "PFL3_R": 12,
+    "DNa02_L": 1,
+    "DNa02_R": 1,
+    "DNa01_L": 1,
+    "DNa01_R": 1
+   },
+   "edges": {
+    "edges": 8906,
+    "synapses": 137690,
+    "self_loops": 0,
+    "bodies": 220
+   },
+   "model_edges": 24,
+   "J0": 0.3,
+   "noise_mV": 2.0,
+   "W_sha256_full": "439b49aff24d3bfdda32987934dbebf8576e9eda90ee99bb9e552f0a8ea840df",
+   "W_sha256_data": "de61f3fdca859902af98f5fd9305735cb558226dd3fad7e7b88b136341ed1929"
+  },
+  "calibration": {
+   "offset": [
+    -2.0830617304422816,
+    -2.4067370146651097
+   ],
+   "slope": [
+    -36.38436560014536,
+    -36.349806671837726
+   ],
+   "seeds": [
+    1011,
+    1012,
+    1013
+   ]
+  },
+  "protocol": {
+   "t_on_s": 1.0,
+   "pre_x": -1.0,
+   "post_x": 1.0,
+   "window_s": 2.0,
+   "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010
+   ],
+   "q0": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.93
+   ],
+   "definitions": "Definicje operacyjne (czas względem t_on; wartość taktu k odpowiada końcowi taktu, czyli (k − k_on + 1)·dt):\n    E1 pierwszy spike DNa02 strony zyskującej (większa średnia po bodźcu); niezdefiniowane, jeśli ta strona miała\n       spike w ostatnich 200 ms przed bodźcem.\n    E2 różnica L−P (DNa02, wyjście dekodera) przekracza połowę drogi między średnią przed (ostatnie 200 ms) a średnią\n       po (ostatnie 500 ms okna); brak odpowiedzi, jeśli |zmiana| < 3·σ_przed + 1 Hz.\n    E3 ω > 0 (oczekiwany znak dla skoku x −1 → +1) przez 3 kolejne takty; niezdefiniowane, jeśli ω > 0 już przed bodźcem.\n    E4 odwrócenie ruchu bazy: q_pan spada o > 1 mrad poniżej swojego maksimum od t_on (ruch w lewo = −q).\n    Brak zdarzenia do końca okna (2 s) → None (cenzurowane), liczone osobno, nigdy nie pomijane po cichu.",
+   "same_network_both_variants": "tak — sieć dane+model; różni się tylko zestaw kanałów dekodera"
+  },
+  "intrinsic": {
+   "tick_quantization_ms": 10,
+   "synaptic_delay_ms_per_hop": 2,
+   "filter_half_rise_ms": {
+    "rate_50ms": 34.657359027997266,
+    "DNa02_0.10s": 69.31471805599453,
+    "DNa01_0.40s": 277.25887222397813
+   }
+  },
+  "variants": {
+   "DNa02": {
+    "trials": [
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 70.0,
+      "E4_pan_reversal_ms": 70.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 90.0,
+      "E4_pan_reversal_ms": 90.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 80.0,
+      "E4_pan_reversal_ms": 80.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 70.0,
+      "E4_pan_reversal_ms": 70.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 70.0,
+      "E4_pan_reversal_ms": 70.0,
+      "gaining_side": "R"
+     }
+    ],
+    "aggregate": {
+     "E1_first_spike_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 12.0,
+      "iqr_ms": [
+       12.0,
+       12.75
+      ],
+      "min_ms": 12.0,
+      "max_ms": 13.0
+     },
+     "E2_diff_half_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 30.0,
+      "iqr_ms": [
+       30.0,
+       30.0
+      ],
+      "min_ms": 30.0,
+      "max_ms": 30.0
+     },
+     "E3_omega_sign_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 80.0,
+      "iqr_ms": [
+       72.5,
+       80.0
+      ],
+      "min_ms": 70.0,
+      "max_ms": 90.0
+     },
+     "E4_pan_reversal_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 80.0,
+      "iqr_ms": [
+       72.5,
+       80.0
+      ],
+      "min_ms": 70.0,
+      "max_ms": 90.0
+     }
+    },
+    "wall_seconds_per_trial": [
+     1.327052915992681,
+     1.3080078750062967,
+     1.3091619579936378,
+     1.3317636660067365,
+     1.343683625003905,
+     1.3256747080013156,
+     1.3253707080002641,
+     1.3129293749952922,
+     1.3324205419921782,
+     1.3257372079970082
+    ]
+   },
+   "DNa02+DNa01": {
+    "trials": [
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 110.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 100.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 110.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 100.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 120.0,
+      "E4_pan_reversal_ms": 120.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 13.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 110.0,
+      "E4_pan_reversal_ms": 110.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 100.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 110.0,
+      "E4_pan_reversal_ms": 110.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 100.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     },
+     {
+      "E1_first_spike_ms": 12.0,
+      "E2_diff_half_ms": 30.0,
+      "E3_omega_sign_ms": 100.0,
+      "E4_pan_reversal_ms": 100.0,
+      "gaining_side": "R"
+     }
+    ],
+    "aggregate": {
+     "E1_first_spike_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 12.0,
+      "iqr_ms": [
+       12.0,
+       12.75
+      ],
+      "min_ms": 12.0,
+      "max_ms": 13.0
+     },
+     "E2_diff_half_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 30.0,
+      "iqr_ms": [
+       30.0,
+       30.0
+      ],
+      "min_ms": 30.0,
+      "max_ms": 30.0
+     },
+     "E3_omega_sign_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 105.0,
+      "iqr_ms": [
+       100.0,
+       110.0
+      ],
+      "min_ms": 100.0,
+      "max_ms": 120.0
+     },
+     "E4_pan_reversal_ms": {
+      "n": 10,
+      "n_censored": 0,
+      "n_undefined": 0,
+      "median_ms": 100.0,
+      "iqr_ms": [
+       100.0,
+       107.5
+      ],
+      "min_ms": 100.0,
+      "max_ms": 120.0
+     }
+    },
+    "wall_seconds_per_trial": [
+     1.330471082997974,
+     1.3241305830015335,
+     1.330255084001692,
+     1.3136485410068417,
+     1.3178831670084037,
+     1.3097311250021448,
+     1.3191379579948261,
+     1.2966504590003751,
+     1.323180000006687,
+     1.3365643339930102
+    ]
+   }
+  },
+  "note": "porównanie wariantów opisuje dekoder w tym modelu; nie dowodzi biologicznej poprawności DNa01 (wejście DNa01 to w 92–96 % krawędzie modelowe)"
+ },
+ "wall_seconds_total": 28.858059749996755,
+ "caveat": "wynik z jednej maszyny; nie dowodzi czasu rzeczywistego na innym sprzęcie"
+}

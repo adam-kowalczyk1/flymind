@@ -1,0 +1,535 @@
+{
+ "bench": "b1",
+ "started": "2026-10-28T20:50:34",
+ "env": {
+  "python": "3.12.13",
+  "implementation": "CPython",
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "cpu_count": 10,
+  "ram_bytes": 34359738368,
+  "packages": {
+   "numpy": "2.5.4",
+   "mujoco": "3.17.0",
+   "pandas": "3.1.0",
+   "pyarrow": "26.0.0"
+  },
+  "blas_threads_env": {
+   "OMP_NUM_THREADS": null,
+   "OPENBLAS_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null
+  },
+  "gc_enabled": true,
+  "gc_counts": [
+   380,
+   8,
+   1
+  ],
+  "dont_write_bytecode": 1,
+  "clock_info": {
+   "implementation": "mach_absolute_time()",
+   "monotonic": true,
+   "adjustable": false,
+   "resolution": 4.166666666666667e-08
+  }
+ },
+ "argv": [
+  "--zgoda-bench",
+  "--which",
+  "b1,b3",
+  "--out",
+  "/private/tmp/claude-501/-Users-admin-so101-fly-project/6454b16d-a7f4-423a-a824-4d37dc6a0832/scratchpad/bench2"
+ ],
+ "result": {
+  "kind": "B1 czas zegarowy etapów",
+  "network": {
+   "neurons": 220,
+   "populations": {
+    "PFL3_L": 12,
+    "PFL3_R": 12,
+    "DNa02_L": 1,
+    "DNa02_R": 1,
+    "DNa01_L": 1,
+    "DNa01_R": 1
+   },
+   "edges": {
+    "edges": 8906,
+    "synapses": 137690,
+    "self_loops": 0,
+    "bodies": 220
+   },
+   "model_edges": 24,
+   "J0": 0.3,
+   "noise_mV": 2.0,
+   "W_sha256_full": "439b49aff24d3bfdda32987934dbebf8576e9eda90ee99bb9e552f0a8ea840df",
+   "W_sha256_data": "de61f3fdca859902af98f5fd9305735cb558226dd3fad7e7b88b136341ed1929"
+  },
+  "calibration": {
+   "offset": [
+    -2.08306173044228
+   ],
+   "slope": [
+    -36.38436560014536
+   ],
+   "seeds": [
+    1011,
+    1012,
+    1013
+   ]
+  },
+  "stimulus": "PFL3 zastępczy, x = ±1 przełączany co 100 taktów",
+  "repetitions": [
+   {
+    "warmup_ticks": 100,
+    "measured_ticks": 3000,
+    "clock": "time.perf_counter_ns (monotoniczny)",
+    "percentile_method": "linear",
+    "tick_total": {
+     "n": 3000,
+     "p50_ms": 4.160958,
+     "p95_ms": 5.45839795,
+     "p99_ms": 8.48333475,
+     "max_ms": 29.679791,
+     "mean_ms": 4.386522685,
+     "over_deadline": 7,
+     "over_frac": 0.0023333333333333335,
+     "deadline_ms": 10.0
+    },
+    "stages": {
+     "observe(render+stan)": {
+      "n": 3000,
+      "p50_ms": 3.5620415000000003,
+      "p95_ms": 4.796539299999998,
+      "p99_ms": 7.717436419999984,
+      "max_ms": 27.320958,
+      "mean_ms": 3.7696353343333335,
+      "over_deadline": 4,
+      "over_frac": 0.0013333333333333333,
+      "deadline_ms": 10.0
+     },
+     "gate": {
+      "n": 3000,
+      "p50_ms": 0.048625,
+      "p95_ms": 0.06292324999999997,
+      "p99_ms": 0.09937541999999999,
+      "max_ms": 0.4295,
+      "mean_ms": 0.050942279666666666,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "stimulus_pfl3_proxy": {
+      "n": 3000,
+      "p50_ms": 0.009292,
+      "p95_ms": 0.01321104999999999,
+      "p99_ms": 0.024877919999999932,
+      "max_ms": 0.110625,
+      "mean_ms": 0.009963629666666666,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "snn_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.27231249999999996,
+      "p95_ms": 0.37261524999999984,
+      "p99_ms": 0.4678858299999997,
+      "max_ms": 3.690917,
+      "mean_ms": 0.2873584003333334,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "decoder": {
+      "n": 3000,
+      "p50_ms": 0.0711665,
+      "p95_ms": 0.08904404999999999,
+      "p99_ms": 0.14017032999999993,
+      "max_ms": 7.7505,
+      "mean_ms": 0.07696690433333334,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "safety": {
+      "n": 3000,
+      "p50_ms": 0.025333,
+      "p95_ms": 0.034169099999999994,
+      "p99_ms": 0.054311159999999546,
+      "max_ms": 0.144125,
+      "mean_ms": 0.026553946999999998,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "act": {
+      "n": 3000,
+      "p50_ms": 0.006542,
+      "p95_ms": 0.009625,
+      "p99_ms": 0.01333301,
+      "max_ms": 0.703042,
+      "mean_ms": 0.007343982333333334,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "physics_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.133333,
+      "p95_ms": 0.17155029999999996,
+      "p99_ms": 0.2521703299999999,
+      "max_ms": 1.37775,
+      "mean_ms": 0.139476974,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     }
+    },
+    "absent_stages": {
+     "encoder": "brak enkodera obraz→SNN w flymind/ — bodziec PFL3 jest zastępczy"
+    },
+    "note": "tick_total mierzony bezpośrednio; percentyle etapów NIE sumują się do percentyli taktu",
+    "sim_seconds": 31.000000000014904,
+    "wall_seconds": 13.65009349999309,
+    "realtime_factor": 2.2710467148104585,
+    "safety_interventions": {
+     "snn:DNa02": {
+      "ticks": 3100
+     }
+    },
+    "gate": {
+     "frames": 3100,
+     "usable": 3100,
+     "lost": 0,
+     "no_image": 0,
+     "stale": 0,
+     "late": 0,
+     "reset": 0,
+     "frozen": 0,
+     "duplicate": 0,
+     "out_of_order": 0
+    },
+    "sim_stats": {
+     "steps": 3100,
+     "frames": 3100,
+     "render_fail": 0,
+     "rejected": 0,
+     "ignored_stopped": 0
+    },
+    "render_only_separate": {
+     "n": 500,
+     "p50_ms": 3.433292,
+     "p95_ms": 4.299454199999998,
+     "p99_ms": 4.84251642,
+     "max_ms": 5.700334,
+     "mean_ms": 3.548433932,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    }
+   },
+   {
+    "warmup_ticks": 100,
+    "measured_ticks": 3000,
+    "clock": "time.perf_counter_ns (monotoniczny)",
+    "percentile_method": "linear",
+    "tick_total": {
+     "n": 3000,
+     "p50_ms": 4.1274999999999995,
+     "p95_ms": 5.293521149999999,
+     "p99_ms": 8.349596009999996,
+     "max_ms": 15.130333,
+     "mean_ms": 4.326861451333333,
+     "over_deadline": 4,
+     "over_frac": 0.0013333333333333333,
+     "deadline_ms": 10.0
+    },
+    "stages": {
+     "observe(render+stan)": {
+      "n": 3000,
+      "p50_ms": 3.537625,
+      "p95_ms": 4.6277707999999995,
+      "p99_ms": 7.263196909999974,
+      "max_ms": 13.827542,
+      "mean_ms": 3.7172180436666666,
+      "over_deadline": 1,
+      "over_frac": 0.0003333333333333333,
+      "deadline_ms": 10.0
+     },
+     "gate": {
+      "n": 3000,
+      "p50_ms": 0.0483335,
+      "p95_ms": 0.06162704999999999,
+      "p99_ms": 0.08700083999999997,
+      "max_ms": 0.396125,
+      "mean_ms": 0.050348936999999996,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "stimulus_pfl3_proxy": {
+      "n": 3000,
+      "p50_ms": 0.009292,
+      "p95_ms": 0.01271104999999999,
+      "p99_ms": 0.016958839999999982,
+      "max_ms": 0.133042,
+      "mean_ms": 0.009767231666666666,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "snn_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.271709,
+      "p95_ms": 0.3658398999999997,
+      "p99_ms": 0.4721508299999994,
+      "max_ms": 5.097959,
+      "mean_ms": 0.2861431213333333,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "decoder": {
+      "n": 3000,
+      "p50_ms": 0.071083,
+      "p95_ms": 0.09292739999999994,
+      "p99_ms": 0.14360824999999844,
+      "max_ms": 0.548542,
+      "mean_ms": 0.07435773,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "safety": {
+      "n": 3000,
+      "p50_ms": 0.025125,
+      "p95_ms": 0.035833,
+      "p99_ms": 0.06804433999999993,
+      "max_ms": 0.895166,
+      "mean_ms": 0.027171003333333336,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "act": {
+      "n": 3000,
+      "p50_ms": 0.006667,
+      "p95_ms": 0.00991605,
+      "p99_ms": 0.01683674999999991,
+      "max_ms": 0.137666,
+      "mean_ms": 0.007294038333333333,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "physics_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.132583,
+      "p95_ms": 0.16647049999999994,
+      "p99_ms": 0.24027166999999947,
+      "max_ms": 1.483958,
+      "mean_ms": 0.13735824766666668,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     }
+    },
+    "absent_stages": {
+     "encoder": "brak enkodera obraz→SNN w flymind/ — bodziec PFL3 jest zastępczy"
+    },
+    "note": "tick_total mierzony bezpośrednio; percentyle etapów NIE sumują się do percentyli taktu",
+    "sim_seconds": 31.000000000014904,
+    "wall_seconds": 13.481546374998288,
+    "realtime_factor": 2.2994394810305163,
+    "safety_interventions": {
+     "snn:DNa02": {
+      "ticks": 3100
+     }
+    },
+    "gate": {
+     "frames": 3100,
+     "usable": 3100,
+     "lost": 0,
+     "no_image": 0,
+     "stale": 0,
+     "late": 0,
+     "reset": 0,
+     "frozen": 0,
+     "duplicate": 0,
+     "out_of_order": 0
+    },
+    "sim_stats": {
+     "steps": 3100,
+     "frames": 3100,
+     "render_fail": 0,
+     "rejected": 0,
+     "ignored_stopped": 0
+    },
+    "render_only_separate": {
+     "n": 500,
+     "p50_ms": 3.4435830000000003,
+     "p95_ms": 4.1952226,
+     "p99_ms": 4.61989092,
+     "max_ms": 5.015875,
+     "mean_ms": 3.5469397920000003,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    }
+   },
+   {
+    "warmup_ticks": 100,
+    "measured_ticks": 3000,
+    "clock": "time.perf_counter_ns (monotoniczny)",
+    "percentile_method": "linear",
+    "tick_total": {
+     "n": 3000,
+     "p50_ms": 4.103313,
+     "p95_ms": 5.293353849999999,
+     "p99_ms": 8.162095249999965,
+     "max_ms": 14.26575,
+     "mean_ms": 4.293587212666667,
+     "over_deadline": 1,
+     "over_frac": 0.0003333333333333333,
+     "deadline_ms": 10.0
+    },
+    "stages": {
+     "observe(render+stan)": {
+      "n": 3000,
+      "p50_ms": 3.521375,
+      "p95_ms": 4.626675,
+      "p99_ms": 7.425874919999963,
+      "max_ms": 9.086208,
+      "mean_ms": 3.692162303,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "gate": {
+      "n": 3000,
+      "p50_ms": 0.047833,
+      "p95_ms": 0.05983604999999999,
+      "p99_ms": 0.08225790999999982,
+      "max_ms": 0.240916,
+      "mean_ms": 0.049353259999999996,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "stimulus_pfl3_proxy": {
+      "n": 3000,
+      "p50_ms": 0.009166,
+      "p95_ms": 0.012625,
+      "p99_ms": 0.017917669999999962,
+      "max_ms": 0.052375,
+      "mean_ms": 0.009602757333333331,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "snn_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.269625,
+      "p95_ms": 0.3593148999999999,
+      "p99_ms": 0.4502005899999992,
+      "max_ms": 1.062,
+      "mean_ms": 0.28137987333333336,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "decoder": {
+      "n": 3000,
+      "p50_ms": 0.069875,
+      "p95_ms": 0.08887709999999999,
+      "p99_ms": 0.13891933999999992,
+      "max_ms": 0.41675,
+      "mean_ms": 0.07268896833333333,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "safety": {
+      "n": 3000,
+      "p50_ms": 0.02475,
+      "p95_ms": 0.03362914999999998,
+      "p99_ms": 0.049086909999999935,
+      "max_ms": 0.307416,
+      "mean_ms": 0.026092613999999997,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "act": {
+      "n": 3000,
+      "p50_ms": 0.006417,
+      "p95_ms": 0.009252049999999989,
+      "p99_ms": 0.01375290999999993,
+      "max_ms": 0.061875,
+      "mean_ms": 0.0069409966666666685,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     },
+     "physics_10x1ms": {
+      "n": 3000,
+      "p50_ms": 0.1301455,
+      "p95_ms": 0.16463334999999996,
+      "p99_ms": 0.23354892999999982,
+      "max_ms": 1.520834,
+      "mean_ms": 0.13532470800000002,
+      "over_deadline": 0,
+      "over_frac": 0.0,
+      "deadline_ms": 10.0
+     }
+    },
+    "absent_stages": {
+     "encoder": "brak enkodera obraz→SNN w flymind/ — bodziec PFL3 jest zastępczy"
+    },
+    "note": "tick_total mierzony bezpośrednio; percentyle etapów NIE sumują się do percentyli taktu",
+    "sim_seconds": 31.000000000014904,
+    "wall_seconds": 13.359952458005864,
+    "realtime_factor": 2.320367538541528,
+    "safety_interventions": {
+     "snn:DNa02": {
+      "ticks": 3100
+     }
+    },
+    "gate": {
+     "frames": 3100,
+     "usable": 3100,
+     "lost": 0,
+     "no_image": 0,
+     "stale": 0,
+     "late": 0,
+     "reset": 0,
+     "frozen": 0,
+     "duplicate": 0,
+     "out_of_order": 0
+    },
+    "sim_stats": {
+     "steps": 3100,
+     "frames": 3100,
+     "render_fail": 0,
+     "rejected": 0,
+     "ignored_stopped": 0
+    },
+    "render_only_separate": {
+     "n": 500,
+     "p50_ms": 3.4478755000000003,
+     "p95_ms": 4.279799349999999,
+     "p99_ms": 5.128516249999998,
+     "max_ms": 5.642333,
+     "mean_ms": 3.575024424,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    }
+   }
+  ]
+ },
+ "wall_seconds_total": 47.98652820799907,
+ "caveat": "wynik z jednej maszyny; nie dowodzi czasu rzeczywistego na innym sprzęcie"
+}

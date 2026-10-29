@@ -1,0 +1,141 @@
+{
+ "bench": "b2",
+ "started": "2026-10-28T20:46:47",
+ "env": {
+  "python": "3.12.13",
+  "implementation": "CPython",
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "cpu_count": 10,
+  "ram_bytes": 34359738368,
+  "packages": {
+   "numpy": "2.5.4",
+   "mujoco": "3.17.0",
+   "pandas": "3.1.0",
+   "pyarrow": "26.0.0"
+  },
+  "blas_threads_env": {
+   "OMP_NUM_THREADS": null,
+   "OPENBLAS_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null
+  },
+  "gc_enabled": true,
+  "gc_counts": [
+   380,
+   8,
+   1
+  ],
+  "dont_write_bytecode": 1,
+  "clock_info": {
+   "implementation": "mach_absolute_time()",
+   "monotonic": true,
+   "adjustable": false,
+   "resolution": 4.166666666666667e-08
+  }
+ },
+ "argv": [
+  "--zgoda-bench",
+  "--which",
+  "b2",
+  "--out",
+  "/private/tmp/claude-501/-Users-admin-so101-fly-project/6454b16d-a7f4-423a-a824-4d37dc6a0832/scratchpad/bench"
+ ],
+ "result": {
+  "kind": "B2 skalowanie kroku ALIF (sieci syntetyczne)",
+  "generator": {
+   "density": 0.12505406574394465,
+   "exc_frac": 0.8,
+   "weight_mV": "0,3 · U{1..19}",
+   "seed": 1001,
+   "note": "gęstość jak circuit_bio2 (9252 krawędzi / 272²); sieć losowa, NIE connectome"
+  },
+  "results": [
+   {
+    "N": 272,
+    "init_ms": 10.30525,
+    "W_bytes": 591872,
+    "estimate_bytes": 661504,
+    "tracemalloc_peak_bytes": 612746,
+    "ru_maxrss_after": 107937792,
+    "step_1ms": {
+     "n": 2000,
+     "p50_ms": 0.019791,
+     "p95_ms": 0.02041605,
+     "p99_ms": 0.02300042,
+     "max_ms": 0.498958,
+     "mean_ms": 0.0202824545,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    },
+    "note": "krok = W@buf (gęsty) + aktualizacja stanu; takt 10 ms ≈ 10 kroków (nie mierzony tu)"
+   },
+   {
+    "N": 1000,
+    "init_ms": 41.910041,
+    "W_bytes": 8000000,
+    "estimate_bytes": 8256000,
+    "tracemalloc_peak_bytes": 8062804,
+    "ru_maxrss_after": 116457472,
+    "step_1ms": {
+     "n": 1000,
+     "p50_ms": 0.109208,
+     "p95_ms": 0.21462469999999995,
+     "p99_ms": 0.37079725999999996,
+     "max_ms": 2.090542,
+     "mean_ms": 0.130768488,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    },
+    "note": "krok = W@buf (gęsty) + aktualizacja stanu; takt 10 ms ≈ 10 kroków (nie mierzony tu)"
+   },
+   {
+    "N": 3000,
+    "init_ms": 189.247875,
+    "W_bytes": 72000000,
+    "estimate_bytes": 72768000,
+    "tracemalloc_peak_bytes": 72180828,
+    "ru_maxrss_after": 188874752,
+    "step_1ms": {
+     "n": 300,
+     "p50_ms": 3.1699165000000002,
+     "p95_ms": 3.9839818500000006,
+     "p99_ms": 5.327756669999996,
+     "max_ms": 6.228292,
+     "mean_ms": 3.2843812333333333,
+     "over_deadline": 0,
+     "over_frac": 0.0,
+     "deadline_ms": 10.0
+    },
+    "note": "krok = W@buf (gęsty) + aktualizacja stanu; takt 10 ms ≈ 10 kroków (nie mierzony tu)"
+   },
+   {
+    "N": 10000,
+    "init_ms": 1132.130709,
+    "W_bytes": 800000000,
+    "estimate_bytes": 802560000,
+    "tracemalloc_peak_bytes": 800593992,
+    "ru_maxrss_after": 989380608,
+    "step_1ms": {
+     "n": 60,
+     "p50_ms": 14.425917,
+     "p95_ms": 15.5952268,
+     "p99_ms": 16.294755969999997,
+     "max_ms": 16.512417,
+     "mean_ms": 14.654899983333332,
+     "over_deadline": 60,
+     "over_frac": 1.0,
+     "deadline_ms": 10.0
+    },
+    "note": "krok = W@buf (gęsty) + aktualizacja stanu; takt 10 ms ≈ 10 kroków (nie mierzony tu)"
+   }
+  ],
+  "init_includes": "generacja W wiersz po wierszu (Bernoulli) + ALIF.__init__",
+  "ru_maxrss_units": "bajty na macOS, KiB na Linuksie"
+ },
+ "wall_seconds_total": 3.692885708005633,
+ "caveat": "wynik z jednej maszyny; nie dowodzi czasu rzeczywistego na innym sprzęcie"
+}
