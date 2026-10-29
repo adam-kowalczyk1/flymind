@@ -1,0 +1,11 @@
+dev4 cross-check: analyze_cx_causal_confirmation.py --mode dev vs scripts/analyze_dev4.py (dev/analysis_dev4.txt)
+  S_DN  v4 +21.13 [+18.19, +24.07] n=6        dev4 +21.13 [+18.19, +24.07] n=6        MATCH
+  P2a   v4 +13.21 [-4.57, +30.99] n=6         dev4 +13.21 [-4.57, +30.99] n=6         MATCH
+  P2b   v4 +12.15 [+2.18, +22.13] n=6         dev4 +12.15 [+2.18, +22.13] n=6         MATCH
+  P3    v4 +18.05 [+8.70, +27.40] n=6  (expected (18.90 + 2·17.62)/3 = +18.05 from dev4 per-Δ means)
+  S_bump +23.02 [+18.96, +27.08] n=6 (dev4: +23.02 [+18.96, +27.08])
+  verdicts: DEV — NOT CONFIRMATORY (no verdicts from development seeds)
+  manipulation_check: {'passed': True, 'median_shift': {'+30': 30.316581867321332, '-30': -26.46314739950327, 'sham': 2.4282715988537404}, 'median_coh_change': -0.003922878493699433}
+  self_motion_gate: {'passed': False} g +0.80 [+0.19, +1.41] n=6
+  memory_content CX-Bump: {'slope': -0.31, 'ci': [-1.367346931611015, 0.7398170411715532], 'r': -0.16, 'n': 18, 'pass_': False} (dev4 within-Δ: slope −0.31, r −0.16)
+  positive_control (arms absent in dev4): None

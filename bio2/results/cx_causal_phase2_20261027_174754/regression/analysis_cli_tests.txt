@@ -1,0 +1,11 @@
+== CLI selftest
+SELFTEST PASS
+exit 0
+== CLI stage1 on a non-conforming dataset (dev seed 230, 5 arms, runner-made manifest) -> must REFUSE
+ "verdicts": "REFUSED",
+ "reason": "V1: ramiona manifestu ≠ 16 wymaganych: ['Freeze', 'SelfOnly', 'CX-Bump', 'CX-Pulse-30', 'CX-DN-Sham']"
+exit 2
+== CLI final with stage1 decision of another dataset -> must REFUSE
+ "reason": "final: stage1_decision niezgodny ze zbiorem lub wersją analizy"
+== CLI dev on non-dev seeds -> must REFUSE
+ "reason": "dev: tylko ziarna 200–299"

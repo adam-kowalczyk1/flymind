@@ -1,0 +1,65 @@
+dev4: 216 records; statuses {'OK': 216}; jump flags {True}
+e_onset (Δ=0, shared): -19.1, -5.8, -8.8, +4.7, -5.0, +5.9; jump_deg: -10.3, -11.1, -16.3, +11.1, -10.7, +12.0
+onset state identical across arms within (seed, Δ): False
+
+Δ = 0 (pure target memory): seed-level |e_end| mean (SD)
+  Freeze             8.22 ( 5.59)
+  Scalar             2.53 ( 1.78)
+  SelfOnly           8.27 ( 5.60)
+  CX-Bump           21.43 (16.53)
+  CX-Bump-NoSelf    27.35 ( 8.75)
+  CX-DN             15.71 (17.69)
+  CX-Sham           21.10 (15.60)
+  CX-Pulse+30       37.87 ( 9.42)
+  CX-Pulse-30       14.82 ( 8.29)
+  CX-DN-Sham        14.73 (17.69)
+  CX-DN-Pulse+30    29.90 (12.23)
+  CX-DN-Pulse-30    20.92 (15.33)
+  paired d = |e_A| - |e_B|:
+    CX-Bump        - Freeze         +13.21 [ -4.57, +30.99] (SD 16.94, n=6)
+    CX-Bump        - Scalar         +18.90 [ +1.71, +36.09] (SD 16.38, n=6)
+    CX-Bump        - SelfOnly       +13.16 [ -4.62, +30.94] (SD 16.94, n=6)
+    Scalar         - Freeze          -5.69 [-11.96,  +0.58] (SD 5.98, n=6)
+    Scalar         - SelfOnly        -5.74 [-12.03,  +0.55] (SD 5.99, n=6)
+    CX-DN          - Freeze          +7.49 [-13.19, +28.18] (SD 19.71, n=6)
+    CX-Bump        - CX-Bump-NoSelf  -5.92 [-16.68,  +4.85] (SD 10.26, n=6)
+
+Δ = ±20 (seed mean): seed-level |e_end| mean (SD)
+  Freeze            17.65 ( 0.79)
+  Scalar             2.76 ( 1.62)
+  SelfOnly           8.23 ( 5.55)
+  CX-Bump           20.38 ( 6.30)
+  CX-Bump-NoSelf    27.46 ( 8.79)
+  CX-DN             16.21 ( 9.06)
+  CX-Sham           18.98 ( 8.44)
+  CX-Pulse+30       34.24 (10.14)
+  CX-Pulse-30       12.36 ( 8.64)
+  CX-DN-Sham        15.46 ( 4.92)
+  CX-DN-Pulse+30    30.82 ( 9.85)
+  CX-DN-Pulse-30    14.34 ( 5.95)
+  paired d = |e_A| - |e_B|:
+    CX-Bump        - Freeze          +2.73 [ -4.22,  +9.68] (SD 6.62, n=6)
+    CX-Bump        - Scalar         +17.62 [ +9.89, +25.35] (SD 7.37, n=6)
+    CX-Bump        - SelfOnly       +12.15 [ +2.18, +22.13] (SD 9.51, n=6)
+    Scalar         - Freeze         -14.89 [-16.67, -13.11] (SD 1.70, n=6)
+    Scalar         - SelfOnly        -5.47 [-11.50,  +0.55] (SD 5.74, n=6)
+    CX-DN          - Freeze          -1.44 [-11.22,  +8.35] (SD 9.32, n=6)
+    CX-Bump        - CX-Bump-NoSelf  -7.08 [-15.76,  +1.61] (SD 8.27, n=6)
+
+memory-content test: regression of the memory-phase correction (true_rel change after passive window, i.e. e_end − e_post_passive)
+on the target bearing at the end of the passive window (ideal memory: slope −1 → full correction; freeze 0)
+  Scalar    slope -0.90 ± 0.03  r -0.99  (n=18)
+  SelfOnly  slope -0.69 ± 0.10  r -0.86  (n=18)
+  CX-Bump   slope -0.71 ± 0.27  r -0.55  (n=18)
+  CX-DN     slope -0.92 ± 0.29  r -0.63  (n=18)
+  Freeze    slope -0.00 ± 0.00  r -0.86  (n=18)
+
+perturbation (signed, seed mean over Δ ∈ {−20, 0, 20}): S = (e(−30) − e(+30))/2, predicted > 0
+  CX     S +23.02 [+18.96, +27.08] (SD 3.87, n=6)  positive 6/6
+    CX-Pulse+30 − Sham -20.56 [-31.35,  -9.77] (SD 10.28, n=6)
+    CX-Pulse-30 − Sham +25.48 [+12.68, +38.28] (SD 12.20, n=6)
+    manipulation check (median bump shift): +30 +28.4, −30 -27.7, sham +0.7
+  CX-DN  S +21.13 [+18.19, +24.07] (SD 2.80, n=6)  positive 6/6
+    CX-DN-Pulse+30 − Sham -21.53 [-30.31, -12.76] (SD 8.36, n=6)
+    CX-DN-Pulse-30 − Sham +20.73 [ +6.69, +34.76] (SD 13.37, n=6)
+    manipulation check (median bump shift): +30 +30.3, −30 -26.5, sham +2.4
