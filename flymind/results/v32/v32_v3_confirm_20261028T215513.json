@@ -1,0 +1,128 @@
+{
+ "summary": {
+  "b_a=0.5": {
+   "k": 3,
+   "n": 80,
+   "frac": 0.037,
+   "wilson95": [
+    0.013,
+    0.105
+   ],
+   "glomeruli_ge3of5": 1,
+   "distinct_active_sets": 3,
+   "max_sat_on": 0.0
+  },
+  "data": {
+   "k": 65,
+   "n": 80,
+   "frac": 0.812,
+   "wilson95": [
+    0.713,
+    0.883
+   ],
+   "glomeruli_ge3of5": 13,
+   "distinct_active_sets": 12,
+   "max_sat_on": 0.0
+  },
+  "shuffle": {
+   "k": 0,
+   "n": 80,
+   "frac": 0.0,
+   "wilson95": [
+    -0.0,
+    0.046
+   ],
+   "glomeruli_ge3of5": 0,
+   "distinct_active_sets": 0,
+   "max_sat_on": 0.0
+  }
+ },
+ "fisher_p_data_gt_shuffle": 1.1991438593005963e-30,
+ "H1": "True",
+ "H2": "True",
+ "H3": true,
+ "verdict": "wzgórze zależne od okablowania (przy modelowym G_INH i b_a = 0)",
+ "protocol": "flymind/v32_v3_confirm.py — V3.2 wersja 3: POTWIERDZENIE (jednorazowe) wyniku eksploracji Red Team.\nProtokół zapisany 2026-10-28 PRZED uruchomieniem; hash pliku w results/v32/v3_protocol_sha256.txt. Bez bio2, bez mujoco.\n\nPochodzenie hipotezy: Red Team (results/redteam/v32_v2_redteam.md) — eksploracja 108 warunków na ziarnach 1001–1005;\nzweryfikowane niezależnym kodem (ziarna 1001–1003): G_INH 16 / G_DD 0,3 / J0 0,2 / b_a 0 → 39/48 prób z trwałym łukiem.\nKonfiguracja wybrana PO obejrzeniu wyników na ziarnach 1001–1005, więc potwierdzenie wyłącznie na nowych ziarnach.\n\nSieć: jak V3.2 (EPG 46, PEN_a 20, PEN_b 22, Delta7 42; tylko krawędzie z danych, liniowo, znak wg przekaźnika), PLUS\nZMIANY MODELU (nie dane, przeniesione z decyzji bio2): wagi Delta7 → EPG/PEN ×G_INH = 16, Delta7 → Delta7 ×G_DD = 0,3;\nJ0 = 0,2 mV/synapsę; ALIF noise 2 mV, b_a = 0 (bez adaptacji). Bodziec 12 mV do EPG jednego glomerulusa 0–300 ms,\nkażdy z 16 glomerulusów; całość 2500 ms. Kąty: wariant A (cykl z epg_ring, „pairs”).\nZiarna: 2001–2005 (potwierdzające, użyte tylko tutaj); tasowanie: ziarna 2101–2105 (jedno tasowanie na ziarno szumu).\nMiara (jak v2): „wzgórze trwałe” w oknie W1 = 650–1000 ms i W2 = 2150–2500 ms: C zdefiniowane ∧ dC > 0,2 ∧\n|błąd fazy względem średniej kątów pobudzonych EPG| < 45°. Wynik próby = trwałe w W1 ∧ W2.\n\nWarunki:  data       — sieć powyżej\n          shuffle    — te same wagi po visual_path.shuffle (zachowane stopnie i siła wyjściowa), potem te same mnożniki\n                       wg typu presynaptycznego/postsynaptycznego (Delta7 → nie-Delta7 ×16, Delta7 → Delta7 ×0,3)\n          b_a=0.5    — sieć data z adaptacją domyślną flymind (kontrola znanego czynnika)\nHipotezy (α = 0,05, Bonferroni na 2 testy → 0,025):\n  H1: odsetek trwałych prób w data ≥ 0,5 (jednostronny dokładny test dwumianowy p0 = 0,5 nie jest wymagany —\n      kryterium opisowe: punkt ≥ 0,5 ORAZ dolna granica 95 % CI Wilsona > 0,25).\n  H2: data > shuffle: test Fishera jednostronny, p < 0,025 (n = 80 vs 80; uwaga: efektywne n ≈ liczba glomerulusów,\n      bo zapłon jest deterministyczny na poziomie glomerulusa — raportowany też odsetek glomerulusów z ≥ 3/5 ziaren).\n  H3 (opisowa): b_a = 0,5 → odsetek ≤ 0,1.\nInterpretacja ustalona teraz: H1 ∧ H2 → „wzgórze zależne od okablowania z danych PRZY modelowym wzmocnieniu hamowania\nDelta7 i bez adaptacji”; H1 ∧ ¬H2 → „trwałość wynika z globalnego hamowania, nie z topologii”; ¬H1 → wynik\neksploracji nie potwierdzony. Żaden wynik nie oznacza ciągłego atraktora (RT: stany skwantowane — raportowana liczba\nróżnych zbiorów aktywnych EPG).\n\nUruchom:  .venv/bin/python -I -B flymind/v32_v3_confirm.py --out flymind/results/v32\n",
+ "wall_s": 15.029826208003215,
+ "meta": {
+  "populations": {
+   "EPG": 46,
+   "PEN_a(PEN1)": 20,
+   "PEN_b(PEN2)": 22,
+   "Delta7": 42
+  },
+  "edges": {
+   "provenance": {
+    "path": "/Users/admin/so101_fly_project/data/malecns/connectome-weights-male-cns-v1.0-minconf-0.5.feather",
+    "bytes": 1051241946,
+    "mtime": 1792771839.3343825,
+    "minconf": 0.5
+   },
+   "rows_in_file": 151856684,
+   "loaded": {
+    "edges": 7606,
+    "synapses": 123798,
+    "self_loops": 0,
+    "bodies": 130
+   },
+   "min_weight": 1,
+   "bodies_requested": 130,
+   "bodies_without_edges": [],
+   "after_min_weight": {
+    "edges": 7606,
+    "synapses": 123798
+   }
+  },
+  "labels": {
+   "type_filter": "type == 'EPG' (dokładnie)",
+   "excluded_similar_types": [
+    "EPGt"
+   ],
+   "regex": "_([LR])(\\d+)$",
+   "neurons": 46,
+   "per_glomerulus": {
+    "L1": 2,
+    "L2": 2,
+    "L3": 3,
+    "L4": 3,
+    "L5": 3,
+    "L6": 3,
+    "L7": 3,
+    "L8": 4,
+    "R1": 2,
+    "R2": 2,
+    "R3": 3,
+    "R4": 3,
+    "R5": 3,
+    "R6": 3,
+    "R7": 3,
+    "R8": 4
+   },
+   "caveat": "interpretacja sufiksu jako glomerulusa PB to konwencja nazewnictwa (porównanie z somaSide w load())"
+  },
+  "cycle": [
+   "L1",
+   "R8",
+   "L2",
+   "R7",
+   "L3",
+   "R6",
+   "L4",
+   "R5",
+   "L5",
+   "R4",
+   "L6",
+   "R3",
+   "L7",
+   "R2",
+   "L8",
+   "R1"
+  ],
+  "weights": {
+   "path": "/Users/admin/so101_fly_project/data/malecns/connectome-weights-male-cns-v1.0-minconf-0.5.feather",
+   "bytes": 1051241946,
+   "mtime": 1792771839.3343825,
+   "minconf": 0.5
+  }
+ }
+}

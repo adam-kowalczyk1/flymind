@@ -1,0 +1,39 @@
+PROV labels: {"type_filter": "type == 'EPG' (dokładnie)", "excluded_similar_types": ["EPGt"], "regex": "_([LR])(\\d+)$", "neurons": 46, "per_glomerulus": {"L1": 2, "L2": 2, "L3": 3, "L4": 3, "L5": 3, "L6": 3, "L7": 3, "L8": 4, "R1": 2, "R2": 2, "R3": 3, "R4": 3, "R5": 3, "R6": 3, "R7": 3, "R8": 4}, "caveat": "interpretacja sufiksu jako glomerulusa PB to konwencja nazewnictwa (porównanie z somaSide w load())", "side_equals_somaSide": "46/46"}
+PROV edges: {'edges': 842, 'synapses': 11486, 'self_loops': 0, 'bodies': 46} | ann mtime/bytes: 14483314 | minconf: 0.5
+EPG→EPG: krawędzi 842 synaps 11486 autapsy 0
+
+=== normalize=pairs
+cykl (kanoniczny): L1–R1–L8–R2–L7–R3–L6–R4–L5–R5–L4–R6–L3–R7–L2–R8
+score 725.53; frakcja wagi S na cyklu 0.822; przekątna 525.4; poza 882.1
+margines lokalny 63.56 (8.8% score); alternatywa ['L1', 'R8', 'L2', 'R7', 'R5', 'L4', 'R6', 'L3', 'L5', 'R4', 'L6', 'R3', 'L7', 'R2', 'L8', 'R1']
+top2: {'n_mutual': 16, 'is_ring': True, 'same_as_cycle': True, 'tie': False} | circulation: -0.0189
+wrażliwość C:
+ variant              A       B       R
+pattern                               
+one_glomerulus  1.0000  0.9952  0.9977
+uniform         0.0306  0.0304  0.0000
+vonmises_k0.5   0.2132  0.2121  0.2416
+vonmises_k2.0   0.6823  0.6786  0.7013
+vonmises_k8.0   0.9262  0.9213  0.9313
+
+=== normalize=sum
+cykl (kanoniczny): L1–R1–L8–R2–L7–R3–L6–R4–L5–R5–L4–R6–L3–R7–L2–R8
+score 5683.00; frakcja wagi S na cyklu 0.817; przekątna 4530.0; poza 6956.0
+margines lokalny 513.00 (9.0% score); alternatywa ['R5', 'L4', 'R6', 'L3', 'R7', 'L2', 'R8', 'L1', 'L5', 'R4', 'L6', 'R3', 'L7', 'R2', 'L8', 'R1']
+top2: {'n_mutual': 16, 'is_ring': True, 'same_as_cycle': True, 'tie': False} | circulation: -0.0174
+wrażliwość C:
+ variant              A       B       R
+pattern                               
+one_glomerulus  1.0000  0.9952  0.9977
+uniform         0.0306  0.0304  0.0000
+vonmises_k0.5   0.2132  0.2121  0.2416
+vonmises_k2.0   0.6823  0.6786  0.7013
+vonmises_k8.0   0.9262  0.9213  0.9313
+
+Held–Karp n=16: 0.35 s
+permutacja etykiet (n=10000, ziarno 1001, 71 s):
+  n_mutual: obs 16; null mediana 12, max 15, p = 0.00010
+  frakcja wagi na cyklu (dokładny cykl, n=200): obs 0.822; null mediana 0.317, max 0.394, p = 0.0050
+bootstrap neuronów w glomerulusach (n=500, ziarno 1002, 173 s): identyczny cykl w 100.0% prób; różnych postaci: 1
+   500 × L1–R1–L8–R2–L7–R3–L6–R4–L5–R5–L4–R6–L3–R7–L2–R8
+kierunek: circulation obs -0.0189; null (losowe odwrócenie par, n=10000, ziarno 1003) 95% [-0.0488, +0.0483], p dwustronne = 0.4616
