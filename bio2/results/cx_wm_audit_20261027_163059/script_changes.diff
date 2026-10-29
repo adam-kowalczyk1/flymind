@@ -1,0 +1,126 @@
+--- results/cx_wm_audit_20261027_163059/archive/test_cx_working_memory_vs_kalman.py	2026-10-27 16:30:59
++++ test_cx_working_memory_vs_kalman.py	2026-10-27 16:40:29
+@@ -60,7 +60,8 @@
+ CX_GROUPS = ["EPG", "PEN_a_L", "PEN_a_R", "PEN_b_L", "PEN_b_R", "Delta7", "PFL3_L", "PFL3_R"]
+ SLOPE_DEGENERATE_THRESH = 1e-6
+ VALID_VARIANTS = ("BIO-Static", "BIO-Hybrid", "BIO-NoSelf", "BIO-Shuffle", "LastObs-PD", "Kalman-PD")
+-DIAGNOSTIC_VARIANTS = ("BIO-Shuffle-DiagFallback",)
++# *-Freeze-Diag: kontroler bazowy, ale komenda = 0 przez całe okno okluzji (Freeze-Null: czy pamięć daje coś ponad bezruch)
++DIAGNOSTIC_VARIANTS = ("BIO-Shuffle-DiagFallback", "LastObs-Freeze-Diag", "BIO-Static-Freeze-Diag")
+ ALL_VARIANTS = VALID_VARIANTS + DIAGNOSTIC_VARIANTS
+ 
+ 
+@@ -430,12 +431,12 @@
+     vision = Vision(scene2.CAM_FOVY, scene2.CAM_W / scene2.CAM_H, efference=True)
+ 
+     # 3. Inicjalizacja kontrolera
+-    if variant == "LastObs-PD":
++    if variant in ("LastObs-PD", "LastObs-Freeze-Diag"):
+         ctl = LastObsPDController(kp=2.5, kd=0.15)
+     elif variant == "Kalman-PD":
+         kf = LinearKalmanTargetEstimator(q_w=0.5, r_v=0.005, dt=dt)
+         ctl = KalmanPDController(kf=kf, kp=2.8, kd=0.12)
+-    elif variant == "BIO-Static":
++    elif variant in ("BIO-Static", "BIO-Static-Freeze-Diag"):
+         ctl = BioAdaptiveController(mode="static", brain=calib_brain, seed=seed)
+     elif variant == "BIO-Hybrid":
+         ctl = BioAdaptiveController(mode="hybrid", brain=calib_brain, seed=seed)
+@@ -461,6 +462,11 @@
+     status = "SUCCESS"
+     error_reason = ""
+     reappear_recorded = False
++    k = -1
++    # diagnostyka (audyt 2026-10-27): stan w chwili zasłonięcia i wyłonienia
++    diag = dict(e_onset_deg=None, aim_onset_deg=None, ball_onset_deg=None, bump_onset_deg=None, coh_onset=None,
++                aim_reappear_deg=None, ball_reappear_deg=None, bump_reappear_deg=None, coh_reappear=None,
++                t_reappear_actual=None, n_occluded_steps=0, n_cue_seen_pre_onset=0, e_ring_lastocc_deg=None)
+ 
+     # Detekcja zdegenerowanej kalibracji na poziomie kontrolera
+     if variant.startswith("BIO-") and hasattr(ctl, "calibration_status"):
+@@ -507,6 +513,19 @@
+                 omega_cmd, b_ang, b_skup = ctl.step(cue_rel, aim_az, w_base, t_sim)
+             else:
+                 omega_cmd = ctl.step(cue_rel, aim_az, w_base)
++            if is_occluded and variant.endswith("Freeze-Diag"):
++                omega_cmd = 0.0
++            if is_occluded:
++                if diag["n_occluded_steps"] == 0:
++                    diag.update(e_onset_deg=float(np.degrees(true_rel_az)), aim_onset_deg=float(np.degrees(aim_az)),
++                                ball_onset_deg=float(np.degrees(ball_az)), bump_onset_deg=float(np.degrees(b_ang)),
++                                coh_onset=float(b_skup))
++                diag["n_occluded_steps"] += 1
++                # e_ring z ostatniego kroku okluzji (w kroku wyłonienia wzgórze dostało już 10 ms bodźca)
++                if variant.startswith("BIO-"):
++                    diag["e_ring_lastocc_deg"] = float(np.degrees(angle_diff(true_rel_az, b_ang)))
++            elif t_sim < t_mask_start and detected_cue is not None:
++                diag["n_cue_seen_pre_onset"] += 1
+ 
+             # Walidacja stabilności numerycznej
+             if not np.isfinite(omega_cmd):
+@@ -531,6 +550,9 @@
+                 if variant.startswith("BIO-"):
+                     e_ring_deg = float(np.degrees(angle_diff(true_rel_az, b_ang)))
+                 reappear_recorded = True
++                diag.update(aim_reappear_deg=float(np.degrees(aim_az)), ball_reappear_deg=float(np.degrees(ball_az)),
++                            bump_reappear_deg=float(np.degrees(b_ang)), coh_reappear=float(b_skup),
++                            t_reappear_actual=float(t_sim))
+ 
+                 # Sprawdzenie kryterium błędu sterowania (tylko gdy próba nie ma wcześniejszej dyskwalifikacji)
+                 if abs(e_reappear_deg) >= 20.0 and status == "SUCCESS":
+@@ -573,6 +595,9 @@
+         error_reason=error_reason,
+         fallback_used=bool(getattr(ctl, "fallback_used", False)),
+         calibration_status=getattr(ctl, "calibration_status", "VALID"),
++        steer_calib=({kk: np.asarray(vv).tolist() for kk, vv in ctl.brain.steer.items()}
++                     if hasattr(ctl, "brain") and ctl.brain.steer is not None else None),
++        **diag,
+     )
+ 
+ 
+@@ -776,8 +801,46 @@
+     parser.add_argument("--seed", type=int, default=100, help="Ziarno losowości sceny")
+     parser.add_argument("--t-occ", type=float, default=1.0, help="Czas okluzji [s]")
+     parser.add_argument("--t-total", type=float, default=2.5, help="Czas całkowity próby diagnostycznej [s]")
++    parser.add_argument("--run-pilot", action="store_true", help="Seria prób: --seeds × --variants, zapis JSONL (wznawialny)")
++    parser.add_argument("--seeds", type=str, default="100-129", help="Zakres ziaren a-b (włącznie) lub lista po przecinku")
++    parser.add_argument("--variants", type=str, default=",".join(VALID_VARIANTS), help="Warianty po przecinku")
++    parser.add_argument("--out", type=str, help="Plik JSONL wyników (--run-pilot); istniejące rekordy są pomijane, nie nadpisywane")
++    parser.add_argument("--allow-heldout", action="store_true", help="Zezwól na ziarna testowe 0–39 (domyślnie zabronione)")
+     args = parser.parse_args()
+ 
++    if args.run_pilot:
++        a, _, b = args.seeds.partition("-")
++        seeds = list(range(int(a), int(b) + 1)) if b else [int(s) for s in args.seeds.split(",")]
++        variants = args.variants.split(",")
++        assert all(v in ALL_VARIANTS for v in variants), variants
++        held = sorted(set(seeds) & set(CFG["seeds_test"]))
++        if held and not args.allow_heldout:
++            sys.exit(f"Odmowa: ziarna testowe {held} wymagają --allow-heldout")
++        t_total = CFG["t_trial_total"]
++        done = set()
++        if os.path.exists(args.out):
++            for line in open(args.out):
++                r = json.loads(line)
++                done.add((r["variant"], r["seed"], r["t_occ"]))
++        # pętla: ziarno zewnętrzne, wariant wewnętrzny (każdy wariant to osobna instancja sceny i mózgu)
++        for s in seeds:
++            for v in variants:
++                if (v, s, args.t_occ) in done:
++                    continue
++                t0 = time.time()
++                try:
++                    res = run_closedloop_trial(variant=v, seed=s, t_occ=args.t_occ, t_total=t_total)
++                except Exception as exc:   # błąd poza pętlą symulacji (np. budowa mózgu) — rekord zostaje
++                    res = dict(variant=v, seed=s, t_occ=args.t_occ, status="TECHNICAL_FAILURE",
++                               error_reason=f"Wyjątek infrastruktury: {exc!r}")
++                res.update(t_total=t_total, wall_s=round(time.time() - t0, 2),
++                           finished_at=time.strftime("%Y-%m-%dT%H:%M:%S"))
++                with open(args.out, "a") as f:
++                    f.write(json.dumps(res) + "\n")
++                print(f"{v:24s} seed={s} status={res['status']} e={res.get('e_reappear_deg')} wall={res['wall_s']}s",
++                      flush=True)
++        sys.exit(0)
++
+     if args.test_unit:
+         success = run_unit_tests()
+         sys.exit(0 if success else 1)

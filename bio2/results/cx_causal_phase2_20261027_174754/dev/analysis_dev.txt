@@ -1,0 +1,54 @@
+EXP A dev: 156 records, seeds [200, 201, 202, 203, 204, 205], passive [-20.0, 20.0]; statuses: {'OK': 156}
+onset (shared visible phase): t_on mean 1.42 [1.28,1.49] s; e_onset mean|.| 4.74 SD 4.41; w_base at onset mean|.| 0.133 rad/s; realised passive |.| mean 17.35 SD 0.05 deg
+onset state identical across arms within (seed, passive): True
+
+per arm: n | |e_end| mean SD median | signed mean | |mem_err_end| mean (estimate vs truth at reappearance) | n coh<0.2 at end
+  CX-Bump           12 |  14.38   9.82  12.23 |  -9.47 |  20.09 (n=12) | 0
+  CX-Bump-NoSelf    12 |  30.95  19.66  23.13 | -17.71 |  52.36 (n=12) | 0
+  CX-DN             12 |  13.42   9.35  13.06 |  -7.54 |  22.14 (n=12) | 0
+  Scalar            12 |   1.42   0.91   1.40 |  +0.31 |   0.58 (n=12) | 0
+  Freeze            12 |  17.31   5.19  17.32 |  +2.54 |    nan (n=0) | 0
+  CX-Reset          12 |  17.31   5.19  17.32 |  +2.54 |    nan (n=0) | 12
+  CX-Pulse+30       12 |  29.48  15.02  21.12 | -29.48 |  48.00 (n=12) | 0
+  CX-Pulse-30       12 |  11.41   9.75   9.99 |  +5.89 |  18.98 (n=12) | 0
+  CX-Sham           12 |  17.14   6.02  18.32 | -14.71 |  26.04 (n=12) | 0
+  Scalar-Shift+30   12 |  26.27   5.94  28.93 | -26.27 |  32.58 (n=12) | 0
+  Scalar-Shift-30   12 |  28.28   4.80  28.26 | +28.28 |  33.04 (n=12) | 0
+  CV                12 |  13.55   3.53  13.20 |  -7.62 |  18.88 (n=12) | 0
+  CX-Shuffle20      12 |  17.31   5.19  17.32 |  +2.54 |    nan (n=0) | 12
+
+paired D = |e_A| - |e_B| (deg): n, mean, SD, 95% t-CI
+  CX-Bump        - Scalar         n=12 +12.96 SD 10.24 [ +6.45, +19.47]
+  CX-Bump        - Freeze         n=12  -2.93 SD 13.13 [-11.27,  +5.42]
+  Scalar         - Freeze         n=12 -15.89 SD  4.29 [-18.61, -13.16]
+  CX-DN          - Freeze         n=12  -3.89 SD 12.62 [-11.91,  +4.12]
+  CX-DN          - Scalar         n=12 +11.99 SD  9.75 [ +5.80, +18.19]
+  CX-Bump        - CX-Bump-NoSelf n=12 -16.57 SD 21.69 [-30.35,  -2.78]
+  CX-Bump        - CX-Reset       n=12  -2.93 SD 13.13 [-11.27,  +5.42]
+  CX-Bump        - CX-Shuffle20   n=12  -2.93 SD 13.13 [-11.27,  +5.42]
+  CX-Shuffle20   - Freeze         n=12  +0.00 SD  0.00 [ +0.00,  +0.00]
+  CX-Reset       - Freeze         n=12  +0.00 SD  0.00 [ +0.00,  +0.00]
+
+perturbation: signed D = e_end(arm) - e_end(sham/base), same (seed, passive); prediction: +30 -> negative, -30 -> positive
+  CX-Pulse+30      - CX-Sham   n=12 -14.77 SD 14.10 [-23.73,  -5.82]
+  CX-Pulse-30      - CX-Sham   n=12 +20.60 SD  8.93 [+14.93, +26.27]
+  CX-Sham          - CX-Bump   n=12  -5.24 SD  7.73 [-10.15,  -0.33]
+  Scalar-Shift+30  - Scalar    n=12 -26.58 SD  4.31 [-29.32, -23.84]
+  Scalar-Shift-30  - Scalar    n=12 +27.97 SD  3.17 [+25.96, +29.98]
+  symmetric pulse effect (e(-30) - e(+30))/2: n=12 mean +17.68 SD 8.88; fraction of seeds with predicted sign 1.00
+
+intervention verification (CX arms): bump shift pre_int -> post_int (deg), coherence, EPG Hz
+  CX-Pulse+30  n=12 shift +26.19 SD  9.17 | coh pre 0.79 post 0.79 | EPG pre 56.7 post 51.6
+  CX-Pulse-30  n=12 shift -24.81 SD  7.63 | coh pre 0.79 post 0.79 | EPG pre 54.2 post 49.6
+  CX-Sham      n=12 shift  +0.17 SD  7.08 | coh pre 0.80 post 0.78 | EPG pre 54.3 post 50.7
+
+closed-loop self-motion integration during passive window (CX-Bump vs CX-Bump-NoSelf): g = -(bump change)/(realised rotation)
+  CX-Bump         g mean +1.54 SD 0.67 (n=12); onset encoding error bump-true mean -1.45 SD 4.88
+  CX-Bump-NoSelf  g mean +0.00 SD 0.88 (n=12); onset encoding error bump-true mean +1.14 SD 6.44
+  Scalar          g mean +0.91 SD 0.003
+
+EXP B dev (moving target, passive 0): 16 records
+  Freeze     n=4 |e_end| mean  26.10 SD  5.56
+  Scalar     n=4 |e_end| mean  22.47 SD  4.36
+  CV         n=4 |e_end| mean   8.65 SD  1.56
+  CX-Bump    n=4 |e_end| mean  22.97 SD 23.77

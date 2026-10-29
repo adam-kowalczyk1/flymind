@@ -1,0 +1,19 @@
+1. Frozen hashes vs files:
+   runner_sha256                OK
+   analysis_sha256              OK
+   analysis_selftest_sha256     OK
+   runner_safety_test_sha256    OK
+   protocol_sha256              OK
+2. Manifest written by the R2 runner (dev regression dataset) vs frozen: {'protocol_version': True, 'runner_sha256': True, 'cfg_sha256': True, 'deps_sha256': True, 'versions': True}
+3. Trial code (apply_velocity … run_trial, classes, calibration) identical v3 vs R2: True
+4. CFG values identical v3 vs R2 (comments ignored): True
+5. Stale references in ACTIVE documents (confirmatory_protocol_v4.md, REPRODUCE.md v4 section):
+   '300–339' in v4 protocol: False
+   '12 arms' in v4 protocol: False
+   'Δ ∈ {−20°, +20°}' in v4 protocol: False
+   'point estimate favours' in v4 protocol: True
+   'Q4 benefit' in v4 protocol: True
+   REPRODUCE v1 command marked SUPERSEDED — DO NOT RUN: True
+{'S_DN': (21.13, [18.19, 24.07]), 'P2a': (13.21, [-4.57, 30.99]), 'P2b': (12.15, [2.18, 22.13]), 'P3': (18.05, [8.7, 27.4]), 'S_bump': (23.02, [18.96, 27.08])}
+ "reason": "V1: ramiona manifestu ≠ 16 wymaganych: ['Freeze', 'SelfOnly', 'CX-Bump', 'CX-Pulse-30', 'CX-DN-Sham']"
+ "reason": "dev: tylko ziarna 200–299"

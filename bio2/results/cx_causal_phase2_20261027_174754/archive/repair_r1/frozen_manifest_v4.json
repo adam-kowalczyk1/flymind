@@ -1,0 +1,81 @@
+{
+ "protocol_version": "v4",
+ "protocol_file": "confirmatory_protocol_v4.md",
+ "protocol_sha256": "13e68691c6c6cf4c42e51c76f0bfd7c1950baf62cd50bd33fe5412806c5c2c56",
+ "runner": "bio2/test_cx_causal_memory.py",
+ "runner_sha256": "cc279579fbb1b0660e786fa5fd9532cd6cca85621aef2e5fbcbec37787954d7b",
+ "cfg": {
+  "dt": 0.01,
+  "w_max": 0.6,
+  "windup": 0.02,
+  "K": 2.5,
+  "conv_t_min": 1.0,
+  "conv_t_max": 2.2,
+  "conv_win": 30,
+  "conv_seen_min": 27,
+  "conv_rate_max_deg_s": 4.0,
+  "t_occ": 2.0,
+  "passive_start": 0.0,
+  "passive_dur": 0.6,
+  "int_start": 0.7,
+  "pulse_dur": 0.2,
+  "reset_start": 0.0,
+  "reset_dur": 0.1,
+  "y0_range": [
+   0.12,
+   0.16
+  ],
+  "v_range": [
+   0.07,
+   0.12
+  ],
+  "coh_min": 0.2,
+  "shuffle_frac": 0.2,
+  "lambda_self": 1.105,
+  "lambda_cx": 0.65,
+  "jump_range": [
+   10.0,
+   20.0
+  ],
+  "jump_vis": 0.2
+ },
+ "cfg_sha256": "be477e8634ee75c743ac6cd04167f0c4951d5220925110b74f79579d24a6b80e",
+ "analysis": "bio2/analyze_cx_causal_confirmation.py",
+ "analysis_sha256": "2c6bf13cac543eca8d140c55e20b1850a986bed1d3a5a79236cf182010318b11",
+ "analysis_selftest": "bio2/test_analyze_cx_causal_confirmation.py",
+ "analysis_selftest_sha256": "901072ce486ff3405eb251096e271dd107247729d67a77b1e27c8a21e9bf6d56",
+ "runner_safety_test": "bio2/test_cx_causal_runner_safety.py",
+ "runner_safety_test_sha256": "06e04c4e23e732dd5eaf088bd577926c7ccefb13f23d75ef5eef13642baf37d7",
+ "required_arms": [
+  "Freeze",
+  "Scalar",
+  "SelfOnly",
+  "CX-Bump",
+  "CX-Bump-NoSelf",
+  "CX-DN",
+  "CX-Sham",
+  "CX-Pulse+30",
+  "CX-Pulse-30",
+  "CX-DN-Sham",
+  "CX-DN-Pulse+30",
+  "CX-DN-Pulse-30",
+  "CX-Reset",
+  "CX-Shuffle20",
+  "Scalar-Shift+30",
+  "Scalar-Shift-30"
+ ],
+ "deltas": [
+  -20.0,
+  0.0,
+  20.0
+ ],
+ "jump": true,
+ "moving": false,
+ "stage1_seeds": [
+  300,
+  323
+ ],
+ "seed_cap": 399,
+ "dataset_id": "CX-A2-CONFIRM-v4",
+ "frozen_at": "2026-10-27T19:07:56"
+}

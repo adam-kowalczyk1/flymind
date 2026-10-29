@@ -1,0 +1,18 @@
+D = |e_A| - |e_B| (deg). BCa 95% CI (scipy.stats.bootstrap, 10000, seed 20261027); paired-t p (two-sided) Holm within family; descriptive only
+[NI] BIO-Static - LastObs-PD: mean +0.49 BCa [-2.32, +3.24] p=0.74 Holm=0.74 | onset-adjusted D at equal e_onset +1.49 (slope -0.39)
+[NI] BIO-Hybrid - Kalman-PD: mean +7.29 BCa [+5.22, +9.42] p=2.3e-07 Holm=4.7e-07 | onset-adjusted D at equal e_onset +7.65 (slope -0.11)
+[mechanism] BIO-Static - BIO-NoSelf: mean -2.73 BCa [-6.20, +0.58] p=0.13 Holm=0.26 | onset-adjusted D at equal e_onset -2.60 (slope -0.71)
+[mechanism] BIO-Hybrid - BIO-Static: mean -1.91 BCa [-4.94, +1.49] p=0.26 Holm=0.26 | onset-adjusted D at equal e_onset -1.95 (slope +0.35)
+[freeze] BIO-Static - BIO-Static-Freeze-Diag: mean +4.80 BCa [+1.91, +7.80] p=0.0042 Holm=0.0042 | onset-adjusted D at equal e_onset +4.80 (slope +0.00)
+[freeze] LastObs-PD - LastObs-Freeze-Diag: mean +1.72 BCa [+1.36, +2.13] p=1.6e-09 Holm=3.3e-09 | onset-adjusted D at equal e_onset +1.72 (slope +0.00)
+
+POST HOC (not prespecified) ball-motion-free endpoint r = dAim - e_onset (0 = arm executed exactly the correction
+a perfect static memory would make); |r| mean, SD; paired vs LastObs-PD:
+  BIO-Static               |r|  6.79 (SD 4.30)  vs LastObs: +5.69 [+4.09, +7.30]
+  BIO-NoSelf               |r|  9.11 (SD 6.45)  vs LastObs: +8.01 [+5.58, +10.45]
+  LastObs-PD               |r|  1.10 (SD 0.21)  vs LastObs: +0.00 [+0.00, +0.00]
+  BIO-Static-Freeze-Diag   |r|  4.52 (SD 2.90)  vs LastObs: +3.43 [+2.35, +4.50]
+  LastObs-Freeze-Diag      |r|  1.09 (SD 0.83)  vs LastObs: -0.01 [-0.36, +0.34]
+  BIO-Static - BIO-NoSelf on |r|: -2.32 [-5.25, +0.60]
+
+BIO-Static encoding error at onset |bump_onset - e_onset|: mean 5.10 SD 3.28 deg (part of the 14 deg 'memory fidelity' figure)

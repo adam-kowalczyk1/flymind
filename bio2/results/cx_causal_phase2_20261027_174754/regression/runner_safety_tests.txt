@@ -1,0 +1,30 @@
+CX-DN-Pulse+30   seed=233 passive=+0 status=OK e_end=-14.517270827321973 t_on=1.4999999999999456 wall=10.71s
+PASS C-dir: missing output directories are created
+PASS D-regression: hardened runner reproduces dev4 trials bit-identically (e_end + snaps)
+PASS C-manifest: dataset_id, protocol v4, runner/cfg hash, arms, Δ, jump stored
+PASS C-provenance: every record carries dataset_id/protocol/runner/cfg hash
+PASS C-lock: lock file removed after normal run
+PASS C-resume: identical command adds no trials (no duplicates)
+PASS C-mismatch: changed parameter (--lambda-cx) refused, file unchanged
+PASS C-mismatch: missing --jump refused, file unchanged
+PASS C-mismatch: different arm list refused
+PASS C-mismatch: different dataset_id refused
+PASS C-mismatch: changed dependency (brain.py hash) refused, file unchanged
+PASS C-manifest: dependency hashes and package versions stored
+PASS C-lock: existing lock -> refused (single writer)
+PASS C-manifest: data file without manifest refused
+PASS C-provenance: record with foreign runner hash refused
+PASS C-duplicate: duplicated record in file refused
+PASS C-truncated: incomplete last record -> refused, file unchanged
+NAPRAWA: usunięto niepełny ostatni rekord; oryginał /private/tmp/claude-501/-Users-admin-so101-fly-project/f538d846-6794-404d-80e4-c9a1b0674de6/scratchpad/runner_safety_qn7abnl6/trunc.jsonl.orig-20261027_191923
+PASS C-truncated: --repair-truncated keeps original copy + report, keeps all complete records
+PASS C-corrupt: corrupted non-final line refused even with --repair-truncated, file unchanged
+CX-Bump          seed=233 passive=+0 status=TECHNICAL_FAILURE e_end=None t_on=None wall=0.0s
+CX-DN            seed=233 passive=+0 status=TECHNICAL_FAILURE e_end=None t_on=None wall=0.0s
+PASS C-calibration: failure persisted as TECHNICAL_FAILURE for every CX arm, run continues for Freeze
+PASS C-guard: held-out seed refused
+PASS C-guard: --dataset-id required
+PASS C-guard: unknown arm refused
+PASS C-duplicate: in-run duplicate append refused
+temp dir: /private/tmp/claude-501/-Users-admin-so101-fly-project/f538d846-6794-404d-80e4-c9a1b0674de6/scratchpad/runner_safety_qn7abnl6
+RUNNER SAFETY PASS

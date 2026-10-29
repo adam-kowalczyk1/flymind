@@ -1,0 +1,28 @@
+Diagnostic reruns (separate file raw/diagnostic_reruns.jsonl) vs pilot records:
+  BIO-Hybrid s117: identical=True e=-15.560212591438516
+  Kalman-PD s117: identical=True e=-6.75503976865535
+  BIO-NoSelf s117: identical=True e=-11.654775473511936
+  preflight LastObs-PD s100 e=-14.80413367811538 == pilot -14.80413367811538: True
+  preflight LastObs-Freeze-Diag s100 e=-12.949624555295559 == pilot -12.949624555295559: True
+  preflight BIO-Static s100 e=-14.009431157803865 == pilot -14.009431157803865: True
+  preflight BIO-Static-Freeze-Diag s100 e=-6.8035922451624105 == pilot -6.8035922451624105: True
+  preflight BIO-Shuffle s100 e=-1.9090319127578408 == pilot -1.9090319127578408: True
+
+Memory fidelity (approx.): bump at last occluded step vs ideal static memory (target bearing at onset minus arm
+rotation): mem_err ~= delta_ball - e_ring_lastocc  [deg]; one-step (10 ms) approximation
+  BIO-Static               mean  +6.89  mean|.| 14.07  SD 17.15  | mean arm rotation +4.79 (SD 8.45)
+  BIO-NoSelf               mean +15.99  mean|.| 25.96  SD 25.64  | mean arm rotation +6.62 (SD 10.69)
+  BIO-Static-Freeze-Diag   mean  +9.93  mean|.| 16.57  SD 17.49  | mean arm rotation -0.00 (SD 0.02)
+  BIO-Hybrid               mean  -8.57  mean|.| 15.35  SD 21.83  | mean arm rotation -0.37 (SD 10.17)
+
+Signed e_onset (deg) mean/SD per arm:
+  BIO-Static   +3.21 / 4.36
+  BIO-Hybrid   +3.30 / 4.13
+  BIO-NoSelf   +3.01 / 3.83
+  LastObs-PD   +0.62 / 1.23
+  Kalman-PD    +0.04 / 1.03
+cue seen pre-onset (of 50 steps) min per arm: {'BIO-Static': 35, 'BIO-Hybrid': 38, 'BIO-NoSelf': 38, 'BIO-Shuffle': 16, 'LastObs-PD': 29, 'Kalman-PD': 27}
+BIO-Shuffle |e| all records mean (degenerate, NOT a valid endpoint): 10.96 ; j_ctrl all zero: True
+intact slope_mem range: 12.75 15.74
+BIO-Shuffle slope_mem all zero: True
+ball speed: delta_ball over occlusion min/max: -15.54 -11.64

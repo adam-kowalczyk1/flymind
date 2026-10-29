@@ -1,0 +1,425 @@
+PASS t-CI [1..5] = 3 ± 2.776·0.7071
+PASS Holm [0.01,0.04,0.03] -> [0.03,0.06,0.06]
+PASS n_required(d=1, α .05, 80 %) = 10 (paired t)
+PASS SD_UB > SD
+PASS BCa CI contains sample mean
+PASS p_less/p_greater complementary
+PASS robust(): disagreement -> INCONCLUSIVE (fragile)
+PASS T1 useful: Q1 SUPPORTED
+PASS T1 useful: Q2 SUPPORTED
+PASS T1 useful: Q3 SUPPORTED (non-inferior)
+PASS T2 harm: Q2 NEGATIVE
+PASS T2 harm: Q3 NEGATIVE (inferior)
+PASS T3 precondition: CIs span 0 and −3
+PASS T3 imprecise: Q2 INCONCLUSIVE
+PASS T3b precise null (benefit ≥3° excluded): Q2 NEGATIVE
+PASS T4 small S_DN: Q1 NEGATIVE
+PASS T5 manipulation fails: Q1 INCONCLUSIVE (no manipulation)
+PASS T6 gate fails: Q2 not SUPPORTED
+PASS T6 gate fails: Q3 INCONCLUSIVE (miscalibrated)
+PASS T6b gate fails but P2a harm: Q2 NEGATIVE
+PASS V1 duplicate -> REFUSED
+PASS V2 missing record -> REFUSED
+PASS V1 record runner hash mismatch -> REFUSED
+PASS V1 manifest hash mismatch -> REFUSED
+PASS V1 manifest without 16 arms -> REFUSED
+PASS V1 manifest no_log -> REFUSED
+PASS V1 missing manifest -> REFUSED
+PASS V1 unknown arm -> REFUSED
+PASS V1 non-A2 record -> REFUSED
+PASS V1 seed outside plan -> REFUSED
+PASS E1 2/24 TF seeds (8 %): no experiment failure
+PASS E1 TF seeds excluded only where needed (P3 n=22, P2a n=24)
+PASS E1 3/24 TF seeds (12.5 %) -> EXPERIMENT TECHNICAL_FAILURE
+PASS E3 positive control < 20 -> EXPERIMENT TECHNICAL_FAILURE
+PASS E2 6/24 NOT_CONVERGED (25 %) -> all INCONCLUSIVE (E2)
+PASS E2 3/24 NOT_CONVERGED: excluded, counted, E4 not triggered (21 ≥ 21)
+PASS E4 20 valid seeds < 21 -> INCONCLUSIVE (E4)
+PASS V7 mixed NOT_CONVERGED -> seed TECHNICAL_FAILURE
+PASS C8 Δ=0 with realised 0° is valid (no exclusion)
+PASS V5 Δ=0 realised 0.7° -> trial invalid, seed TF
+PASS V4 onset mismatch 0.01° -> trial invalid
+PASS V8 degenerate calibration -> seed excluded from CX contrasts only
+PASS V9 silent bump counted, not excluded
+PASS persistence check fails when 6/72 trials silent? (8 % < 10 %: passes)
+PASS V1 manifest deps mismatch -> REFUSED
+PASS V3 OK record with NaN e_end -> trial invalid, seed counted TF
+{
+ "analysis_version": "1.0.0",
+ "protocol_version": "v4",
+ "mode": "stage1",
+ "planned_seeds": 24,
+ "dataset_id": "synthetic",
+ "n_records": 1152,
+ "seed_status_counts": {
+  "OK": 24,
+  "TECHNICAL_FAILURE": 0,
+  "NOT_CONVERGED": 0
+ },
+ "invalid_trials": [],
+ "silent_bump_trials": 0,
+ "stage1": {
+  "Q1": {
+   "n_valid": 24,
+   "sd": 0.2863631291791767,
+   "sd_ub80": 0.3312739013064893,
+   "delta": 10.0,
+   "n_required": 3
+  },
+  "Q2a": {
+   "n_valid": 24,
+   "sd": 0.7500909637344463,
+   "sd_ub80": 0.867728888852788,
+   "delta": 5.0,
+   "n_required": 4
+  },
+  "Q2b": {
+   "n_valid": 24,
+   "sd": 1.1178531754178493,
+   "sd_ub80": 1.2931678165760394,
+   "delta": 5.0,
+   "n_required": 6
+  },
+  "Q3": {
+   "n_valid": 24,
+   "sd": 0.8511054542876468,
+   "sd_ub80": 0.984585638078727,
+   "delta": 5.0,
+   "n_required": 8
+  }
+ },
+ "n_final": 40,
+ "final_seeds": [
+  1300,
+  1339
+ ],
+ "E1_technical_failure_rate": "PASS",
+ "E2_not_converged_rate": "PASS",
+ "E3_positive_control": "PASS",
+ "decision": "CONTINUE to seeds 1324–1339",
+ "stage1_records_sha256": "eabd39d08c7966b812ef09cba6037b92054ce72072ff01515da45566c605e044",
+ "data_sha256": "c487f653638894b61285a858fa166ac3fdf911277afd79728c5271e92026c31e",
+ "manifest_sha256": "4844df5fd0bdfe7fc1574458b829068a16f085de987e87a478e431c711e6787f",
+ "analysis_sha256": "c432ca353da0c7ca2bd174dc302a17e7a14a332cff6835bb642f240c91a11d18",
+ "created_at": "2026-10-27T19:18:58"
+}
+PASS CLI stage1 writes decision with n_final and stage1_records_sha256
+{
+ "analysis_version": "1.0.0",
+ "protocol_version": "v4",
+ "mode": "final",
+ "planned_seeds": 40,
+ "dataset_id": "synthetic",
+ "n_records": 1920,
+ "seed_status_counts": {
+  "OK": 40,
+  "TECHNICAL_FAILURE": 0,
+  "NOT_CONVERGED": 0
+ },
+ "invalid_trials": [],
+ "silent_bump_trials": 0,
+ "results": {
+  "S_DN": {
+   "n": 40,
+   "mean": 20.008392889597367,
+   "sd": 0.33815626279745337,
+   "t_ci95": [
+    19.900245270093652,
+    20.116540509101082
+   ],
+   "bca_ci95": [
+    19.894034441819066,
+    20.102409939900678
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  },
+  "P2a": {
+   "n": 40,
+   "mean": -8.24534874945887,
+   "sd": 0.8949869028085587,
+   "t_ci95": [
+    -8.531579447139968,
+    -7.9591180517777715
+   ],
+   "bca_ci95": [
+    -8.52062263209189,
+    -7.973167647045199
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "P2b": {
+   "n": 40,
+   "mean": -6.6907328591381034,
+   "sd": 1.0141918123940397,
+   "t_ci95": [
+    -7.0150871364275655,
+    -6.366378581848641
+   ],
+   "bca_ci95": [
+    -6.97956618612148,
+    -6.356119069858702
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "P3": {
+   "n": 40,
+   "mean": -0.6056261904553033,
+   "sd": 0.772290906235339,
+   "t_ci95": [
+    -0.8526168047434246,
+    -0.358635576167182
+   ],
+   "bca_ci95": [
+    -0.8310872634739587,
+    -0.3620285790958835
+   ],
+   "wilcoxon_p": 2.8431650207494386e-05,
+   "frac_positive": 0.25,
+   "excluded_seeds": []
+  },
+  "S_scalar": {
+   "n": 40,
+   "mean": 27.0,
+   "sd": 0.0,
+   "t_ci95": [
+    27.0,
+    27.0
+   ],
+   "bca_ci95": [
+    27.0,
+    27.0
+   ],
+   "wilcoxon_p": 2.5396285894708556e-10,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  },
+  "g": {
+   "n": 40,
+   "mean": 0.9999999999999997,
+   "sd": 1.124366563280595e-16,
+   "t_ci95": [
+    0.9999999999999997,
+    0.9999999999999997
+   ],
+   "bca_ci95": [
+    0.9999999999999997,
+    0.9999999999999997
+   ],
+   "wilcoxon_p": 2.5396285894708556e-10,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  },
+  "DN+30_vs_sham": {
+   "n": 40,
+   "mean": -20.005051214020213,
+   "sd": 0.4382428957374688,
+   "t_ci95": [
+    -20.145208091631584,
+    -19.86489433640884
+   ],
+   "bca_ci95": [
+    -20.131792951597017,
+    -19.861996859654262
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "DN-30_vs_sham": {
+   "n": 40,
+   "mean": 20.011734565174525,
+   "sd": 0.46133765343852906,
+   "t_ci95": [
+    19.864191625723805,
+    20.159277504625244
+   ],
+   "bca_ci95": [
+    19.871914708369673,
+    20.1526691164615
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  },
+  "S_bump": {
+   "n": 40,
+   "mean": 22.0,
+   "sd": 0.0,
+   "t_ci95": [
+    22.0,
+    22.0
+   ],
+   "bca_ci95": [
+    22.0,
+    22.0
+   ],
+   "wilcoxon_p": 2.5396285894708556e-10,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  },
+  "Q4_bump_vs_noself": {
+   "n": 40,
+   "mean": -3.8641550133211657,
+   "sd": 0.8875974654917443,
+   "t_ci95": [
+    -4.148022454297585,
+    -3.5802875723447465
+   ],
+   "bca_ci95": [
+    -4.112241918318905,
+    -3.5642249455915924
+   ],
+   "wilcoxon_p": 3.564343021499709e-08,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "Q4_noself_vs_freeze": {
+   "n": 40,
+   "mean": -4.733295470168644,
+   "sd": 0.7726216407897325,
+   "t_ci95": [
+    -4.98039185849877,
+    -4.486199081838517
+   ],
+   "bca_ci95": [
+    -4.983402714855907,
+    -4.50761300768438
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "DN_vs_freeze": {
+   "n": 40,
+   "mean": -8.59745048348981,
+   "sd": 0.7228374333785403,
+   "t_ci95": [
+    -8.82862510986332,
+    -8.3662758571163
+   ],
+   "bca_ci95": [
+    -8.815682716878523,
+    -8.373392229752115
+   ],
+   "wilcoxon_p": 1.8189894035458565e-12,
+   "frac_positive": 0.0,
+   "excluded_seeds": []
+  },
+  "memerr_CXBump": {
+   "n": 40,
+   "mean": 10.0,
+   "sd": 0.0,
+   "t_ci95": [
+    10.0,
+    10.0
+   ],
+   "bca_ci95": [
+    10.0,
+    10.0
+   ],
+   "wilcoxon_p": 2.5396285894708556e-10,
+   "frac_positive": 1.0,
+   "excluded_seeds": []
+  }
+ },
+ "manipulation_check": {
+  "passed": true,
+  "median_shift": {
+   "+30": 28.0,
+   "-30": -27.0,
+   "sham": 1.0
+  },
+  "median_coh_change": 0.0
+ },
+ "self_motion_gate": {
+  "passed": true
+ },
+ "persistence_check": {
+  "passed": true,
+  "fraction_ok": 1.0,
+  "trials": 120
+ },
+ "memory_content": {
+  "CX-Bump": {
+   "slope": 0.0,
+   "r": 0.0,
+   "pass_": false,
+   "n": 120
+  },
+  "CX-DN": {
+   "slope": 0.0,
+   "r": 0.0,
+   "pass_": false,
+   "n": 120
+  },
+  "Scalar": {
+   "slope": 0.0,
+   "r": 0.0,
+   "pass_": false,
+   "n": 120
+  }
+ },
+ "positive_control": {
+  "S_scalar_mean": 27.0,
+  "passed": true
+ },
+ "E1": false,
+ "E2": false,
+ "E3": false,
+ "min_valid_seeds": 34,
+ "F1s_holm_p": {
+  "DN+30_vs_sham": 2.94315136016156e-66,
+  "DN-30_vs_sham": 1.0753914627031918e-65,
+  "S_bump>5": 0.0
+ },
+ "Q2_tests": {
+  "holm_p_benefit": [
+   1.525956747485806e-39,
+   2.820594025319326e-34
+  ],
+  "holm_p_no_meaningful_benefit": [
+   1.0,
+   1.0
+  ]
+ },
+ "causal_memory_composite_descriptive": {
+  "q1_supported": true,
+  "self_motion_gate": true,
+  "memerr_upper_below_17_3": true
+ },
+ "verdicts": {
+  "Q1": "SUPPORTED",
+  "Q2": "SUPPORTED",
+  "Q3": "SUPPORTED"
+ },
+ "data_sha256": "247409b6c6b5159a676f31034479a462cd70104bdaf31b3ace02905ca55427f9",
+ "manifest_sha256": "4844df5fd0bdfe7fc1574458b829068a16f085de987e87a478e431c711e6787f",
+ "analysis_sha256": "c432ca353da0c7ca2bd174dc302a17e7a14a332cff6835bb642f240c91a11d18",
+ "created_at": "2026-10-27T19:18:58"
+}
+PASS CLI final runs on stage-1 + continuation seeds and gives verdicts
+{
+ "analysis_version": "1.0.0",
+ "mode": "final",
+ "verdicts": "REFUSED",
+ "reason": "final: stage1_decision nie odpowiada przeliczonemu etapowi 1 (n_final lub hash rekordów)"
+}
+PASS CLI final refuses hand-edited n_final
+{
+ "analysis_version": "1.0.0",
+ "mode": "final",
+ "verdicts": "REFUSED",
+ "reason": "final: stage1_decision nie odpowiada przeliczonemu etapowi 1 (n_final lub hash rekordów)"
+}
+PASS CLI final refuses modified stage-1 records
+PASS stage1 output contains no means/tests/verdicts
+PASS stage1 N_final within [40, 100]
+PASS stage1 E1/E2/E3 reported as PASS/FAIL only
+PASS stage1 large SD -> N_final capped at 100
+SELFTEST PASS
