@@ -151,3 +151,32 @@ W literaturze tego nie sprawdzono.
 - kontrola z przetasowanymi połączeniami (ziarna do zarejestrowania);
 - weryfikacja, że wymach T2 R nie jest artefaktem doboru przekaźników (przekaźniki wybrane według wejścia z T2 L i wyjścia do
   dowolnej innej nogi, nie do pul wymachu).
+
+## Kontrola z przetasowanymi połączeniami (`shuffle_six_legs.py`, 2026-11-03)
+
+Badanie eksploracyjne. Kryterium spisano w pliku przed uruchomieniem.
+- **Ziarna:** 9 211 001–020 (SEED_REGISTRY.md).
+- **Smoke:** ziarno 9 218 001, wynik nieanalizowany. Smoke wydrukował jednak werdykt dla 1 instancji, co ujawniam tutaj.
+- **Tasowanie:** `visual_path.shuffle(equal_weight=True)`.
+- **Miara:** M = wymach − podpór w nodze T2 R przy dotyku T2 L.
+
+| Glu | M (dane) | M (10 tasowań) | Werdykt |
+|---|---|---|---|
+| −1 | +22,9 Hz | 16,2; 2,8; −1,0; −12,0; −0,3; −4,1; 1,4; −4,2; 2,4; 3,4 | **SPECYFICZNY** (dane > każda instancja) |
+| +1 | +78,1 Hz | −87,6; −61,0; −42,8; −12,2; 30,6; 16,8; −24,1; −77,4; −40,2; −6,7 | **SPECYFICZNY** |
+
+Rzeczy, których nie widać w tabeli:
+- Przy Glu −1 przewaga jest mała: najlepsza instancja daje 16,2 Hz wobec 22,9 Hz.
+- Przy Glu +1 tasowane sieci zwykle dają odwrotnie, czyli przewagę podporu.
+- Dotknięta noga T2 L w sieci z danych mocno dociska (podpór 59,7 Hz, wymach 0 przy Glu −1). W tasowanych sieciach jej
+  odpowiedź jest bardziej wyrównana.
+
+**Ograniczenia:**
+1. Tasowanie zachowuje stopnie i siłę wejściową neuronów, ale nie klasy neuronów. Red team FJ1 pokazał, że miesza też warstwy
+   receptor → IN → MN.
+2. Sieć sześciu nóg wybrano według wejścia z dotykanej nogi, nie według wyniku.
+3. To model bez szumu i z jednym bodźcem (40 mV).
+4. Wynik przy 10 instancjach na znak.
+
+Wniosek [MODEL, eksploracja]: wzorzec „dotknięta noga dociska, przeciwna się unosi” zależy w tym modelu od konkretnych
+połączeń z danych, a nie tylko od rozmiaru i stopni sieci.
