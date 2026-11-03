@@ -83,3 +83,34 @@ wynika z założenia o słabszym poparciu.
 
 **Gdzie szukać dalej:** w danych, w pętli dotyk nogi → neurony wstępujące → mózg → neurony zstępujące → pule wymachu
 (Sternal anterior rotator, Tr flexor).
+
+**Errata (2026-11-03).** `vision_leg.py` miał w `VNC` nazwy „descending” i „ascending”, których w danych nie ma. Prawdziwe
+nazwy to `descending_neuron` i `ascending_neuron`. W rzeczywistości przekaźniki pilotów 4–6 i FJ2 to wyłącznie `vnc_intrinsic`.
+Liczby w notatkach pozostają poprawne dla tej definicji. Nieprawdziwy był opis, nie wynik. Poprawiono opis, nie sieć.
+
+## Szukanie sygnału uniesienia w pętli przez mózg (2026-11-03)
+
+**`search_lift_loop.py`** [DATA, strukturalnie, bez znaków]:
+- Dotyk nogi T2 L dochodzi do 432 neuronów AN, w tym 108 bezpośrednio, a przez nie do 1295 neuronów DN.
+- Kandydaci o wyjściu przesuniętym ku wymachowi: DNge037, DNge080/081, DNpe002, DNde006, DNb08.
+- Kandydatów nie użyto do symulacji: wybór według wyjścia byłby wyborem pod wynik.
+
+**`pilot_touch_brain_loop.py`** [MODEL, pilot, szum 0, J0 0,275]:
+- Sieć ma 5344 neurony: noga T2 L, 100 AN wybranych według wejścia z obwodu nogi, 1932 neurony mózgu, 100 DN
+  wybranych według wejścia z dotyku (nie według wyjścia) i 1705 przekaźników VNC.
+- Bodziec: sam dotyk, czyli 40 mV na receptory szczecinkowe.
+- Kontrola: te same neurony, ale wyjścia DN odcięte.
+
+| | wymach (Hz) | podpór (Hz) |
+|---|---|---|
+| Glu −1, pętla | 7,8 | 63,5 |
+| Glu −1, bez pętli | 8,7 | 42,5 |
+| Glu +1, pętla | 172,7 | 177,7 |
+| Glu +1, bez pętli | 165,8 | 172,2 |
+
+**Wniosek:** przy Glu −1 pętla przez mózg wzmacnia **podpór**, czyli dociskanie, a nie uniesienie. Przy Glu +1 prawie nic nie
+zmienia. W obu sprawdzonych miejscach (sam obwód nogi oraz pętla AN → mózg → DN) dane nie dają naturalnego sygnału „unieś
+po chwycie”. Spójne z literaturą jest to, że odpowiedzią na kontakt jest podpór.
+
+**Niezbadane:** czy dotyk jednej nogi uruchamia wymach INNYCH nóg. Byłoby to zgodne z celowanym czyszczeniem miejsca dotyku
+(Eichler i in. 2024).
