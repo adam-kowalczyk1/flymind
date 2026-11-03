@@ -114,3 +114,40 @@ po chwycie”. Spójne z literaturą jest to, że odpowiedzią na kontakt jest p
 
 **Niezbadane:** czy dotyk jednej nogi uruchamia wymach INNYCH nóg. Byłoby to zgodne z celowanym czyszczeniem miejsca dotyku
 (Eichler i in. 2024).
+
+## Dotyk jednej nogi → inne nogi (`pilot_touch_other_legs.py`, 2026-11-03)
+
+Pilot: szum 0, J0 0,275.
+
+**Sieć z danych (10 036 neuronów):**
+- obwody 6 nóg;
+- MN według podklasy fl/ml/hl;
+- 2284 przekaźniki `vnc_intrinsic` z obwodu T2 L do pozostałych nóg.
+
+**Wejście:** sam dotyk T2 L (40 mV na szczecinki).
+**Kontrola:** te same neurony, ale wyjścia obwodu T2 L do reszty sieci są odcięte.
+
+**Wyniki, wymach / podpór (Hz):**
+
+| noga | Glu −1 pełna | Glu −1 odcięta | Glu +1 pełna | Glu +1 odcięta |
+|---|---|---|---|---|
+| T1 L | 0,0 / 19,4 | 0 / 0 | 16,3 / 57,9 | 0 / 0 |
+| T1 R | 1,4 / 0,0 | 0 / 0 | 4,5 / 18,5 | 0 / 0 |
+| **T2 L (dotknięta)** | 0,0 / 59,7 | 19,6 / 42,8 | 160 / 211 | 156 / 180 |
+| **T2 R (przeciwna środkowa)** | **27,1 / 4,2** | 0 / 0 | **92,9 / 14,8** | 0 / 0 |
+| T3 L | 36,7 / 23,5 | 0 / 0 | 163 / 182 | 0 / 0 |
+| T3 R | 4,9 / 21,5 | 0 / 0 | 64 / 97 | 0 / 0 |
+
+**Wnioski [MODEL, pilot]:**
+- Dotyk T2 L uruchamia **wymach przeciwnej środkowej nogi T2 R** przy obu znakach Glu. To pierwszy znaleziony sygnał
+  uniesienia odporny na założenie o glutaminianie.
+- Dotknięta noga dociska (podpór). Pozostałe nogi pobudza wyłącznie sygnał z obwodu dotkniętej nogi (kontrola odcięta = 0).
+- Sprzężenie zwrotne od innych nóg wycisza wymach dotkniętej nogi: przy Glu −1 spada z 19,6 do 0 Hz.
+
+[HIPOTEZA] Wzorzec „dotknięta noga trzyma, przeciwna się unosi” przypomina odpowiedzi typu podpór i przenoszenie ciężaru.
+W literaturze tego nie sprawdzono.
+
+**Do zrobienia:**
+- kontrola z przetasowanymi połączeniami (ziarna do zarejestrowania);
+- weryfikacja, że wymach T2 R nie jest artefaktem doboru przekaźników (przekaźniki wybrane według wejścia z T2 L i wyjścia do
+  dowolnej innej nogi, nie do pul wymachu).
