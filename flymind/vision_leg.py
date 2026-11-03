@@ -5,7 +5,8 @@ Neuronów ruchowych ani przedruchowych nie pobudza się sztucznie (decyzja wła�
 
 Skład [DATA] (progi jak visual_path i leg_circuit, ≥ t synaps na krawędź/połączenie):
   LC9 L/R (type == 'LC9', strona = somaSide); pośredniki ≥ t od LC9 i ≥ t do DNp09; DNp09 10783 (L), 11177 (R);
-  przekaźniki: cele DNp09 (≥ t) w VNC oraz ich cele (≥ t), które dochodzą (≥ t) do obwodów nóg; obwody nóg z leg_circuit.
+  przekaźniki: cele DNp09 (≥ t) wśród vnc_intrinsic oraz ich cele vnc_intrinsic (≥ t), które dochodzą (≥ t) do obwodów
+  nóg (bez neuronów wstępujących/zstępujących — patrz VNC); obwody nóg z leg_circuit.
 Znaki: snn_interface.build z sign_map (glutaminian jako jawny parametr); ciała bez NT i NT spoza mapy → znak 0.
 """
 import pandas as pd
@@ -17,7 +18,8 @@ from snn_interface import DEFAULT_SIGN, NT_COLS, ModelParams, assign_nt, build
 from visual_path import ANN, NTS, WEIGHTS
 
 DNP09 = {"L": 10783, "R": 11177}
-VNC = ("vnc_intrinsic", "descending", "ascending")
+VNC = ("vnc_intrinsic",)   # błąd do 2026-11-03: wpisane też "descending"/"ascending", których w danych nie ma
+                           # (prawdziwe nazwy: descending_neuron, ascending_neuron) — faktycznie liczono tylko vnc_intrinsic
 
 
 def select_all(legs=(("T2", "L"), ("T2", "R")), t=5):
