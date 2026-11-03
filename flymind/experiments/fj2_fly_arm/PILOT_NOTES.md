@@ -180,3 +180,41 @@ Rzeczy, których nie widać w tabeli:
 
 Wniosek [MODEL, eksploracja]: wzorzec „dotknięta noga dociska, przeciwna się unosi” zależy w tym modelu od konkretnych
 połączeń z danych, a nie tylko od rozmiaru i stopni sieci.
+
+## Red team wyniku „dotyk T2 L → wymach T2 R” (2026-11-03)
+
+**Werdykt:** SUPPORTED WITH CAVEATS, przy Glu −1 bliżej „słabe”. Ziarna red teamu: 9 219 001–008, 011–014, 021–023, 031.
+Skrypty: `scratchpad/rt_sixlegs/`.
+
+**Utrzymuje się (wąsko):** przy dokładnie tych pulach, 40 mV i szumie 0 sieć z danych wygrywa z każdym tasowaniem przy obu
+znakach Glu. 8 nowych tasowań przy Glu −1 też jest poniżej wyniku z danych, więc łącznie 18/18 (p ≈ 0,05).
+
+**Nie utrzymuje się:**
+1. **Przy Glu −1 cały efekt robi jeden typ, Tr flexor**, którego znaczenie („= unoszenie”) jest NIEZWERYFIKOWANE.
+   - W samym Tr flexor M = +32 Hz.
+   - Pule tylko dobrze opisane (Sternal anterior rotator wobec remotor + posterior rotator): M = +2,9 Hz przy 40 mV i ujemne
+     przy 20 i 10 mV.
+   - Przy tych pulach tasowania sięgają +15,4, więc specyficzności brak.
+2. **Zależność od bodźca przy Glu −1:** M = +22,9 / +14,5 / **−2,5** przy 40 / 20 / 10 mV. Znak odwraca się przy słabym dotyku.
+   Przy Glu +1 wynik jest odporny (+78 / +48 / +61), ale to słabiej poparty znak, a częstości ok. 160–240 Hz są blisko
+   sufitu 250 Hz.
+3. **Nie jest to para lewa → prawa:**
+   - Dotyk T3 L daje T2 R ten sam efekt (+23,9 i +59,3).
+   - Lustro, czyli dotyk T2 R, daje T2 L tylko +7,3 przy Glu −1.
+   - To raczej cecha samej nogi T2 R niż „dotknięta trzyma, przeciwna się unosi”.
+4. **T2 R wybrano po obejrzeniu 6 nóg.** Przy maksimum po 5 nogach 1 z 18 tasowań przebija wynik z danych.
+5. **Cały efekt idzie przez 2284 wybrane przekaźniki:** odcięcie ich wyjścia daje M = 0. Tasowanie niszczy strukturę
+   wbudowaną przez dobór (warstwy, klasy), więc wynik „dane > tasowanie” częściowo znaczy tylko „wybrany obwód > losowe
+   okablowanie”.
+   - Tasowanie zachowujące bloki klasa × noga: 3–4 instancje na znak, eksploracyjnie.
+   - Przy Glu −1: −1,8…+1,8 Hz, wyraźnie poniżej 22,9. Przy Glu +1: do 61,9 wobec 78,1.
+6. **Mierzona jest aktywność pul, nie ruch nogi.** Słowo „uniesienie” było skrótem myślowym.
+
+**Poprawione twierdzenie:** w tym modelu dotyk T2 L zwiększa aktywność pul „wymachu” w T2 R bardziej niż losowe okablowanie,
+ale tylko przy definicji pul zawierającej Tr flexor i przy silnym bodźcu. Nie jest to potwierdzony naturalny sygnał
+uniesienia ani wzorzec przeniesienia ciężaru. Wcześniejsze zdanie „pierwszy znaleziony sygnał uniesienia odporny na założenie
+o glutaminianie” **wycofuję**.
+
+**Żeby to rozstrzygnąć, trzeba:**
+- potwierdzić w literaturze, co robi Tr flexor (tabele mięśni Azevedo i in. 2024, przy pierwszym podejściu niedostępne);
+- powtórzyć test na nowych ziarnach z tasowaniem zachowującym bloki i z kilkoma poziomami bodźca, ustalonymi z góry.
