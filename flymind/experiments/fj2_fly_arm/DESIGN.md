@@ -18,9 +18,9 @@ porównawcze.
 | shoulder_pan (0) | DNa02 L − R (pętla V5, jak dotąd) | | obrót podstawy = skręt muchy; jedyna część zwalidowana wcześniej |
 | shoulder_lift (1) | Pleural remotor/abductor MN | Sternal anterior rotator MN | ruch biodra w przód/tył ↔ wymach ramienia; biodro reaguje na wzrok najmocniej (pilot 6) |
 | elbow_flex (2) | Tr flexor MN | Tr extensor MN | krętarz/udo ↔ łokieć |
-| wrist_flex (3) | Ti flexor MN | Ti extensor MN | goleń ↔ nadgarstek |
+| wrist_flex (3) | stały (v1) | | goleń jest już przypisana szczęce; brak drugiej pary pul bez konfliktu |
 | wrist_roll (4) | stały | | brak odpowiednika |
-| gripper (5) | obwód dotyku (FJ1: prostownik → zaciskanie) | | |
+| gripper (5) | Ti extensor MN (zaciskanie) | Ti flexor + Acc. ti flexor MN | goleń/stopa/pazurek ↔ chwytak; to samo mapowanie co FJ1, ale w tej samej sieci (J0 0,275, nie 0,2 jak w FJ1) |
 
 **Prawo sterowania [MODEL]:** prędkość celu stawu j = k_j · (r_agonista − r_antagonista), przy k_j wspólnym dla stawów 1–3
 i ustalonym przed testem. Pule MN są wygładzane wykładniczo, τ = 50 ms, jak w FJ1.
@@ -50,3 +50,5 @@ i ustalonym przed testem. Pule MN są wygładzane wykładniczo, τ = 50 ms, jak 
 
    Ziarna do zarejestrowania przed startem.
 3. **Red team** protokołu, uruchomienie, red team wyników.
+
+**Poprawka 2026-11-03 (przed pilotem):** w v0 projektu Ti flexor/extensor przypisano jednocześnie nadgarstkowi i szczęce — konflikt. Goleń → szczęka, nadgarstek stały.
