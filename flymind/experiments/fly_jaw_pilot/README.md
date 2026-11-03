@@ -67,3 +67,20 @@ Wyniki [MODEL]:
 | Glu +1 | do 11 Hz (Pleural remotor 10,7; Tr extensor 9,0; Ti flexor 8,0; Sternotrochanter 7,0) | 0 Hz |
 
 Wniosek: istnieje słaby, ale specyficzny co do strony łańcuch od oka do mięśni nogi.
+
+## 6. `vision_both_legs.py`: wzrok → obie środkowe nogi (`vision_leg.py`, 5643 neurony z danych)
+Skład sieci: LC9 104 + 115, 94 pośredniki, DNp09 L i R, 2301 przekaźników, obwody T2 L i T2 R. 137 ciał nie ma NT i ma znak 0.
+Wejście to wyłącznie 12 mV do LC9 jednej strony. Czas: 0,76 ms na krok ALIF, czyli 7,6 ms na takt 10 ms.
+
+**J0 = 0,2** (wartość z V4):
+- bodziec wzrokowy z lewej pobudza MN lewej nogi do 7 Hz;
+- bodziec z prawej pobudza MN prawej nogi najwyżej do 1,3 Hz.
+
+**J0 = 0,275 mV/synapsę** (Shiu i in. 2024, wartość z literatury, nie dobrana pod wynik):
+
+| | Glu −1 | Glu +1 |
+|---|---|---|
+| bodziec z lewej | lewa noga: Pleural remotor/abductor 41 Hz, Sternal posterior rotator 24 Hz; prawa noga: Tr flexor 12,6 Hz | szeroka koaktywacja: lewa noga Ti flexor 42 Hz, Tr extensor 29 Hz |
+| bodziec z prawej | najwyżej 8 Hz | Ti flexor 21 / 12 Hz (lewa / prawa noga) |
+
+Bodziec z prawej działa słabiej niż z lewej. Przyczyna nieznana; może to być kompletność danych (patrz D1).
