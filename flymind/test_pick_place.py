@@ -13,14 +13,16 @@ from grip import GripCfg  # noqa: E402
 from pick_place import PHASES, Cell, Fail, PPCfg, cube_pose, profile  # noqa: E402
 
 
-def expect_fail(cell, reasons):
+def expect_fail(cell, reasons, cube_lost=False):
+    """Awaria wykryta, potem recover(): True = stan potwierdzony (gotowość do następnego cyklu); przy zgubionej kostce
+    recover() ma to zgłosić (nie True), a ramię i tak ma stać w domu."""
     try:
         cell.cycle()
     except Fail as e:
         assert e.reason in reasons, f"oczekiwano {reasons}, jest {e.reason}: {e.detail}"
-        rec = cell.recover()
-        assert rec is True, rec
-        assert np.abs(cell.obs.q[:5] - cell.home[:5]).max() < 0.05, "po recover ramię nie w domu"
+        rec = cell.recover(e.reason)
+        assert str(rec).startswith("cube_lost") if cube_lost else rec is True, rec
+        assert np.abs(cell.obs.q[:5] - cell.home[:5]).max() < cell.cfg.settle_tol, "po recover ramię nie w domu"
         return e.reason
     raise AssertionError(f"awaria {reasons} nie wykryta — cykl zaliczony")
 
@@ -84,7 +86,7 @@ def main():
     c8 = Cell(cfg)
     c8.sim.reset(c8.home, cube_pose=(cfg.A[0], cfg.A[1], c8.yaw_nom["A"] + math.radians(30)))
     c8.obs = c8.sim.observe()
-    expect_fail(c8, {"object_lost"})
+    expect_fail(c8, {"object_lost"}, cube_lost=True)
     p, yaw, tilt = cube_pose(c8.sim)
     assert np.linalg.norm(p[:2] - cfg.A) < 1e-3, "object_lost nie może ruszać kostki"
     print(f"OK: pick-and-place (T1–T8; cykl A→B {sum(seq[0]['t_sim'].values()):.2f} s sym., "

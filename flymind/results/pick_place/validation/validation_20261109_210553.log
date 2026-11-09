@@ -1,0 +1,101 @@
+# Etap 1 — log testów: validation (NIE benchmark wydajności)
+data: 2026-11-09 21:05:53 +0100
+commit bazowy (HEAD): f0b6927f2bc6285f1364c312380807be6704550a (flymind/fly-first-control)
+zmiany względem HEAD w plikach Etapu 1:
+   M flymind/pick_place.py
+   M flymind/so101.py
+   M flymind/test_pick_place.py
+  ?? flymind/results/pick_place/validation/
+  ?? flymind/test_pick_place_faults.py
+sha256 kodu i testów:
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  05fba6aa1034ce31543504b9f2427c5586baba7d6b99a76ba57fa18085dfac41  flymind/test_pick_place.py
+  ebb341e76dec3a48a83936d7144ae88269cc2b7ecd9cd0ba1c2a3d3ee6b5de1d  flymind/test_pick_place_faults.py
+  9c5941b8794ac2aa7fbd6f7340e66be2ea2bdf0c9574663f283b70ef119829c7  flymind/test_reach.py
+  bf55bea99c73d9965159fa1e102261847d615919cf3d629f54664442a2091c28  flymind/test_safety.py
+  ee705cf694faff57081775252ec3e50aaa3816447de96211e76fa314e5c07aa7  flymind/test_so101.py
+  8f653282662cf3ef907a75e2a0a0c7778e04d34f8cc80683c00985d5bf886534  flymind/test_cl_runner.py
+  0f7cf576d62e78fac7228ab89c41b5f024eccf23d94ad3bc51c0d5e8c35059e2  flymind/demo/test_demo.py
+  05bc8cdf09b848c9d822c011c54e638781ff11a2aa7b91073d620c4eb5a376c8  flymind/loop.py
+  3ad95d3822ad060e5540311670c492aad8ac34ed9b2e9508c778350e25f333b0  flymind/validation/v5v4_frozen_code/so101.py
+  3e5e6e03af23fee5ce78f927c0be23d96f5c0da34190da8ebcf9e569ea3b8bea  flymind/results/pick_place/validation/mutate.py
+  a4fc09968a95a6cc6bb0fe8d95970411217445dca303d421c3daac3499ea87d6  flymind/results/pick_place/validation/with_so101.py
+  f531031d628afbf7349e314bda2e1ce365fec11af001cd474761debe1cb2c38c  flymind/results/pick_place/validation/run_validation.sh
+python: 3.12.13
+mujoco: 3.17.0
+numpy:  2.5.4
+katalog roboczy testów: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.IgWmklwq2Q
+
+## $ .venv/bin/python -I -B flymind/test_pick_place.py
+OK: pick-and-place (T1–T8; cykl A→B 9.16 s sym., błąd odłożenia ≤ 1.86 mm w 6 cyklach ciągłych)
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/test_pick_place_faults.py
+WARNING: Nan, Inf or huge value in QVEL at DOF 12. The simulation is unstable. Time = 0.0500.
+
+WARNING: Nan, Inf or huge value in QVEL at DOF 12. The simulation is unstable. Time = 0.0000.
+
+WARNING: Nan, Inf or huge value in QVEL at DOF 12. The simulation is unstable. Time = 0.0010.
+
+WARNING: Nan, Inf or huge value in QVEL at DOF 12. The simulation is unstable. Time = 2.9900.
+
+WARNING: Nan, Inf or huge value in QACC at DOF 12. The simulation is unstable. Time = 12.0600.
+
+WARNING: Nan, Inf or huge value in QVEL at DOF 12. The simulation is unstable. Time = 0.4900.
+
+P1.1 OK: sim_time ciągły przez reset() i auto-reset MuJoCo (BADQVEL wykryty jako SimError)
+P1.5 OK: auto-reset MuJoCo w 1. i 2. kroku po reset(): wykryty, auto_resets = 1, czas co do kroku
+P1.2 OK: 2 cykle bez resetu identyczne z S0_baseline.json (seed 1): [9.100000000000396, 9.189999999998975] s
+P1.3 OK: 3 resety w ścieżce błędu, czasy cykli [16.45, 16.45, 16.45] s, T_sim 49.35 s = takty × dt
+P1.4 OK: 2 auto-resety MuJoCo (BADQVEL, BADQACC) → sim_error, czas do błędu 3.00 s, cykl do resetu 3.00 s (recover nie rusza ramienia), po RESECIE kolejne cykle udane
+P5:
+  table_collision: table_collision (jaw_fixed,jaw_fixed,jaw_fixed,jaw_fixed); recover=no_motion: table_collision; outcome=reset; t_do_błędu 2.36 s, cykl 2.36 s sym.
+  cube_hit_table: cube_hit_table (kontakt kostki ze stołem w transporcie); recover=cube_lost: [0.2222, -0.0808, 0.0149]; outcome=reset; t_do_błędu 5.21 s, cykl 9.91 s sym.
+  release_failed: release_failed (touch po otwarciu [0.46, 0.07, 0.0]); recover=True; outcome=recovered; t_do_błędu 6.17 s, cykl 10.34 s sym.
+  place_out_of_zone: place_out_of_zone (błąd 14.3 mm, obrót 4.2°, przechył 0.0°); recover=cube_lost: [0.2216, -0.1008, 0.0149]; outcome=reset; t_do_błędu 9.07 s, cykl 16.45 s sym.
+  place_no_contact: place_no_contact (spód kostki 15.3 mm); recover=True; outcome=recovered; t_do_błędu 6.16 s, cykl 11.10 s sym.
+  cube_pushed: cube_pushed (kostka przesunięta przy zejściu o 5.0 mm); recover=True; outcome=recovered; t_do_błędu 2.39 s, cykl 6.55 s sym.
+  unreachable: unreachable (za blisko stołu w [0.233, 0.079, 0.038]: 14.4 mm < 20.0 mm); recover=True; outcome=recovered; t_do_błędu 0.00 s, cykl 7.39 s sym.
+  jaw_not_open (odłożenie): jaw_not_open (q szczęki 0.20 < 0.55); recover=jaw_not_open: 0.20 < 0.55; outcome=reset; t_do_błędu 7.07 s, cykl 11.74 s sym.
+  jaw_not_open (podejście): jaw_not_open (q szczęki 0.20 < 0.55); recover=jaw_not_open: 0.20 < 0.55; outcome=reset; t_do_błędu 1.75 s, cykl 6.48 s sym.
+R1 OK: cube_pushed → recover() bez resetu (dom 0.0004 rad, szczęka 0.93 rad, kostka 5.0 mm od A) → 3 kolejne cykle udane, resets 0, błąd odłożenia ≤ 1.87 mm
+S1 OK: zły odczyt enkodera → safety_fault zatrzaśnięty, seria zatrzymana; recover / cycle / tick / series bez żadnego taktu i komendy; po jawnym clear(): recover potwierdzony, 2 cykle udane, 0 resetów
+S2 OK: estop → seria zatrzymana bez ruchu; recover i reset symulatora go nie kasują; po clear() cykl udany
+S3 OK: sim_error → symulator zatrzymany; recover (z przyczyną i bez) oraz nowy cykl nie wykonują taktu
+  bad_command: bad_command (komenda odrzucona: cel poza ctrlrange [99.0, -0.3999, 0.9999, 0.0002, ); recover=no_motion: bad_command; outcome=reset; t_do_błędu 0.00 s, cykl 0.00 s sym.
+W OK: wyjątek → complete=False i plik *.INCOMPLETE.json (kod wyjścia 1); istniejący tag nie jest nadpisywany
+OK: test_pick_place_faults (P1.1–P1.5, P5: 9 ścieżek + bad_command, R1, S1–S4, W)
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/test_reach.py
+OK: sięganie i chwyt (IK najgorzej 0.81 mm; [0.25, 0.03]: uniesienie 56 mm, touch [6.3, 6.2] N; [0.2, -0.1]: uniesienie 56 mm, touch [6.3, 6.2] N; [0.22, 0.1]: uniesienie 56 mm, touch [6.3, 6.2] N)
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/test_safety.py
+OK: warstwa bezpieczeństwa (21 asercji)
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/test_so101.py --zgoda-sim
+T1 ok
+T2 ok: q_pan -0.251 rad po 0,5 s
+T3 ok: centroidy [(61.6, 47.2), (49.9, 47.2), (61.7, 35.7)]; oś „góra” kamery w świecie [0.0, -1.0, -0.05] (tylko log)
+T4 ok
+T5 ok: flagi ['lead', 'rate']
+T6 ok: q 0.930 → 0.814 (τ+) → 0.898 (τ−); max nacisk 0.28 N (położenie piłeczki do strojenia)
+T7 ok: kontakty ze stołem [('table', 'jaw_fixed')] (tylko pomiar; reakcja warstwy bezpieczeństwa — osobna decyzja)
+T9 ok: render po zwolnieniu innego symulatora bez zmian
+T8 ok: Stage 1, git status i bio2/__pycache__ bez zmian
+## kod wyjścia: 0
+
+## PODSUMOWANIE (validation): polecenia uruchomione 5, zaliczone 5, niezaliczone 0, pominięte 0
+## zmiany śledzonych plików po testach (ma być to samo co na górze logu):
+##    M flymind/PICK_PLACE_STAGE1.md
+##    M flymind/REPRODUCE.md
+##    M flymind/VALIDATION_PLAN.md
+##    M flymind/pick_place.py
+##    M flymind/so101.py
+##    M flymind/test_pick_place.py

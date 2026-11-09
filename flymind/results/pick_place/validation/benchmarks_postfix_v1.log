@@ -1,0 +1,199 @@
+# Etap 1 — powtórzenie benchmarków poprawionym kodem, sufiks postfix_v1
+data startu: 2026-11-09 21:10:04 +0100
+commit bazowy (HEAD): f0b6927f2bc6285f1364c312380807be6704550a (flymind/fly-first-control); kod niezacommitowany:
+   M flymind/pick_place.py
+   M flymind/so101.py
+sha256 kodu:
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+python 3.12.13, mujoco 3.17.0, numpy 2.5.4
+historyczne wyniki przed startem: 17/17 zgodne z validation/historical_sha256.txt
+katalog roboczy: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.jveih3bq5K (6 serii równolegle; czasy zegarowe nieporównywalne z historycznymi)
+
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 1 2 3 4 5 --cycles 50 --tag S0_baseline_postfix_v1
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 1 2 3 4 5 --cycles 50 --v 1.45 --a 8 --tag S1_v1.45_postfix_v1
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 1 2 3 4 5 --cycles 50 --v 1.45 --a 8 --q-pre 0.65 --tag S2_v1.45_jaw0.65_postfix_v1
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 1 2 3 4 5 --cycles 50 --v 1.45 --a 8 --q-pre 0.65 --home -0.065 -0.17 0.179 1.512 1.571 0.93 --tag S3_v1.45_jaw0.65_homemid_postfix_v1
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 1 2 3 4 5 --cycles 50 --q-pre 0.65 --home -0.065 -0.17 0.179 1.512 1.571 0.93 --tag S4_v1.0_jaw0.65_homemid_postfix_v1
+$ .venv/bin/python -I -B flymind/pick_place.py --seeds 6 --cycles 500 --v 1.45 --a 8 --q-pre 0.65 --home -0.065 -0.17 0.179 1.512 1.571 0.93 --tag S3_long500_seed6_postfix_v1
+kod wyjścia S0_baseline_postfix_v1: 0
+kod wyjścia S1_v1.45_postfix_v1: 0
+kod wyjścia S2_v1.45_jaw0.65_postfix_v1: 0
+kod wyjścia S3_v1.45_jaw0.65_homemid_postfix_v1: 0
+kod wyjścia S4_v1.0_jaw0.65_homemid_postfix_v1: 0
+kod wyjścia S3_long500_seed6_postfix_v1: 0
+data końca: 2026-11-09 21:10:59 +0100; serie nieudane (kod ≠ 0): 0
+MUJOCO_LOG.TXT w katalogu roboczym: 0 ostrzeżeń
+
+## historyczne wyniki po przebiegu (shasum -c):
+  flymind/results/pick_place/S0_baseline.json: OK
+  flymind/results/pick_place/S0_baseline_stdout.txt: OK
+  flymind/results/pick_place/S1_v1.45.json: OK
+  flymind/results/pick_place/S1_v1.45_stdout.txt: OK
+  flymind/results/pick_place/S2_v1.45_jaw0.65.json: OK
+  flymind/results/pick_place/S2_v1.45_jaw0.65_stdout.txt: OK
+  flymind/results/pick_place/S3_long500_seed6.json: OK
+  flymind/results/pick_place/S3_long500_seed6_stdout.txt: OK
+  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid.json: OK
+  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_stdout.txt: OK
+  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid.json: OK
+  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_stdout.txt: OK
+  flymind/results/pick_place/files_sha256_before.txt: OK
+  flymind/results/pick_place/plot_variants.py: OK
+  flymind/results/pick_place/run_sweep.sh: OK
+  flymind/results/pick_place/so101_default_xml_sha256_before.txt: OK
+  flymind/results/pick_place/variants.png: OK
+
+## sha256 nowych wyników:
+  0f6195940cb94f3a44860ea39b0a84ab3cb1a7ae9427edc71e46cd7e27daafe7  flymind/results/pick_place/S0_baseline_postfix_v1.json
+  86d1cb687fcece50974804c9f65e01947f92eb9e2da5c242af8d7b447e90a689  flymind/results/pick_place/S1_v1.45_postfix_v1.json
+  57cedb098fbdf02be326fcfa193c6f89f143e6ae3cc9f72633a96445960ed27c  flymind/results/pick_place/S2_v1.45_jaw0.65_postfix_v1.json
+  56e7d0dcea4a470ae00d8333dc647f3d76b768003e200cf6832da7c7c61665eb  flymind/results/pick_place/S3_long500_seed6_postfix_v1.json
+  3e427d82162ebe3a588783087e1795cb74d727e1cd3761835a2fe5bc7af05921  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_postfix_v1.json
+  a6662a77365c46cd98cf6ee061e873d6bb58a271191902e84021647f3380fe31  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_postfix_v1.json
+  b4ae95ef0a9b4d5f32dfdeb439636cc18c42a2bd75912ef8f2b9bdc746a1f4db  flymind/results/pick_place/S0_baseline_postfix_v1_stdout.txt
+  c460b2f0c03d5d3d60486d4dd976230c69ff3373964cc822eb626dac81cf5fc6  flymind/results/pick_place/S1_v1.45_postfix_v1_stdout.txt
+  07dd4a7e34faecf5a3346ebe6e178a1c13d44f9f5f26e3fc7fe9afced72c1682  flymind/results/pick_place/S2_v1.45_jaw0.65_postfix_v1_stdout.txt
+  7b7a05629b9e537c6b4216e0e39017dc54a618d2be3dc887d65d045efa4c899a  flymind/results/pick_place/S3_long500_seed6_postfix_v1_stdout.txt
+  2262da54df734379b6f08d92e5850eb87631b14af1620e1ed4b4bff3f6d50506  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_postfix_v1_stdout.txt
+  8fa20a13cf2a65a484e20c49c7637f79634f64f9c74223b955566e411c64a2fb  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_postfix_v1_stdout.txt
+
+## porównanie ze starymi seriami (compare_postfix.py postfix_v1):
+
+== S0_baseline  vs  S0_baseline_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     250                    250            0
+   sukcesy                                                   250                    250            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                   2287.459999980468      2287.459999980468          0.0
+   mediana cyklu [s]                            9.15000000004369       9.15000000004369          0.0
+   3600/mediana [op/h]                        393.44262294894105     393.44262294894105          0.0
+   ok/T_sim×3600 [op/h]                        393.4495029454875      393.4495029454875          0.0
+   max prędkość [rad/s]                                  0.88936                0.88936          0.0
+   max przyspieszenie [rad/s²]                          61.84594               61.84594          0.0
+   błąd odłożenia mediana [mm]                1.8169448399228507     1.8169448399228507          0.0
+   błąd odłożenia max [mm]                    2.0903056889627205     2.0903056889627205          0.0
+   suma czasów faz [s]                         2287.459999980468      2287.459999980468          0.0
+   takty symulacji (z warstwy bezp.)                      228746                 228746            0
+   nowe pola serii: {'auto_resets': [0, 0, 0, 0, 0], 'continuous': [True, True, True, True, True], 'complete': [True, True, True, True, True], 'stopped_by': [None, None, None, None, None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 250 cykli; RÓŻNICE: 0
+
+== S1_v1.45  vs  S1_v1.45_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     250                    250            0
+   sukcesy                                                   250                    250            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                  1729.4899999936624     1729.4899999936624          0.0
+   mediana cyklu [s]                           6.920000000033042      6.920000000033042          0.0
+   3600/mediana [op/h]                         520.2312138703484      520.2312138703484          0.0
+   ok/T_sim×3600 [op/h]                        520.3846220581199      520.3846220581199          0.0
+   max prędkość [rad/s]                                  1.35587                1.35587          0.0
+   max przyspieszenie [rad/s²]                          77.37077               77.37077          0.0
+   błąd odłożenia mediana [mm]                 2.515034880561857      2.515034880561857          0.0
+   błąd odłożenia max [mm]                     3.116067258194498      3.116067258194498          0.0
+   suma czasów faz [s]                        1729.4899999936624     1729.4899999936624          0.0
+   takty symulacji (z warstwy bezp.)                      172949                 172949            0
+   nowe pola serii: {'auto_resets': [0, 0, 0, 0, 0], 'continuous': [True, True, True, True, True], 'complete': [True, True, True, True, True], 'stopped_by': [None, None, None, None, None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 250 cykli; RÓŻNICE: 0
+
+== S2_v1.45_jaw0.65  vs  S2_v1.45_jaw0.65_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     250                    250            0
+   sukcesy                                                   250                    250            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                  1637.1699999958455     1637.1699999958455          0.0
+   mediana cyklu [s]                           6.549999999845113      6.549999999845113          0.0
+   3600/mediana [op/h]                         549.6183206236838      549.6183206236838          0.0
+   ok/T_sim×3600 [op/h]                         549.729105714302       549.729105714302          0.0
+   max prędkość [rad/s]                                  1.35466                1.35466          0.0
+   max przyspieszenie [rad/s²]                           77.3707                77.3707          0.0
+   błąd odłożenia mediana [mm]                2.5141285814390435     2.5141285814390435          0.0
+   błąd odłożenia max [mm]                    3.1223005344905967     3.1223005344905967          0.0
+   suma czasów faz [s]                        1637.1699999958455     1637.1699999958455          0.0
+   takty symulacji (z warstwy bezp.)                      163717                 163717            0
+   nowe pola serii: {'auto_resets': [0, 0, 0, 0, 0], 'continuous': [True, True, True, True, True], 'complete': [True, True, True, True, True], 'stopped_by': [None, None, None, None, None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 250 cykli; RÓŻNICE: 0
+
+== S3_v1.45_jaw0.65_homemid  vs  S3_v1.45_jaw0.65_homemid_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     250                    250            0
+   sukcesy                                                   250                    250            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                  1289.7400000040611     1289.7400000040611          0.0
+   mediana cyklu [s]                           5.169999999987951      5.169999999987951          0.0
+   3600/mediana [op/h]                         696.3249516457234      696.3249516457234          0.0
+   ok/T_sim×3600 [op/h]                        697.8150634989735      697.8150634989735          0.0
+   max prędkość [rad/s]                                   1.3451                 1.3451          0.0
+   max przyspieszenie [rad/s²]                         102.10708              102.10708          0.0
+   błąd odłożenia mediana [mm]                2.5601008044829365     2.5601008044829365          0.0
+   błąd odłożenia max [mm]                    3.1028836474255503     3.1028836474255503          0.0
+   suma czasów faz [s]                        1289.7400000040611     1289.7400000040611          0.0
+   takty symulacji (z warstwy bezp.)                      128974                 128974            0
+   nowe pola serii: {'auto_resets': [0, 0, 0, 0, 0], 'continuous': [True, True, True, True, True], 'complete': [True, True, True, True, True], 'stopped_by': [None, None, None, None, None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 250 cykli; RÓŻNICE: 0
+
+== S4_v1.0_jaw0.65_homemid  vs  S4_v1.0_jaw0.65_homemid_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     250                    250            0
+   sukcesy                                                   250                    250            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                   1687.809999994648      1687.809999994648          0.0
+   mediana cyklu [s]                           6.769999999839911      6.769999999839911          0.0
+   3600/mediana [op/h]                         531.7577548131652      531.7577548131652          0.0
+   ok/T_sim×3600 [op/h]                        533.2353760215036      533.2353760215036          0.0
+   max prędkość [rad/s]                                  0.89096                0.89096          0.0
+   max przyspieszenie [rad/s²]                          71.83015               71.83015          0.0
+   błąd odłożenia mediana [mm]                1.7792526601077667     1.7792526601077667          0.0
+   błąd odłożenia max [mm]                     2.074564435092663      2.074564435092663          0.0
+   suma czasów faz [s]                         1687.809999994648      1687.809999994648          0.0
+   takty symulacji (z warstwy bezp.)                      168781                 168781            0
+   nowe pola serii: {'auto_resets': [0, 0, 0, 0, 0], 'continuous': [True, True, True, True, True], 'complete': [True, True, True, True, True], 'stopped_by': [None, None, None, None, None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 250 cykli; RÓŻNICE: 0
+
+== S3_long500_seed6  vs  S3_long500_seed6_postfix_v1
+   kod stary: {'pick_place.py': 'a7b6e4572b1c9b7a', 'so101.py': '071b4918ff40fd34', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   kod nowy:  {'pick_place.py': '91ad5b512a5ef2db', 'so101.py': '1246c409b51ec3ff', 'reach.py': '654a2033639be8d8', 'grip.py': '0ee1d4036ddaa0ba', 'safety.py': '703afe922003328d'}
+   metryka                                                 stare                   nowe      różnica
+   próby                                                     500                    500            0
+   sukcesy                                                   500                    500            0
+   porażki                                                     0                      0            0
+   resety                                                      0                      0            0
+   przerwania (serie niekompletne)                             0                      0            0
+   T_sim [s]                                   2572.810000065401      2572.810000065401          0.0
+   mediana cyklu [s]                           5.164999999938583      5.164999999938583          0.0
+   3600/mediana [op/h]                         696.9990319540769      696.9990319540769          0.0
+   ok/T_sim×3600 [op/h]                         699.624146343587       699.624146343587          0.0
+   max prędkość [rad/s]                                  1.37127                1.37127          0.0
+   max przyspieszenie [rad/s²]                          95.59521               95.59521          0.0
+   błąd odłożenia mediana [mm]                 2.614391175797109      2.614391175797109          0.0
+   błąd odłożenia max [mm]                     2.679523986756044      2.679523986756044          0.0
+   suma czasów faz [s]                         2572.810000065401      2572.810000065401          0.0
+   takty symulacji (z warstwy bezp.)                      257281                 257281            0
+   nowe pola serii: {'auto_resets': [0], 'continuous': [True], 'complete': [True], 'stopped_by': [None]}; plik complete=True
+   pola symulacyjne porównane co do bitu: 500 cykli; RÓŻNICE: 0
+
+ŁĄCZNIE różnic w polach symulacyjnych: 0
+## kod wyjścia porównania: 0

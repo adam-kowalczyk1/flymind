@@ -1,0 +1,88 @@
+# Etap 1 — log testów: regression (NIE benchmark wydajności)
+data: 2026-11-09 21:06:04 +0100
+commit bazowy (HEAD): f0b6927f2bc6285f1364c312380807be6704550a (flymind/fly-first-control)
+zmiany względem HEAD w plikach Etapu 1:
+   M flymind/pick_place.py
+   M flymind/so101.py
+   M flymind/test_pick_place.py
+  ?? flymind/results/pick_place/validation/
+  ?? flymind/test_pick_place_faults.py
+sha256 kodu i testów:
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  05fba6aa1034ce31543504b9f2427c5586baba7d6b99a76ba57fa18085dfac41  flymind/test_pick_place.py
+  ebb341e76dec3a48a83936d7144ae88269cc2b7ecd9cd0ba1c2a3d3ee6b5de1d  flymind/test_pick_place_faults.py
+  9c5941b8794ac2aa7fbd6f7340e66be2ea2bdf0c9574663f283b70ef119829c7  flymind/test_reach.py
+  bf55bea99c73d9965159fa1e102261847d615919cf3d629f54664442a2091c28  flymind/test_safety.py
+  ee705cf694faff57081775252ec3e50aaa3816447de96211e76fa314e5c07aa7  flymind/test_so101.py
+  8f653282662cf3ef907a75e2a0a0c7778e04d34f8cc80683c00985d5bf886534  flymind/test_cl_runner.py
+  0f7cf576d62e78fac7228ab89c41b5f024eccf23d94ad3bc51c0d5e8c35059e2  flymind/demo/test_demo.py
+  05bc8cdf09b848c9d822c011c54e638781ff11a2aa7b91073d620c4eb5a376c8  flymind/loop.py
+  3ad95d3822ad060e5540311670c492aad8ac34ed9b2e9508c778350e25f333b0  flymind/validation/v5v4_frozen_code/so101.py
+  3e5e6e03af23fee5ce78f927c0be23d96f5c0da34190da8ebcf9e569ea3b8bea  flymind/results/pick_place/validation/mutate.py
+  a4fc09968a95a6cc6bb0fe8d95970411217445dca303d421c3daac3499ea87d6  flymind/results/pick_place/validation/with_so101.py
+  f531031d628afbf7349e314bda2e1ce365fec11af001cd474761debe1cb2c38c  flymind/results/pick_place/validation/run_validation.sh
+python: 3.12.13
+mujoco: 3.17.0
+numpy:  2.5.4
+katalog roboczy testów: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.b1KeT3CkaR
+
+## $ .venv/bin/python -I -B flymind/test_cl_runner.py
+default DATA calibration slope (seeds 8 601 001–003): 496.46 offset 0.0 | frozen V5 v4: 492.12
+test_cl_runner: 6 tests OK | trial wall 2.39 s; final err default 1.501 i_max 9 6.498 b_a 0 8.686
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/demo/test_demo.py
+T1 OK snn: 300 taktów identycznych z loop.run_trial, końcowy |e| 0.44°
+T2 OK classical_p: 300 taktów identycznych z loop.run_trial, końcowy |e| 0.07°
+T3 OK: piłeczka +20° → g [0.761 0.212], −20° → g [0.187 0.724]
+T4 OK: ω = dekoder(impulsy DNa02); po 1 s baza 9.6°, z wyciszonym DNa02 0.000°
+T5 OK: P bez SNN (kroki ALIF 0), baza -9.7°
+T6 OK: raster panelu = 951 impulsów z symulacji, DNa02 L na wykresie = dec.r (0.1 Hz)
+T7 OK: pauza przełącza stan, reset zeruje czas i bazę, 8 przełącza tryb, '-' przesuwa piłeczkę
+T8 OK: 150 taktów z renderowaniem nagrań (światło, znaczniki, 1600×1440, panel) — obraz robota i e(t) identyczne
+   cmp0_snn         cel +20°/0.20: |e| końcowy  1.70°  sukces True
+   cmp0_classical_p cel +20°/0.20: |e| końcowy  0.18°  sukces True
+   cmp2_snn         cel +25°/0.30: |e| końcowy  7.56°  sukces False
+   cmp2_classical_p cel +25°/0.30: |e| końcowy  0.36°  sukces True
+T9 OK: próby porównawcze prezentacji identyczne z loop.run_trial; start SNN i P bit w bit ten sam
+T10 OK: scenariusz deterministyczny; ALIF/enkoder/dekoder/J0/W/kalibracja bez zmian (W sha fe91e7ce0ff7)
+WSZYSTKIE TESTY OK
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/results/pick_place/validation/with_so101.py /Users/admin/so101_fly_project/flymind/validation/v5v4_frozen_code/so101.py /Users/admin/so101_fly_project/flymind/test_cl_runner.py
+default DATA calibration slope (seeds 8 601 001–003): 496.46 offset 0.0 | frozen V5 v4: 492.12
+test_cl_runner: 6 tests OK | trial wall 2.35 s; final err default 1.501 i_max 9 6.498 b_a 0 8.686
+## kod wyjścia: 0
+
+## $ .venv/bin/python -I -B flymind/results/pick_place/validation/with_so101.py /Users/admin/so101_fly_project/flymind/validation/v5v4_frozen_code/so101.py /Users/admin/so101_fly_project/flymind/demo/test_demo.py
+T1 OK snn: 300 taktów identycznych z loop.run_trial, końcowy |e| 0.44°
+T2 OK classical_p: 300 taktów identycznych z loop.run_trial, końcowy |e| 0.07°
+T3 OK: piłeczka +20° → g [0.761 0.212], −20° → g [0.187 0.724]
+T4 OK: ω = dekoder(impulsy DNa02); po 1 s baza 9.6°, z wyciszonym DNa02 0.000°
+T5 OK: P bez SNN (kroki ALIF 0), baza -9.7°
+T6 OK: raster panelu = 951 impulsów z symulacji, DNa02 L na wykresie = dec.r (0.1 Hz)
+T7 OK: pauza przełącza stan, reset zeruje czas i bazę, 8 przełącza tryb, '-' przesuwa piłeczkę
+T8 OK: 150 taktów z renderowaniem nagrań (światło, znaczniki, 1600×1440, panel) — obraz robota i e(t) identyczne
+   cmp0_snn         cel +20°/0.20: |e| końcowy  1.70°  sukces True
+   cmp0_classical_p cel +20°/0.20: |e| końcowy  0.18°  sukces True
+   cmp2_snn         cel +25°/0.30: |e| końcowy  7.56°  sukces False
+   cmp2_classical_p cel +25°/0.30: |e| końcowy  0.36°  sukces True
+T9 OK: próby porównawcze prezentacji identyczne z loop.run_trial; start SNN i P bit w bit ten sam
+T10 OK: scenariusz deterministyczny; ALIF/enkoder/dekoder/J0/W/kalibracja bez zmian (W sha fe91e7ce0ff7)
+WSZYSTKIE TESTY OK
+## kod wyjścia: 0
+
+## PORÓWNANIE flymind/test_cl_runner.py: wyjście z bieżącym so101.py IDENTYCZNE z wyjściem z zamrożonym
+## PORÓWNANIE flymind/demo/test_demo.py: wyjście z bieżącym so101.py IDENTYCZNE z wyjściem z zamrożonym
+## PODSUMOWANIE (regression): polecenia uruchomione 4, zaliczone 4, niezaliczone 0, pominięte 0
+## zmiany śledzonych plików po testach (ma być to samo co na górze logu):
+##    M flymind/PICK_PLACE_STAGE1.md
+##    M flymind/REPRODUCE.md
+##    M flymind/VALIDATION_PLAN.md
+##    M flymind/pick_place.py
+##    M flymind/so101.py
+##    M flymind/test_pick_place.py

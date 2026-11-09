@@ -36,6 +36,12 @@ from so101 import ROOT, UPSTREAM, SceneCfg, SimError, SO101Sim  # noqa: E402
 SRC = "classical:pick_place"
 PHASES = ("approach", "grasp", "lift", "transport", "place", "return")
 OUT = os.path.join(ROOT, "flymind", "results", "pick_place")
+# Co wolno zrobić automatycznie po porażce cyklu (klasy błędów; opis w PICK_PLACE_STAGE1.md §15):
+#   1. porażki procesu (cube_pushed, no_contact, slip, …)  → recover() wraca do domu i SPRAWDZA stan
+#   2. NO_MOTION: kolizja, zła komenda, zatrzymana fizyka      → recover() nie rusza ramienia; seria resetuje scenę
+#   3. zatrzaśnięty błąd SafetyLayer (pomiar poza zakresem, estop) → nic go nie kasuje poza jawnym
+#      SafetyLayer.clear(powód); seria się zatrzymuje (reset sceny NIE jest potwierdzeniem bezpieczeństwa)
+NO_MOTION = ("table_collision", "bad_command", "sim_error")
 
 
 class Fail(RuntimeError):
@@ -216,7 +222,12 @@ class Cell:
         for f in {x for v in per.values() for x in v}:
             self.stats["flags"][f] = self.stats["flags"].get(f, 0) + 1
         try:
-            self.sim.act(q_t, tau_t)
+            applied = self.sim.act(q_t, tau_t)
+        except SimError as e:                             # komenda łamie kontrakt symulatora: ctrl bez zmian, bez kroku
+            raise Fail("bad_command", str(e)) from e
+        if not applied:                                   # symulator zatrzymany (po niestabilności): bez kroku
+            raise Fail("sim_error", f"symulator zatrzymany: {self.sim.stopped}")
+        try:
             self.sim.step()
         except SimError as e:
             raise Fail("sim_error", str(e)) from e
@@ -238,6 +249,15 @@ class Cell:
                 other = b if a == self.table_id else a
                 if other in self.arm_geoms or (other == self.cube_id and not cube_ok):
                     out.append(self.sim.m.geom(other).name)
+        return out
+
+    def cube_contacts(self):
+        """Nazwy geomów ramienia dotykających kostki (pady, dłoń, korpus)."""
+        d, out = self.sim.d, []
+        for i in range(d.ncon):
+            a, b = int(d.contact.geom[i][0]), int(d.contact.geom[i][1])
+            if self.cube_id in (a, b) and (b if a == self.cube_id else a) in self.arm_geoms:
+                out.append(self.sim.m.geom(b if a == self.cube_id else a).name)
         return out
 
     def cube_on_table(self):
@@ -293,6 +313,10 @@ class Cell:
         """Jeden pełny cykl. Zwraca dict pomiarów; porażka → Fail (po próbie odzyskania pozycji domowej)."""
         c, sim = self.cfg, self.sim
         rec = {"t_sim": {}, "t_wall": {}}
+        if self.safety.fault:                             # zatrzaśnięty błąd: żaden cykl nie rusza przed clear()
+            raise Fail("safety_fault", self.safety.fault)
+        if self.sim.stopped:                              # fizyka zatrzymana: wznowienie tylko przez reset symulatora
+            raise Fail("sim_error", f"symulator zatrzymany: {self.sim.stopped}")
         src = self.where()
         if src is None:
             p, yaw, tilt = cube_pose(sim)
@@ -311,12 +335,12 @@ class Cell:
             except ReachError as e:
                 raise Fail("unreachable", str(e)) from e
         rec["src_dev_mm"], rec["src_dyaw_deg"] = dev * 1e3, dyaw
-        clock = [sim.d.time, time.perf_counter()]
+        clock = [sim.sim_time, time.perf_counter()]      # sim_time: odporny na reset MuJoCo (so101.SO101Sim)
 
         def mark(ph):
-            rec["t_sim"][ph] = sim.d.time - clock[0]
+            rec["t_sim"][ph] = sim.sim_time - clock[0]
             rec["t_wall"][ph] = time.perf_counter() - clock[1]
-            clock[:] = [sim.d.time, time.perf_counter()]
+            clock[:] = [sim.sim_time, time.perf_counter()]
 
         z_table = c.cube / 2
         # 1 podejście: szczęka otwarta, nad kostkę, pionowe zejście
@@ -388,10 +412,39 @@ class Cell:
         rec["home_err_rad"] = float(np.abs(self.obs.q[:5] - self.home[:5]).max())
         return rec
 
-    def recover(self):
-        """Po porażce: otwórz szczękę, odejdź w górę o h_above w stawach, wróć do domu. Bez resetu symulacji."""
+    def not_ready(self):
+        """Powód, dla którego następny cykl NIE może ruszyć bez ingerencji, albo None. Czyta bieżący stan (ostatnia
+        obserwacja, kontakty fizyki, warstwa bezpieczeństwa), nie historię ruchu."""
+        o, c = self.obs, self.cfg
+        if self.safety.fault:
+            return f"safety_latched: {self.safety.fault}"
+        if self.sim.stopped:
+            return f"sim_stopped: {self.sim.stopped}"
+        e = float(np.abs(o.q[:5] - self.home[:5]).max())
+        if e >= c.settle_tol:
+            return f"arm_not_home: {e:.3f} rad ≥ {c.settle_tol}"
+        if o.q[5] < c.q_clear:
+            return f"jaw_not_open: {o.q[5]:.2f} < {c.q_clear}"
+        if max(o.touch) > GripCfg().f_contact:
+            return f"pads_loaded: touch {np.round(o.touch, 2).tolist()} N"
+        hit = self.table_contacts() + self.cube_contacts()
+        if hit:
+            return "contact: " + ",".join(hit)
+        if self.where() is None:
+            return f"cube_lost: {np.round(cube_pose(self.sim)[0], 4).tolist()}"
+        return None
+
+    def recover(self, reason=None):
+        """Po porażce cyklu (reason = jej przyczyna): otwórz szczękę, odejdź w górę o h_above, wróć do domu — bez resetu
+        symulacji. Zwraca True TYLKO gdy stan po ruchu jest potwierdzony (not_ready() is None: ramię w domu, szczęka
+        otwarta, pady i ramię bez kontaktu, kostka w A/B, brak błędu bezpieczeństwa i symulatora); inaczej opis powodu.
+        Nie kasuje zatrzaśniętego błędu SafetyLayer i nie rusza ramienia po przyczynach z NO_MOTION."""
+        if self.safety.fault:
+            return f"safety_latched: {self.safety.fault}"
+        if self.sim.stopped or reason in NO_MOTION:
+            return f"no_motion: {reason or self.sim.stopped}"
         try:
-            self.safety.fault and self.safety.clear("recover po porażce cyklu")
+            self.obs = self.sim.observe()                 # świeży pomiar (ostatni mógł być powodem porażki)
             q = self.obs.q.copy()
             self.wait(0.5, q[:5], "open", until=lambda: self.obs.q[5] >= self.cfg.q_clear)
             up, ep, ea = ik(self.sim, self.sim.d.site("cs_fixed").xpos + [0, 0, self.cfg.h_above], q, cfg=self.rcfg,
@@ -402,9 +455,18 @@ class Cell:
                     tg = profile(path, self.obs.q, 0.5, 2.0, self.lim.dt)
                     for x in tg:
                         self.tick(x, "open")
-            return True
+            self.settle(self.home[:5], "open")
         except Fail as e:
             return f"{e.reason}: {e.detail}"
+        return self.not_ready() or True
+
+    def reset_scene(self):
+        """Reset SYMULATORA (teleport ramienia do domu i kostki do A) — na prawdziwym stanowisku ręczna ingerencja.
+        Nie jest potwierdzeniem bezpieczeństwa: ta sama SafetyLayer, zatrzaśnięty błąd i statystyki zostają."""
+        self.sim.reset(self.home, cube_pose=(*self.cfg.A, self.yaw_nom["A"]))
+        self.obs = self.sim.observe()
+        self.safety.prev = None                           # pierwszy cel po resecie = pomiar (bez skoku)
+        self._qd_prev = self.obs.qd[:5].copy()            # bez fałszywego skoku max_qdd po teleportacji
 
 
 def git_state():
@@ -418,33 +480,53 @@ def git_state():
                               "flymind/reach.py", "flymind/grip.py", "flymind/safety.py").splitlines())
 
 
-def series(cfg, seed, n):
-    """n kolejnych cykli bez resetu. Porażka → recover; kostka zgubiona → reset środowiska (liczony jawnie)."""
+def series(cfg, seed, n, cell=None):
+    """n kolejnych cykli bez resetu. Po porażce cyklu `outcome` mówi, co się stało — to trzy różne rzeczy:
+      "recovered"  recover() wrócił do domu i potwierdził stan; następny cykl rusza BEZ resetu
+      "reset"      stanu nie potwierdzono → reset symulatora (liczony w `resets`; na sprzęcie = ręczna ingerencja,
+                   której czas NIE jest wliczony — dlatego `continuous` = brak resetów jawnych i samoczynnych MuJoCo)
+      "halted"     zatrzaśnięty błąd SafetyLayer → seria staje (bez resetu, bez dalszych cykli) do jawnego clear()
+    Nieoczekiwany wyjątek też kończy serię. Seria przerwana ma complete=False i stopped_by=powód (nie jest udana).
+    Czas symulacji z sim.sim_time (monotoniczny przez resety). cell: gotowe stanowisko (testy)."""
     import mujoco
-    cell = Cell(cfg, seed)
-    cycles, resets = [], 0
-    t_sim0, t_wall0 = cell.sim.d.time, time.perf_counter()
+    cell = cell or Cell(cfg, seed)
+    sim, cfg = cell.sim, cell.cfg
+    cycles, resets, auto0, stopped_by = [], 0, sim.stats["auto_resets"], None
+    t_sim0, t_wall0 = sim.sim_time, time.perf_counter()
     for i in range(n):
         q_start = cell.obs.q.copy()
-        s0, w0 = cell.sim.d.time, time.perf_counter()
+        s0, w0, a0 = sim.sim_time, time.perf_counter(), sim.stats["auto_resets"]
         try:
-            rec = cell.cycle()
-            rec["ok"], rec["reason"] = True, None
-        except Fail as e:
-            rec = {"ok": False, "reason": e.reason, "detail": e.detail}
-            rec["recover"] = cell.recover()
-            if cell.where() is None:                     # nie da się kontynuować bez ręcznej ingerencji
-                resets += 1
-                rec["reset"] = True
-                cell.sim.reset(cell.home, cube_pose=(*cfg.A, cell.yaw_nom["A"]))
-                cell.safety, cell.obs = SafetyLayer(cell.lim), cell.sim.observe()
-        rec.update(i=i, cycle_sim=cell.sim.d.time - s0, cycle_wall=time.perf_counter() - w0,
+            try:
+                rec = cell.cycle()
+                rec["ok"], rec["reason"] = True, None
+            except Fail as e:
+                rec = {"ok": False, "reason": e.reason, "detail": e.detail, "t_to_fail_sim": sim.sim_time - s0}
+                rec["recover"] = cell.recover(e.reason)
+                if cell.safety.fault:
+                    rec["outcome"], stopped_by = "halted", f"safety_latched: {cell.safety.fault}"
+                elif rec["recover"] is True:
+                    rec["outcome"] = "recovered"
+                else:
+                    resets += 1
+                    rec["reset"], rec["outcome"] = True, "reset"
+                    cell.reset_scene()
+        except (Exception, KeyboardInterrupt) as e:      # noqa: BLE001 — zapisujemy to, co jest, jako niekompletne
+            rec = {"ok": False, "reason": "exception", "detail": repr(e)}
+            stopped_by = f"exception: {e!r}"
+        rec.update(i=i, cycle_sim=sim.sim_time - s0, cycle_wall=time.perf_counter() - w0,
                    start_drift_rad=float(np.abs(q_start[:5] - cell.home[:5]).max()), start_jaw=float(q_start[5]))
+        if sim.stats["auto_resets"] > a0:
+            rec["auto_resets"] = sim.stats["auto_resets"] - a0
         cycles.append(rec)
-    T_sim, T_wall = cell.sim.d.time - t_sim0, time.perf_counter() - t_wall0
-    ok = sum(r["ok"] for r in cycles)
-    return dict(seed=seed, n=n, ok=ok, resets=resets, T_sim=T_sim, T_wall=T_wall, plan_wall=cell.plan_wall,
-                per_h_sim=ok / T_sim * 3600, per_h_wall=ok / T_wall * 3600,
+        if stopped_by:
+            break
+    T_sim, T_wall = sim.sim_time - t_sim0, time.perf_counter() - t_wall0
+    ok, auto = sum(r["ok"] for r in cycles), sim.stats["auto_resets"] - auto0
+    return dict(seed=seed, n=n, ok=ok, resets=resets, auto_resets=auto, continuous=resets == 0 and auto == 0,
+                complete=stopped_by is None, stopped_by=stopped_by,
+                T_sim=T_sim, T_wall=T_wall, plan_wall=cell.plan_wall,
+                per_h_sim=ok / T_sim * 3600 if T_sim else 0.0, per_h_wall=ok / T_wall * 3600,
                 scene=dict(cube_mass=cell.scene.cube_mass, cube_friction=cell.scene.cube_friction[0],
                            cube_size=cell.scene.cube_size, timestep=cell.scene.timestep),
                 stats={k: (v if not isinstance(v, float) else round(v, 5)) for k, v in cell.stats.items()},
@@ -463,12 +545,16 @@ def summarize(runs):
             reasons[c["reason"]] = reasons.get(c["reason"], 0) + 1
     q = lambda a: [round(float(x), 3) for x in np.percentile(a, [0, 25, 50, 75, 100])]  # noqa: E731
     return dict(attempts=len(cyc), ok=len(ok), success_rate=len(ok) / len(cyc), fail_reasons=reasons,
-                resets=sum(r["resets"] for r in runs),
+                resets=sum(r["resets"] for r in runs), auto_resets=sum(r.get("auto_resets", 0) for r in runs),
+                continuous=all(r.get("continuous", r["resets"] == 0) for r in runs),
+                complete=all(r.get("complete", True) for r in runs) and len(cyc) == sum(r["n"] for r in runs),
+                recovered=sum(c.get("outcome") == "recovered" for c in cyc),
                 cycle_sim_s_min_q1_med_q3_max=q(ts), cycle_wall_s_min_q1_med_q3_max=q(tw),
                 phase_sim_s_median={p: round(float(np.median([c["t_sim"][p] for c in ok])), 3) for p in PHASES} if ok else {},
                 phase_wall_s_median={p: round(float(np.median([c["t_wall"][p] for c in ok])), 4) for p in PHASES} if ok else {},
                 T_sim_s=round(T_sim, 2), T_wall_s=round(T_wall, 2),
-                ops_per_h_sim=round(len(ok) / T_sim * 3600, 1), ops_per_h_wall=round(len(ok) / T_wall * 3600, 1),
+                ops_per_h_sim=round(len(ok) / T_sim * 3600, 1) if T_sim else 0.0,
+                ops_per_h_wall=round(len(ok) / T_wall * 3600, 1),
                 place_err_mm_med_max=[round(float(np.median([c["place_err_mm"] for c in ok])), 2),
                                       round(float(max(c["place_err_mm"] for c in ok)), 2)] if ok else None,
                 start_drift_rad_max=round(max(c["start_drift_rad"] for c in cyc), 4),
@@ -487,21 +573,29 @@ def main():
     ap.add_argument("--tag", default="run")
     a = ap.parse_args()
     cfg = replace(PPCfg(), v_max=a.v, a_max=a.a, q_pre=a.q_pre, home=tuple(a.home))
+    os.makedirs(OUT, exist_ok=True)
+    paths = [os.path.join(OUT, f"{a.tag}{x}.json") for x in ("", ".INCOMPLETE")]
+    if any(os.path.exists(p) for p in paths):            # wyników nie nadpisujemy — nowa seria = nowy --tag
+        sys.exit(f"istnieje już wynik o tagu {a.tag!r} w {OUT} — wybierz inny --tag")
     runs = []
     for s in a.seeds:
         r = series(cfg, s, a.cycles)
         runs.append(r)
         print(f"seed {s}: {r['ok']}/{r['n']} ok, resets {r['resets']}, T_sim {r['T_sim']:.1f} s, "
               f"T_wall {r['T_wall']:.1f} s, fails {[c['reason'] for c in r['cycles'] if not c['ok']]}", flush=True)
+        if not r["complete"]:                             # zatrzaśnięty błąd / wyjątek: kolejnych ziaren nie ruszamy
+            print(f"SERIA PRZERWANA: {r['stopped_by']}", flush=True)
+            break
     summ = summarize(runs)
-    out = dict(tag=a.tag, argv=sys.argv, cfg=asdict(cfg), git=git_state(), python=sys.version.split()[0],
-               summary=summ, runs=runs)
-    os.makedirs(OUT, exist_ok=True)
-    path = os.path.join(OUT, f"{a.tag}.json")
-    with open(path, "w") as f:
+    complete = summ["complete"] and len(runs) == len(a.seeds)
+    out = dict(tag=a.tag, complete=complete, argv=sys.argv, cfg=asdict(cfg), git=git_state(),
+               python=sys.version.split()[0], summary=summ, runs=runs)
+    path = paths[0] if complete else paths[1]
+    with open(path, "x") as f:
         json.dump(out, f, indent=1, default=float)
     print(json.dumps(summ, indent=1))
-    print("zapisano", path)
+    print("zapisano" if complete else "NIEKOMPLETNE — zapisano", path)
+    sys.exit(0 if complete else 1)
 
 
 if __name__ == "__main__":
