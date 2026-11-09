@@ -78,6 +78,11 @@ class SceneCfg:
     ball_park: tuple = (0.0, 0.9, 0.025)   # domyślnie poza przestrzenią roboczą: brak ukrytego zadania
     backdrop: bool = True
     distractor_r: float = 0.0          # > 0: druga zielona kula „distractor” (V5 v2), parkowana jak piłeczka; 0 = XML bez zmian
+    # Etap 1 pick-and-place (flymind/pick_place.py); domyślne 0/() = XML bez zmian dla pozostałych eksperymentów
+    cube_size: float = 0.0             # m, krawędź; > 0: kostka „cube” na freejoint, parkowana za podstawą
+    cube_mass: float = 0.030           # kg
+    cube_friction: tuple = (0.8, 0.005, 1e-4)
+    marks: tuple = ()                  # ((x, y), ...) m: znaczniki miejsc (tylko wizualne, bez kontaktu)
 
 
 def _sub(parent, tag, **attrs):
@@ -124,6 +129,14 @@ def build_mjcf(cfg=SceneCfg()):
         _sub(dis, "freejoint", name="distractor")
         _sub(dis, "geom", name="distractor", type="sphere", size=cfg.distractor_r, mass=cfg.ball_mass, rgba=".1 .7 .2 1",
              condim=6, solref="0.01 1", friction=cfg.ball_friction)
+    if cfg.cube_size > 0:
+        cube = _sub(world, "body", name="cube", pos=(-0.9, 0.0, cfg.cube_size / 2))
+        _sub(cube, "freejoint", name="cube")
+        _sub(cube, "geom", name="cube", type="box", size=(cfg.cube_size / 2,) * 3, mass=cfg.cube_mass,
+             rgba=".2 .3 .9 1", condim=4, friction=cfg.cube_friction)
+    for i, (x, y) in enumerate(cfg.marks):
+        _sub(world, "geom", name=f"mark{i}", type="cylinder", size="0.022 0.0003", pos=(x, y, 0.0003),
+             rgba=".95 .75 .1 1", contype=0, conaffinity=0)
 
     # chwytak (bio2 so101_base.py): siatki szczęk tylko wizualne, kontakt przez pudełka-pady z czujnikami touch
     for g in root.iter("geom"):
@@ -192,8 +205,9 @@ class SO101Sim:
         self.seq = 0
 
     # ---------------- stan ----------------
-    def reset(self, q0, ball_pos=None, distractor_pos=None):
-        """Ustaw pozycje stawów q0[6] (w zakresach) i piłeczkę (x, y, z) albo parking; prędkości 0; cele = q0."""
+    def reset(self, q0, ball_pos=None, distractor_pos=None, cube_pose=None):
+        """Ustaw pozycje stawów q0[6] (w zakresach) i piłeczkę (x, y, z) albo parking; prędkości 0; cele = q0.
+        cube_pose = (x, y, yaw [rad]) stawia kostkę płasko na stole (wymaga cube_size > 0)."""
         q0 = np.asarray(q0, float)
         if q0.shape != (6,) or not np.isfinite(q0).all() or \
                 ((q0 < self.jrange[:, 0]) | (q0 > self.jrange[:, 1])).any():
@@ -208,6 +222,12 @@ class SO101Sim:
                 raise SimError("distractor_pos bez distractor_r > 0 w SceneCfg")
             b = m.joint("distractor").qposadr[0]
             d.qpos[b:b + 7] = [*distractor_pos, 1, 0, 0, 0]
+        if cube_pose is not None:
+            if self.cfg.cube_size <= 0:
+                raise SimError("cube_pose bez cube_size > 0 w SceneCfg")
+            x, y, yaw = cube_pose
+            b = m.joint("cube").qposadr[0]
+            d.qpos[b:b + 7] = [x, y, self.cfg.cube_size / 2, math.cos(yaw / 2), 0, 0, math.sin(yaw / 2)]
         d.ctrl[self.aid[:5]] = np.clip(q0[:5], self.crange[:5, 0], self.crange[:5, 1])
         d.ctrl[self.aid[5]] = 0.0
         mj.mj_forward(m, d)
