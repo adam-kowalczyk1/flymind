@@ -1,0 +1,62 @@
+# Etap 1 — kontrola integralności po poprawkach P1
+data: 2026-11-09 21:15:00 +0100
+commit bazowy: f0b6927f2bc6285f1364c312380807be6704550a (flymind/fly-first-control)
+commit końcowy: commit, który dodał ten plik (git log -1 --format=%H -- flymind/results/pick_place/validation/integrity_p1.txt)
+python 3.12.13, mujoco 3.17.0, numpy 2.5.4
+
+## 17 historycznych plików wynikowych po wszystkich pracach (shasum -c historical_sha256.txt):
+  flymind/results/pick_place/S0_baseline.json: OK
+  flymind/results/pick_place/S0_baseline_stdout.txt: OK
+  flymind/results/pick_place/S1_v1.45.json: OK
+  flymind/results/pick_place/S1_v1.45_stdout.txt: OK
+  flymind/results/pick_place/S2_v1.45_jaw0.65.json: OK
+  flymind/results/pick_place/S2_v1.45_jaw0.65_stdout.txt: OK
+  flymind/results/pick_place/S3_long500_seed6.json: OK
+  flymind/results/pick_place/S3_long500_seed6_stdout.txt: OK
+  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid.json: OK
+  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_stdout.txt: OK
+  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid.json: OK
+  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_stdout.txt: OK
+  flymind/results/pick_place/files_sha256_before.txt: OK
+  flymind/results/pick_place/plot_variants.py: OK
+  flymind/results/pick_place/run_sweep.sh: OK
+  flymind/results/pick_place/so101_default_xml_sha256_before.txt: OK
+  flymind/results/pick_place/variants.png: OK
+  identyczne z wersją w commicie bazowym (git hash-object): 17/17
+
+## pliki w commicie z poprawkami (status, sha256):
+  M 663da1cb95126062f94778568b9bae54bca339dbb612069295ac4b35dea41022  flymind/PICK_PLACE_STAGE1.md
+  M 91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  A 0f6195940cb94f3a44860ea39b0a84ab3cb1a7ae9427edc71e46cd7e27daafe7  flymind/results/pick_place/S0_baseline_postfix_v1.json
+  A b4ae95ef0a9b4d5f32dfdeb439636cc18c42a2bd75912ef8f2b9bdc746a1f4db  flymind/results/pick_place/S0_baseline_postfix_v1_stdout.txt
+  A 86d1cb687fcece50974804c9f65e01947f92eb9e2da5c242af8d7b447e90a689  flymind/results/pick_place/S1_v1.45_postfix_v1.json
+  A c460b2f0c03d5d3d60486d4dd976230c69ff3373964cc822eb626dac81cf5fc6  flymind/results/pick_place/S1_v1.45_postfix_v1_stdout.txt
+  A 57cedb098fbdf02be326fcfa193c6f89f143e6ae3cc9f72633a96445960ed27c  flymind/results/pick_place/S2_v1.45_jaw0.65_postfix_v1.json
+  A 07dd4a7e34faecf5a3346ebe6e178a1c13d44f9f5f26e3fc7fe9afced72c1682  flymind/results/pick_place/S2_v1.45_jaw0.65_postfix_v1_stdout.txt
+  A 56e7d0dcea4a470ae00d8333dc647f3d76b768003e200cf6832da7c7c61665eb  flymind/results/pick_place/S3_long500_seed6_postfix_v1.json
+  A 7b7a05629b9e537c6b4216e0e39017dc54a618d2be3dc887d65d045efa4c899a  flymind/results/pick_place/S3_long500_seed6_postfix_v1_stdout.txt
+  A 3e427d82162ebe3a588783087e1795cb74d727e1cd3761835a2fe5bc7af05921  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_postfix_v1.json
+  A 2262da54df734379b6f08d92e5850eb87631b14af1620e1ed4b4bff3f6d50506  flymind/results/pick_place/S3_v1.45_jaw0.65_homemid_postfix_v1_stdout.txt
+  A a6662a77365c46cd98cf6ee061e873d6bb58a271191902e84021647f3380fe31  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_postfix_v1.json
+  A 8fa20a13cf2a65a484e20c49c7637f79634f64f9c74223b955566e411c64a2fb  flymind/results/pick_place/S4_v1.0_jaw0.65_homemid_postfix_v1_stdout.txt
+  A b65bd9b7a3b52570839c4ddb773815e8adf17cc6900d8ac7ac68badd91910ec5  flymind/results/pick_place/validation/benchmarks_postfix_v1.log
+  A 1c7400925669ee66398f27c1bf5f3c7f1ee1039029f047160db3ed698d8b4c98  flymind/results/pick_place/validation/compare_postfix.py
+  A e47891c0b7762dc047f37742e02f2bb9a54b32547bfe1323f6e097ef06765361  flymind/results/pick_place/validation/historical_sha256.txt
+  A 3e5e6e03af23fee5ce78f927c0be23d96f5c0da34190da8ebcf9e569ea3b8bea  flymind/results/pick_place/validation/mutate.py
+  A 1c3516830f1a143b15e850456c31cabeb16bfbeba70b01a33bfa42255ff78f5b  flymind/results/pick_place/validation/mutation_20261109_210817.log
+  A 2ef4d450a2ee60f2db0f7761876a048c48ce291da4862689fb14bb1e9dbde968  flymind/results/pick_place/validation/regression_20261109_210604.log
+  A 58af6b705898b6a444deaa7849713f1aa6343fef36b4c1d040c1a534189b4f76  flymind/results/pick_place/validation/run_postfix.sh
+  A f531031d628afbf7349e314bda2e1ce365fec11af001cd474761debe1cb2c38c  flymind/results/pick_place/validation/run_validation.sh
+  A 8a455c1763ace26f7c254de6bd6e4fadd213a5ee6a8d1d8996d44ac7421bf822  flymind/results/pick_place/validation/validation_20261109_193810.log
+  A 5d6c1ab77c963f39554ee4321cf6294a0b3f9f2e4b6d0bcc32376c1605edd28a  flymind/results/pick_place/validation/validation_20261109_194124.log
+  A 1b374a0829cd8a725fa999d55a2040b7756cd5570b561903df3cc320b12b2509  flymind/results/pick_place/validation/validation_20261109_210553.log
+  A a4fc09968a95a6cc6bb0fe8d95970411217445dca303d421c3daac3499ea87d6  flymind/results/pick_place/validation/with_so101.py
+  M 1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  M 05fba6aa1034ce31543504b9f2427c5586baba7d6b99a76ba57fa18085dfac41  flymind/test_pick_place.py
+  A ebb341e76dec3a48a83936d7144ae88269cc2b7ecd9cd0ba1c2a3d3ee6b5de1d  flymind/test_pick_place_faults.py
+
+## śledzone pliki zmienione lokalnie, celowo POZA commitem (wcześniejsze, niezwiązane zmiany):
+  flymind/REPRODUCE.md
+  flymind/VALIDATION_PLAN.md
+
+## git push: nie wykonano

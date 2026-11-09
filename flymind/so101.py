@@ -199,7 +199,11 @@ class SO101Sim:
                 self.renderer.scene.flags[f] = False                # bez cieni/odbić/nieba (jak bio2: ruchomy cień myli siatkówkę)
             self.opt = mujoco.MjvOption()
             self.opt.sitegroup[:] = 0                               # siatkówka nie widzi znaczników pomocniczych
-        self.stats = dict(steps=0, frames=0, render_fail=0, rejected=0, ignored_stopped=0)
+        self.stats = dict(steps=0, frames=0, render_fail=0, rejected=0, ignored_stopped=0, resets=0, auto_resets=0)
+        # d.time zeruje każdy mj_resetData (reset() i samoczynny reset MuJoCo przy niestabilności). t_offset zbiera
+        # czas utracony przy resetach, więc sim_time = t_offset + d.time rośnie monotonicznie (= liczba wykonanych
+        # kroków fizyki × timestep). Bez resetów t_offset = 0.0, czyli sim_time == d.time bit w bit.
+        self.t_offset = 0.0
         self.last_error = None
         self.stopped = None
         self.seq = 0
@@ -213,6 +217,8 @@ class SO101Sim:
                 ((q0 < self.jrange[:, 0]) | (q0 > self.jrange[:, 1])).any():
             raise SimError(f"q0 poza zakresem lub zły kształt: {q0}")
         mj, m, d = self.mj, self.m, self.d
+        self.t_offset += d.time          # reset nie cofa sim_time (czas samego resetu = 0: nic nie symulowano)
+        self.stats["resets"] += 1
         mj.mj_resetData(m, d)
         d.qpos[self.qadr] = q0
         b = m.joint("ball").qposadr[0]
@@ -294,15 +300,33 @@ class SO101Sim:
         self.stats.setdefault("released", []).append((self.stopped, reason))
         self.stopped = None
 
+    @property
+    def sim_time(self):
+        """Czas symulacji [s] narastający przez resety (do pomiarów); d.time / Obs.t po resecie startują od 0."""
+        return self.t_offset + self.d.time
+
     def step(self):
-        """Jeden takt sterowania = n_sub kroków fizyki. Niestabilność (NaN, ostrzeżenie BADQACC) → stop + SimError."""
+        """Jeden takt sterowania = n_sub kroków fizyki. Niestabilność (NaN; ostrzeżenie BADQPOS/BADQVEL/BADQACC, po
+        którym MuJoCo samo robi mj_resetData — stan teleportowany do qpos0, d.time ≈ 0) → stop + SimError."""
         mj, m, d = self.mj, self.m, self.d
+        W = mj.mjtWarning
+        warn = lambda: {n: d.warning[w].number for n, w in (("BADQPOS", W.mjWARN_BADQPOS), ("BADQVEL", W.mjWARN_BADQVEL),  # noqa: E731
+                                                            ("BADQACC", W.mjWARN_BADQACC)) if d.warning[w].number}
+        auto = 0
         for _ in range(self.cfg.n_sub):
+            t = d.time
             mj.mj_step(m, d)
+            # Samoczynny reset w tym kroku (mj_resetData, potem zwykły krok: d.time = timestep). Zwykły krok zawsze
+            # zwiększa d.time, więc d.time <= t = reset (także gdy t == timestep, czyli 2. krok po resecie). Przy t == 0
+            # (1. krok po reset(), liczniki ostrzeżeń wyzerowane) czas się zgadza, a reset zdradza tylko ostrzeżenie.
+            if d.time <= t or (t == 0.0 and warn()):
+                self.t_offset += t       # wykonany krok liczy się raz, utracone t nie
+                auto += 1
         self.stats["steps"] += 1
-        bad = d.warning[mj.mjtWarning.mjWARN_BADQACC].number
-        if bad or not (np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all()):
-            self.last_error = f"fizyka niestabilna (BADQACC={bad}) w t={d.time:.3f}"
+        self.stats["auto_resets"] += auto
+        bad = warn()
+        if bad or auto or not (np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all()):
+            self.last_error = f"fizyka niestabilna ({bad}, auto-reset {auto}) w t={d.time:.3f}"
             self.stop(self.last_error)
             raise SimError(self.last_error)
 
