@@ -1,0 +1,20 @@
+# Kontrola przed commitem etapu „czucie i manipulacja” — 2026-11-10 09:54:15 +0100
+HEAD przed commitem: a7344e377709eb0c1cfa427f269c914672db3f0b (flymind/fly-first-control); zdalne repozytoria: 0
+
+1. Manifest MANIFEST_2026-11-10.txt: 68 skrótów nowych plików sprawdzonych ponownie (shasum -c) — niezgodnych: 0
+2. Etap 1: 17 plików historycznych (validation/historical_sha256.txt) — OK: 17; zmienione śledzone pliki w results/pick_place: 0
+3. Liczby w podsumowaniach przeliczone z surowych prób: 11 ramion × 135 prób, latency 15, 2 serie pokazowe po 8, baza B_base_v1/v2 135, D_hard_v1/v2 45 — zgodne.
+   Pliki *.INCOMPLETE.json (serie ciągłe bazy klasycznej) są niekompletne celowo: podsumowanie liczy przedmioty wprowadzone (53/90, 25/45, 12/15).
+4. Skróty kodu zapisane w plikach wyników = bieżący kod (object_handling.py 0bf03d36…, sensory_manipulation.py 260c2c25…);
+   wyjątek zgodny z opisem: B_base_v1 i D_hard_v1 pochodzą z wcześniejszej wersji object_handling.py (4066cb0e…, artefakt profilu „light”) — nie do cytowania.
+5. Niezależna powtórka wycinka (6 przedmiotów × 3 położenia, repro_check.sh, katalog tymczasowy):
+   sensory_manipulation/repro_check_B_fly_search_v1.json: prób 18, identycznych z sensory_manipulation/B_fly_search_glu-1_v1.json (poza czasem zegarowym): 18
+   sensory_manipulation/repro_check_C_fly_feco_search_v1.json: prób 18, identycznych z sensory_manipulation/C_fly_feco_search_v1.json (poza czasem zegarowym): 18
+   object_handling/repro_check_B_base_v2.json: prób 18, identycznych z object_handling/B_base_v2.json (poza czasem zegarowym): 18
+6. Testy uruchomione ponownie: test_object_handling.py 14/14 OK, test_sensory_manipulation.py 5/5 OK.
+7. Pliki śledzone zmienione poza etapem (NIE wchodzą do commita): flymind/REPRODUCE.md flymind/VALIDATION_PLAN.md 
+8. MUJOCO_LOG.TXT w repozytorium: 27b1dd7409b327cac69fe4febdc158aea080a0c8c57951dded806ade44701e66 (bez zmian, nie wchodzi do commita).
+
+Uwaga: zdania „nowe pliki nie są zacommitowane” w SENSORY_MANIPULATION_STAGE.md (wiersz 4 i §18) opisują stan sprzed tego commita;
+dokument zostawiono bez zmian, żeby jego skrót zgadzał się z manifestem.
+Wszystko jest symulacją MuJoCo; fizyczny SO-101 nie był używany.

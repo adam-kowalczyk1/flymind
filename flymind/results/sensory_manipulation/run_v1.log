@@ -1,0 +1,64 @@
+# Zamrożenie przed przebiegiem ramion (v1)
+data: 2026-11-10 07:52:18 +0100
+commit odniesienia (HEAD): a7344e377709eb0c1cfa427f269c914672db3f0b (flymind/fly-first-control)
+sha256:
+  260c2c25401cd52ab672858406c54a993da72abab5311eff70ef1866dd7a6807  flymind/sensory_manipulation.py
+  0bf03d36c6dd408ddf38fbb4daeef7ea318dc8e2d541db170038eeca13b36939  flymind/object_handling.py
+  7104d901afd16e0236568d9e858ff4ad15a10f1d2799b9cb49ddc1f537b1ca7d  flymind/fly_jaw.py
+  cc1064b073ae4c3fe2d5a1a45936e4e6cebd8e43cf977f943fcfdf52bfb1b643  flymind/leg_circuit.py
+  13e36619f211f399ce71bc4e5dc3b0337486fae6c892b5f2dc6ae00e8cc60aff  flymind/alif.py
+  2c10ac736555039e087c7c42253184942ddf9a2ff8374b10584d9196c39a8724  flymind/alif_sparse.py
+  ed06464dd963f1365345bc3844191e5884ffd520974689d8571947bdc26f6a59  flymind/snn_interface.py
+  4d81dfd7d4d0ea937284a6e377d18ad5fb062eaf89f1f7f9888f2497b3105fe5  flymind/visual_path.py
+  f0d38e7ec6694fd4715ab587046b0d458425ad83f1e28ecb8d0e1cdc48f5daf3  flymind/connectome.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  d75253eb568e8a7214db9c631ab7bed4217f608a26f7276ebe9a7636cac82580  assets/so101_upstream.xml
+  2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2  data/malecns/body-annotations-male-cns-v1.0-minconf-0.5.feather
+  95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621  data/malecns/body-neurotransmitters-male-cns-v1.0.feather
+  e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1  data/malecns/connectome-weights-male-cns-v1.0-minconf-0.5.feather
+katalog roboczy: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.RkMcjlmwzu
+$ sensory_manipulation.py --arm N_null --trigger search --tag N_null_search_v1
+$ sensory_manipulation.py --arm D_reflex --trigger search --tag D_reflex_search_v1
+$ sensory_manipulation.py --arm B_fly --trigger search --glu -1 --tag B_fly_search_glu-1_v1
+$ sensory_manipulation.py --arm B_fly --trigger search --glu 1 --tag B_fly_search_glu+1_v1
+$ sensory_manipulation.py --arm C_fly_feco --trigger search --tag C_fly_feco_search_v1
+$ sensory_manipulation.py --arm C_no_touch --trigger search --tag C_no_touch_search_v1
+$ sensory_manipulation.py --arm S_shuffle --trigger search --shuffle-seed 17100001 --tag S_shuffle1_search_v1
+$ sensory_manipulation.py --arm S_shuffle --trigger search --shuffle-seed 17100002 --tag S_shuffle2_search_v1
+$ sensory_manipulation.py --arm S_shuffle --trigger search --shuffle-seed 17100003 --tag S_shuffle3_search_v1
+$ sensory_manipulation.py --arm B_fly --trigger push --tag B_fly_push_v1
+$ sensory_manipulation.py --arm D_reflex --trigger push --tag D_reflex_push_v1
+kod wyjścia N_null_search_v1: 0
+kod wyjścia D_reflex_search_v1: 0
+kod wyjścia B_fly_search_glu-1_v1: 0
+kod wyjścia B_fly_search_glu+1_v1: 0
+kod wyjścia C_fly_feco_search_v1: 0
+kod wyjścia C_no_touch_search_v1: 0
+kod wyjścia S_shuffle1_search_v1: 0
+kod wyjścia S_shuffle2_search_v1: 0
+kod wyjścia S_shuffle3_search_v1: 0
+kod wyjścia B_fly_push_v1: 0
+kod wyjścia D_reflex_push_v1: 0
+$ sensory_manipulation.py --arm C_fly_feco --trigger search --tag latency_v1   (pojedynczo, bez innych procesów)
+kod wyjścia latency_v1: 0
+data końca: 2026-11-10 08:01:47 +0100
+MUJOCO_LOG.TXT w katalogu roboczym: 0 ostrzeżeń
+kod po przebiegu: IDENTYCZNY
+Etap 1 (17 plików historycznych) OK: 17
+## sha256 wyników:
+  63d971a9e303b9999418b35b6062c9715a9242fce9be801e83bfc6d57322c862  flymind/results/sensory_manipulation/B_fly_push_v1.json
+  9ac92a04e174e7aff712e0941254835309ea7659a396bc9ba799ce54fae7a866  flymind/results/sensory_manipulation/B_fly_search_glu+1_v1.json
+  2bb4afeda53a9ce46803413417c0102556c93b44b712dfa667311812798a4ef4  flymind/results/sensory_manipulation/B_fly_search_glu-1_v1.json
+  641500489604ead4ca254d17d62783c8b94b2b6eff4355f9905e6169f5159279  flymind/results/sensory_manipulation/C_fly_feco_search_v1.json
+  7c7fcea15aab3e754f9a51b4da6093d8d9a1ed1314c8487bfbc85a127a988007  flymind/results/sensory_manipulation/C_no_touch_search_v1.json
+  d02eeedae039fcd2c4a6a7b360cd9b3287d6eb4b3f7768c04c374c1383553985  flymind/results/sensory_manipulation/D_reflex_push_v1.json
+  ac4e31759e201e4c1f3752759ec2f8ef82b80002efca28e38371c64dab67024b  flymind/results/sensory_manipulation/D_reflex_search_v1.json
+  937f3acf7debe279de382786a0c5a7a12824a558226edb6711b5a09850bf927a  flymind/results/sensory_manipulation/N_null_search_v1.json
+  219b5c91abd4bc5b7336bd886d9a114e9893476158424020583015cec5ba5c7a  flymind/results/sensory_manipulation/S_shuffle1_search_v1.json
+  8e752e5d84b94d182386b7c27235319a1da692dc1c5cb64d4be2d774442c3742  flymind/results/sensory_manipulation/S_shuffle2_search_v1.json
+  5cabee04f8064b0bca9d8f0429bb8036605614c3ff0e3a10fec1f82fe4e7b453  flymind/results/sensory_manipulation/S_shuffle3_search_v1.json
+  e38511841282c511f0cfde94c83130de3282a6996002fcd78754304186e9db14  flymind/results/sensory_manipulation/latency_v1.json

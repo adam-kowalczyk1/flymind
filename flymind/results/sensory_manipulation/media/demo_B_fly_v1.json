@@ -1,0 +1,1792 @@
+{
+ "tag": "demo_B_fly_v1",
+ "arm": "B_fly",
+ "jaw_source": "snn:legT2L",
+ "seed": 4242,
+ "items": [
+  [
+   "cube_M",
+   "mid"
+  ],
+  [
+   "sphere",
+   "hard_slick"
+  ],
+  [
+   "long",
+   "heavy"
+  ],
+  [
+   "cyl",
+   "hard_grip"
+  ],
+  [
+   "cube_S",
+   "light"
+  ],
+  [
+   "flat",
+   "mid"
+  ],
+  [
+   "wedge",
+   "mid"
+  ],
+  [
+   "cube_L",
+   "light"
+  ]
+ ],
+ "frames": 1864,
+ "fly_cfg": {
+  "glu_sign": -1.0,
+  "trigger": "search",
+  "tau_search": 0.3,
+  "search_max": 4.0,
+  "push": 0.004,
+  "v_side": 0.02,
+  "tau_engage": 0.1,
+  "engage_ticks": 10,
+  "loss_ticks": 5,
+  "hold_max": 1.5,
+  "q_mid": 0.8,
+  "q_span": 0.9,
+  "qd_ref": 1.0,
+  "feco_mV": 40.0
+ },
+ "code": {
+  "commit": "a7344e377709eb0c1cfa427f269c914672db3f0b",
+  "branch": "flymind/fly-first-control",
+  "sha256": {
+   "object_handling.py": "0bf03d36c6dd408ddf38fbb4daeef7ea318dc8e2d541db170038eeca13b36939",
+   "pick_place.py": "91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d",
+   "so101.py": "1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6",
+   "reach.py": "654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10",
+   "grip.py": "0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a",
+   "safety.py": "703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16"
+  }
+ },
+ "summary": {
+  "introduced": 8,
+  "not_introduced": 0,
+  "grasp": {
+   "k": 6,
+   "n": 8,
+   "pct": 75.0
+  },
+  "lift": {
+   "k": 6,
+   "n": 8,
+   "pct": 75.0
+  },
+  "transport": {
+   "k": 5,
+   "n": 8,
+   "pct": 62.5
+  },
+  "release": {
+   "k": 5,
+   "n": 8,
+   "pct": 62.5
+  },
+  "placed": {
+   "k": 5,
+   "n": 8,
+   "pct": 62.5
+  },
+  "success": {
+   "k": 5,
+   "n": 8,
+   "pct": 62.5
+  },
+  "dropped": 1,
+  "fell_out": 0,
+  "abandoned": 2,
+  "pad_penetration_gt2mm": 1,
+  "final_loc": {
+   "box": 6,
+   "zone": 2,
+   "table": 0,
+   "gripper": 0
+  },
+  "attempts": 10,
+  "controller_fails": {
+   "snn_released": 5
+  },
+  "false_belief": 0,
+  "op_sim_s": {
+   "n": 5,
+   "mean": 7.8,
+   "median": 7.66,
+   "min": 7.17,
+   "max": 8.56
+  },
+  "phase_sim_s_median": {
+   "approach": 1.82,
+   "grasp": 1.46,
+   "lift": 0.68,
+   "transport": 1.94,
+   "place": 0.23,
+   "return": 2.0
+  },
+  "phase_wall_s_median": {
+   "approach": 1.018,
+   "grasp": 0.808,
+   "lift": 0.398,
+   "transport": 1.124,
+   "place": 0.13,
+   "return": 1.12
+  },
+  "T_sim_s": 74.56,
+  "T_wall_s": 42.21,
+  "max_qd": 0.8955,
+  "max_qdd": 96.1242,
+  "v_exceed_ticks": 0,
+  "safety_flags": {
+   "range": 1
+  },
+  "unwanted_contacts": {
+   "arm_table": 0,
+   "arm_box": 0,
+   "armlink_object": 0,
+   "pad_other_object": 0,
+   "carried_hit": 0
+  },
+  "resets": 0,
+  "auto_resets": 0,
+  "interrupted_series": 0,
+  "box_drift_mm_max": 0.006,
+  "by_shape": {
+   "cube_L": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "cube_M": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.29
+   },
+   "cube_S": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "cyl": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "flat": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "long": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.17
+   },
+   "sphere": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "wedge": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.66
+   }
+  },
+  "by_material": {
+   "hard_grip": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "hard_slick": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "heavy": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.17
+   },
+   "light": {
+    "n": 2,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "mid": {
+    "n": 3,
+    "grasp": 3,
+    "lift": 3,
+    "transport": 2,
+    "release": 2,
+    "placed": 2,
+    "success": 2,
+    "op_sim_med": 7.975
+   }
+  },
+  "by_category": {
+   "du\u017ce": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "ma\u0142e": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "nieregularne": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.66
+   },
+   "okr\u0105g\u0142e": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "p\u0142askie": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "wyd\u0142u\u017cone": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.17
+   },
+   "w\u0105skie (walec stoj\u0105cy)": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "\u015brednie": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.29
+   }
+  },
+  "by_mass": {
+   "a <10 g": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "b 10\u201330 g": {
+    "n": 4,
+    "grasp": 3,
+    "lift": 3,
+    "transport": 2,
+    "release": 2,
+    "placed": 2,
+    "success": 2,
+    "op_sim_med": 7.975
+   },
+   "c 30\u2013100 g": {
+    "n": 2,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "d 100\u2013300 g": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.17
+   }
+  },
+  "by_mu": {
+   "0.2": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "0.5": {
+    "n": 4,
+    "grasp": 4,
+    "lift": 4,
+    "transport": 3,
+    "release": 3,
+    "placed": 3,
+    "success": 3,
+    "op_sim_med": 7.66
+   },
+   "0.6": {
+    "n": 2,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "1.0": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   }
+  },
+  "by_object": {
+   "cube_L/light": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "cube_M/mid": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.29
+   },
+   "cube_S/light": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.32
+   },
+   "cyl/hard_grip": {
+    "n": 1,
+    "grasp": 0,
+    "lift": 0,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "flat/mid": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 0,
+    "release": 0,
+    "placed": 0,
+    "success": 0,
+    "op_sim_med": null
+   },
+   "long/heavy": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.17
+   },
+   "sphere/hard_slick": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 8.56
+   },
+   "wedge/mid": {
+    "n": 1,
+    "grasp": 1,
+    "lift": 1,
+    "transport": 1,
+    "release": 1,
+    "placed": 1,
+    "success": 1,
+    "op_sim_med": 7.66
+   }
+  }
+ },
+ "run": {
+  "objects": [
+   {
+    "uid": 0,
+    "shape": "cube_M",
+    "material": "mid",
+    "cat": "\u015brednie",
+    "mass": 0.0189,
+    "mu": 0.5,
+    "density": 700,
+    "spawn": {
+     "x": 0.20411257376282754,
+     "y": 0.03714867096990008,
+     "yaw": 0.7457541024473057,
+     "wait_s": 0.010000000000000002
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": true,
+     "release": true,
+     "placed": true
+    },
+    "t": {
+     "grasp": 3.569999999999718,
+     "lift": 3.859999999999686,
+     "release_cmd": 6.2100000000004085,
+     "released": 6.320000000000445
+    },
+    "dropped": null,
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 1.83,
+    "place_check": {
+     "released": true,
+     "in_box": true,
+     "still": true,
+     "no_arm_contact": true
+    },
+    "above_rim": false,
+    "final": "box",
+    "final_pos": [
+     0.0584,
+     -0.1428,
+     0.0177
+    ],
+    "success": true,
+    "fell_out": false,
+    "z_low_mm": 2.7,
+    "attempt_log": [
+     {
+      "uid": 0,
+      "n": 1,
+      "percept": {
+       "x": 0.2041125421517092,
+       "y": 0.03714870595280906,
+       "yaw": 2.3125612588924866,
+       "l": 0.03011943609119966,
+       "w": 0.030119436091199214,
+       "h": 0.029972699191918868
+      },
+      "t_sim": {
+       "approach": 1.8199999999998762,
+       "grasp": 1.4599999999998392,
+       "lift": 0.6700000000000417,
+       "transport": 1.9400000000006479,
+       "place": 0.22000000000007347,
+       "return": 2.1800000000001942
+      },
+      "t_wall": {
+       "approach": 1.0176593330106698,
+       "grasp": 0.807511874998454,
+       "lift": 0.3858419999887701,
+       "transport": 1.1241664999979548,
+       "place": 0.11649770798976533,
+       "return": 1.2175653330050409
+      },
+      "ok": true,
+      "reason": null,
+      "lifted": true,
+      "plan_wall": 0.008824582997476682,
+      "q_pre": 0.7452969173526197,
+      "z_grasp": 0.007,
+      "drop": 0,
+      "tau_engage": 0.747,
+      "q_jaw_grasp": 0.198,
+      "tau_carry": 0.483,
+      "op_sim": 8.290000000000672
+     }
+    ]
+   },
+   {
+    "uid": 1,
+    "shape": "sphere",
+    "material": "hard_slick",
+    "cat": "okr\u0105g\u0142e",
+    "mass": 0.03165350948032567,
+    "mu": 0.2,
+    "density": 1410,
+    "spawn": {
+     "x": 0.17397306633080123,
+     "y": 0.004662366561830896,
+     "yaw": 0.477867626086072,
+     "wait_s": 1.7300000000005156
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": true,
+     "release": true,
+     "placed": true
+    },
+    "t": {
+     "grasp": 12.709999999998395,
+     "lift": 13.039999999998212,
+     "release_cmd": 14.899999999997181,
+     "released": 14.969999999997142
+    },
+    "dropped": null,
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 0.51,
+    "place_check": {
+     "released": true,
+     "in_box": true,
+     "still": true,
+     "no_arm_contact": true
+    },
+    "above_rim": false,
+    "final": "box",
+    "final_pos": [
+     0.0945,
+     -0.1102,
+     0.0202
+    ],
+    "success": true,
+    "fell_out": false,
+    "z_low_mm": 2.71,
+    "attempt_log": [
+     {
+      "uid": 1,
+      "n": 1,
+      "percept": {
+       "x": 0.17397306633080123,
+       "y": 0.004662366561830895,
+       "yaw": 1.7191493132144147,
+       "l": 0.03493015845017646,
+       "w": 0.03493015845017641,
+       "h": 0.034982518087745884
+      },
+      "t_sim": {
+       "approach": 2.319999999998714,
+       "grasp": 1.8099999999989969,
+       "lift": 0.719999999999601,
+       "transport": 1.439999999999202,
+       "place": 0.239999999999867,
+       "return": 2.0300000000009355
+      },
+      "t_wall": {
+       "approach": 1.2918887500127312,
+       "grasp": 1.0035310829989612,
+       "lift": 0.4069270839972887,
+       "transport": 0.8100072920206003,
+       "place": 0.1303803340124432,
+       "return": 1.1334507080027834
+      },
+      "ok": true,
+      "reason": null,
+      "lifted": true,
+      "plan_wall": 0.007635624991962686,
+      "q_pre": 0.9239197907668898,
+      "z_grasp": 0.007,
+      "drop": 1,
+      "tau_engage": 0.659,
+      "q_jaw_grasp": 0.257,
+      "tau_carry": 0.596,
+      "op_sim": 8.559999999997316
+     }
+    ]
+   },
+   {
+    "uid": 2,
+    "shape": "long",
+    "material": "heavy",
+    "cat": "wyd\u0142u\u017cone",
+    "mass": 0.25120000000000003,
+    "mu": 0.5,
+    "density": 7850,
+    "spawn": {
+     "x": 0.1805714761364764,
+     "y": -0.0060993480229711,
+     "yaw": 1.7076356372486592,
+     "wait_s": 1.3499999999992518
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": true,
+     "release": true,
+     "placed": true
+    },
+    "t": {
+     "grasp": 20.40000000000195,
+     "lift": 20.54000000000212,
+     "release_cmd": 22.12000000000405,
+     "released": 22.170000000004112
+    },
+    "dropped": null,
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 0.14,
+    "place_check": {
+     "released": true,
+     "in_box": true,
+     "still": true,
+     "no_arm_contact": true
+    },
+    "above_rim": false,
+    "final": "box",
+    "final_pos": [
+     0.1396,
+     -0.1448,
+     0.0127
+    ],
+    "success": true,
+    "fell_out": false,
+    "z_low_mm": 2.66,
+    "attempt_log": [
+     {
+      "uid": 2,
+      "n": 1,
+      "percept": {
+       "x": 0.18057147637293597,
+       "y": -0.006099347986185916,
+       "yaw": 1.710422666954443,
+       "l": 0.08005542962292578,
+       "w": 0.02022288361277208,
+       "h": 0.01999562799103024
+      },
+      "t_sim": {
+       "approach": 2.120000000002591,
+       "grasp": 0.950000000001161,
+       "lift": 0.7000000000008555,
+       "transport": 1.1800000000014421,
+       "place": 0.25000000000030553,
+       "return": 1.9700000000024076
+      },
+      "t_wall": {
+       "approach": 1.1816623749909922,
+       "grasp": 0.5175820000004023,
+       "lift": 0.4134861250058748,
+       "transport": 0.6688988750101998,
+       "place": 0.15038312500109896,
+       "return": 1.093317582999589
+      },
+      "ok": true,
+      "reason": null,
+      "lifted": true,
+      "plan_wall": 0.007020416000159457,
+      "q_pre": 0.4101169933780397,
+      "z_grasp": 0.007,
+      "drop": 2,
+      "tau_engage": 0.54,
+      "q_jaw_grasp": 0.067,
+      "tau_carry": 0.572,
+      "op_sim": 7.170000000008763
+     }
+    ]
+   },
+   {
+    "uid": 3,
+    "shape": "cyl",
+    "material": "hard_grip",
+    "cat": "w\u0105skie (walec stoj\u0105cy)",
+    "mass": 0.040644354955817946,
+    "mu": 1.0,
+    "density": 1150,
+    "spawn": {
+     "x": 0.21088542565394763,
+     "y": 0.014426472322776504,
+     "yaw": 2.3885028995840885,
+     "wait_s": 1.130000000001381
+    },
+    "attempts": 2,
+    "truth": {
+     "grasp": false,
+     "lift": false,
+     "transport": false,
+     "release": false,
+     "placed": false
+    },
+    "t": {},
+    "dropped": null,
+    "abandoned": true,
+    "bumped": [],
+    "pen_mm": 0.28,
+    "final": "zone",
+    "final_pos": [
+     0.2111,
+     0.0141,
+     0.025
+    ],
+    "success": false,
+    "fell_out": false,
+    "z_low_mm": -0.01,
+    "attempt_log": [
+     {
+      "uid": 3,
+      "n": 1,
+      "percept": {
+       "x": 0.21088542567234578,
+       "y": 0.014426472340603638,
+       "yaw": 0.7504915783575618,
+       "l": 0.029939185159053222,
+       "w": 0.029939184454562215,
+       "h": 0.04999417097476436
+      },
+      "t_sim": {
+       "approach": 1.7300000000021143,
+       "grasp": 0.8800000000010755
+      },
+      "t_wall": {
+       "approach": 0.9590000830066856,
+       "grasp": 0.4885668749921024
+      },
+      "ok": false,
+      "reason": "snn_released",
+      "lifted": false,
+      "plan_wall": 0.009453874983591959,
+      "q_pre": 0.7388628084812908,
+      "z_grasp": 0.007,
+      "drop": 3,
+      "tau_engage": 0.669,
+      "q_jaw_grasp": 0.43,
+      "detail": "moment sterownika 0.03 N\u00b7m < 0.1",
+      "fail_phase": "lift",
+      "t_to_fail_sim": 2.810000000003434,
+      "recover": true,
+      "op_sim": 5.660000000006917
+     },
+     {
+      "uid": 3,
+      "n": 2,
+      "percept": {
+       "x": 0.21102692303283124,
+       "y": 0.014283684520822473,
+       "yaw": 0.619591884457987,
+       "l": 0.029939054218329597,
+       "w": 0.02993905330510062,
+       "h": 0.04999417104201482
+      },
+      "t_sim": {
+       "approach": 1.630000000001992,
+       "grasp": 0.8699999999993189
+      },
+      "t_wall": {
+       "approach": 0.9101492500049062,
+       "grasp": 0.4879325410001911
+      },
+      "ok": false,
+      "reason": "snn_released",
+      "lifted": false,
+      "plan_wall": 0.009777832980034873,
+      "q_pre": 0.7388581840971222,
+      "z_grasp": 0.007,
+      "drop": 3,
+      "tau_engage": 0.669,
+      "q_jaw_grasp": 0.433,
+      "detail": "moment sterownika 0.03 N\u00b7m < 0.1",
+      "fail_phase": "lift",
+      "t_to_fail_sim": 2.700000000000845,
+      "recover": true,
+      "op_sim": 5.319999999994739
+     }
+    ]
+   },
+   {
+    "uid": 4,
+    "shape": "cube_S",
+    "material": "light",
+    "cat": "ma\u0142e",
+    "mass": 0.0009600000000000001,
+    "mu": 0.6,
+    "density": 120,
+    "spawn": {
+     "x": 0.17113772383458636,
+     "y": 0.060934143431200495,
+     "yaw": 2.240841672384759,
+     "wait_s": 0.029999999999930083
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": true,
+     "release": true,
+     "placed": true
+    },
+    "t": {
+     "grasp": 37.94000000000228,
+     "lift": 38.250000000001556,
+     "release_cmd": 40.76999999999568,
+     "released": 40.87999999999543
+    },
+    "dropped": null,
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 2.34,
+    "place_check": {
+     "released": true,
+     "in_box": true,
+     "still": true,
+     "no_arm_contact": true
+    },
+    "above_rim": false,
+    "final": "box",
+    "final_pos": [
+     0.0861,
+     -0.1989,
+     0.0128
+    ],
+    "success": true,
+    "fell_out": false,
+    "z_low_mm": 2.75,
+    "attempt_log": [
+     {
+      "uid": 4,
+      "n": 1,
+      "percept": {
+       "x": 0.17113772386772194,
+       "y": 0.06093414158537367,
+       "yaw": 0.6719517620178169,
+       "l": 0.02003809196132278,
+       "w": 0.020038091961247305,
+       "h": 0.01999562799107687
+      },
+      "t_sim": {
+       "approach": 1.1999999999972033,
+       "grasp": 1.1199999999973898,
+       "lift": 0.6799999999984152,
+       "transport": 2.1099999999950825,
+       "place": 0.20999999999951058,
+       "return": 1.9999999999953388
+      },
+      "t_wall": {
+       "approach": 0.6684811669983901,
+       "grasp": 0.6278871249814983,
+       "lift": 0.38684191700303927,
+       "transport": 1.2109098749933764,
+       "place": 0.11442912500933744,
+       "return": 1.120086958981119
+      },
+      "ok": true,
+      "reason": null,
+      "lifted": true,
+      "plan_wall": 0.02473979099886492,
+      "q_pre": 0.40403354465688074,
+      "z_grasp": 0.007,
+      "drop": 4,
+      "tau_engage": 0.749,
+      "q_jaw_grasp": 0.001,
+      "tau_carry": 0.439,
+      "op_sim": 7.31999999998294
+     }
+    ]
+   },
+   {
+    "uid": 5,
+    "shape": "flat",
+    "material": "mid",
+    "cat": "p\u0142askie",
+    "mass": 0.01225,
+    "mu": 0.5,
+    "density": 700,
+    "spawn": {
+     "x": 0.16539364457020958,
+     "y": 0.06928412085924741,
+     "yaw": 0.43335200914155375,
+     "wait_s": 1.799999999995805
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": false,
+     "release": false,
+     "placed": false
+    },
+    "t": {
+     "grasp": 45.969999999983564,
+     "lift": 46.27999999998284,
+     "dropped": 48.10999999997858
+    },
+    "dropped": "lost:transport",
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 1.34,
+    "final": "box",
+    "final_pos": [
+     0.1517,
+     -0.1277,
+     0.0277
+    ],
+    "success": false,
+    "fell_out": false,
+    "z_low_mm": 22.65,
+    "attempt_log": [
+     {
+      "uid": 5,
+      "n": 1,
+      "percept": {
+       "x": 0.16539364304860774,
+       "y": 0.06928412738341297,
+       "yaw": 0.4363323129985824,
+       "l": 0.05010408999444807,
+       "w": 0.035148861779967094,
+       "h": 0.009972699194337973
+      },
+      "t_sim": {
+       "approach": 1.0899999999974597,
+       "grasp": 1.929999999995502,
+       "lift": 0.6799999999984152
+      },
+      "t_wall": {
+       "approach": 0.6000622079882305,
+       "grasp": 1.0721805419889279,
+       "lift": 0.3937030410161242
+      },
+      "ok": false,
+      "reason": "snn_released",
+      "lifted": true,
+      "plan_wall": 0.023797125002602115,
+      "q_pre": 0.9325453663382094,
+      "z_grasp": 0.007,
+      "drop": 5,
+      "tau_engage": 0.701,
+      "q_jaw_grasp": 0.21,
+      "detail": "moment sterownika 0.04 N\u00b7m < 0.1",
+      "fail_phase": "transport",
+      "t_to_fail_sim": 5.189999999987904,
+      "recover": true,
+      "op_sim": 8.089999999981146
+     }
+    ]
+   },
+   {
+    "uid": 6,
+    "shape": "wedge",
+    "material": "mid",
+    "cat": "nieregularne",
+    "mass": 0.01259999915510418,
+    "mu": 0.5,
+    "density": 700,
+    "spawn": {
+     "x": 0.17416261133215474,
+     "y": 0.06785785046256125,
+     "yaw": 2.1872720855900116,
+     "wait_s": 1.9799999999953855
+    },
+    "attempts": 1,
+    "truth": {
+     "grasp": true,
+     "lift": true,
+     "transport": true,
+     "release": true,
+     "placed": true
+    },
+    "t": {
+     "grasp": 54.17999999996443,
+     "lift": 54.36999999996399,
+     "release_cmd": 56.75999999995842,
+     "released": 56.84999999995821
+    },
+    "dropped": null,
+    "abandoned": false,
+    "bumped": [],
+    "pen_mm": 1.58,
+    "place_check": {
+     "released": true,
+     "in_box": true,
+     "still": true,
+     "no_arm_contact": true
+    },
+    "above_rim": false,
+    "final": "box",
+    "final_pos": [
+     0.1399,
+     -0.1973,
+     0.0217
+    ],
+    "success": true,
+    "fell_out": false,
+    "z_low_mm": 2.68,
+    "attempt_log": [
+     {
+      "uid": 6,
+      "n": 1,
+      "percept": {
+       "x": 0.17416783771350244,
+       "y": 0.06785047474129485,
+       "yaw": 0.619591884457987,
+       "l": 0.040093344887732474,
+       "w": 0.030142681794109977,
+       "h": 0.029963607811400197
+      },
+      "t_sim": {
+       "approach": 1.2999999999969702,
+       "grasp": 1.699999999996038,
+       "lift": 0.6699999999984385,
+       "transport": 2.0199999999952922,
+       "place": 0.22999999999946397,
+       "return": 1.7399999999959448
+      },
+      "t_wall": {
+       "approach": 0.7338586670230143,
+       "grasp": 0.9445337079814635,
+       "lift": 0.39847729200846516,
+       "transport": 1.1608108750078827,
+       "place": 0.13595316701685078,
+       "return": 1.0018435000092722
+      },
+      "ok": true,
+      "reason": null,
+      "lifted": true,
+      "plan_wall": 0.02384516701567918,
+      "q_pre": 0.7461268710353028,
+      "z_grasp": 0.007,
+      "drop": 5,
+      "tau_engage": 0.325,
+      "q_jaw_grasp": 0.08,
+      "tau_carry": 0.447,
+      "op_sim": 7.659999999982148
+     }
+    ]
+   },
+   {
+    "uid": 7,
+    "shape": "cube_L",
+    "material": "light",
+    "cat": "du\u017ce",
+    "mass": 0.010934999999999999,
+    "mu": 0.6,
+    "density": 120,
+    "spawn": {
+     "x": 0.17031196512385371,
+     "y": 0.06306900595958984,
+     "yaw": 0.8539138826167411,
+     "wait_s": 3.949999999990794
+    },
+    "attempts": 2,
+    "truth": {
+     "grasp": false,
+     "lift": false,
+     "transport": false,
+     "release": false,
+     "placed": false
+    },
+    "t": {},
+    "dropped": null,
+    "abandoned": true,
+    "bumped": [],
+    "pen_mm": 0.55,
+    "final": "zone",
+    "final_pos": [
+     0.1702,
+     0.0591,
+     0.0225
+    ],
+    "success": false,
+    "fell_out": false,
+    "z_low_mm": -0.0,
+    "attempt_log": [
+     {
+      "uid": 7,
+      "n": 1,
+      "percept": {
+       "x": 0.17031196532409132,
+       "y": 0.0630690061548038,
+       "yaw": 2.426007660272118,
+       "l": 0.0450583473964658,
+       "w": 0.04505834739638892,
+       "h": 0.04499562799113303
+      },
+      "t_sim": {
+       "approach": 2.0399999999952456,
+       "grasp": 1.8499999999956884
+      },
+      "t_wall": {
+       "approach": 1.1540461250115186,
+       "grasp": 1.0455454160110094
+      },
+      "ok": false,
+      "reason": "snn_released",
+      "lifted": false,
+      "plan_wall": 0.024062334006885067,
+      "q_pre": 1.4155319756444842,
+      "z_grasp": 0.007,
+      "drop": 1,
+      "tau_engage": 0.676,
+      "q_jaw_grasp": 0.704,
+      "detail": "moment sterownika 0.03 N\u00b7m < 0.1",
+      "fail_phase": "lift",
+      "t_to_fail_sim": 4.089999999990468,
+      "recover": true,
+      "op_sim": 7.689999999999195
+     },
+     {
+      "uid": 7,
+      "n": 2,
+      "percept": {
+       "x": 0.16827387558394036,
+       "y": 0.060676946416618506,
+       "yaw": 0.8552113334772214,
+       "l": 0.04502874989067815,
+       "w": 0.04502874989067812,
+       "h": 0.044995627991030185
+      },
+      "t_sim": {
+       "approach": 1.5200000000072578,
+       "grasp": 1.8600000000088812
+      },
+      "t_wall": {
+       "approach": 0.8609273749752901,
+       "grasp": 1.0426529170072172
+      },
+      "ok": false,
+      "reason": "snn_released",
+      "lifted": false,
+      "plan_wall": 0.02461283400771208,
+      "q_pre": 1.4134990492611177,
+      "z_grasp": 0.007,
+      "drop": 1,
+      "tau_engage": 0.632,
+      "q_jaw_grasp": 0.695,
+      "detail": "moment sterownika 0.04 N\u00b7m < 0.1",
+      "fail_phase": "lift",
+      "t_to_fail_sim": 3.5600000000169985,
+      "recover": true,
+      "op_sim": 6.150000000029365
+     }
+    ]
+   }
+  ],
+  "events": [
+   {
+    "t": 0.01,
+    "ev": "spawn",
+    "phase": "idle",
+    "uid": 0,
+    "obj": "cube_M/mid",
+    "x": 0.2041,
+    "y": 0.0371,
+    "yaw": 0.7458,
+    "wait_s": 0.01
+   },
+   {
+    "t": 0.31,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 0,
+    "obj": "cube_M/mid",
+    "attempt": 1,
+    "x": 0.20411,
+    "y": 0.03715,
+    "yaw": 2.31256,
+    "l": 0.03012,
+    "w": 0.03012,
+    "h": 0.02997
+   },
+   {
+    "t": 3.57,
+    "ev": "grasp",
+    "phase": "grasp",
+    "uid": 0,
+    "obj": "cube_M/mid"
+   },
+   {
+    "t": 3.86,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 0,
+    "obj": "cube_M/mid",
+    "dz_mm": 20.2
+   },
+   {
+    "t": 5.59,
+    "ev": "spawn",
+    "phase": "transport",
+    "uid": 1,
+    "obj": "sphere/hard_slick",
+    "x": 0.174,
+    "y": 0.0047,
+    "yaw": 0.4779,
+    "wait_s": 1.73
+   },
+   {
+    "t": 6.21,
+    "ev": "release_cmd",
+    "phase": "place",
+    "uid": 0,
+    "obj": "cube_M/mid",
+    "over_box": true,
+    "held": true,
+    "bumped": []
+   },
+   {
+    "t": 7.71,
+    "ev": "placed",
+    "phase": "return",
+    "uid": 0,
+    "obj": "cube_M/mid",
+    "released": true,
+    "in_box": true,
+    "still": true,
+    "no_arm_contact": true
+   },
+   {
+    "t": 8.6,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 1,
+    "obj": "sphere/hard_slick",
+    "attempt": 1,
+    "x": 0.17397,
+    "y": 0.00466,
+    "yaw": 1.71915,
+    "l": 0.03493,
+    "w": 0.03493,
+    "h": 0.03498
+   },
+   {
+    "t": 12.71,
+    "ev": "grasp",
+    "phase": "grasp",
+    "uid": 1,
+    "obj": "sphere/hard_slick"
+   },
+   {
+    "t": 13.04,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 1,
+    "obj": "sphere/hard_slick",
+    "dz_mm": 20.7
+   },
+   {
+    "t": 14.39,
+    "ev": "spawn",
+    "phase": "transport",
+    "uid": 2,
+    "obj": "long/heavy",
+    "x": 0.1806,
+    "y": -0.0061,
+    "yaw": 1.7076,
+    "wait_s": 1.35
+   },
+   {
+    "t": 14.9,
+    "ev": "release_cmd",
+    "phase": "place",
+    "uid": 1,
+    "obj": "sphere/hard_slick",
+    "over_box": true,
+    "held": true,
+    "bumped": []
+   },
+   {
+    "t": 16.41,
+    "ev": "placed",
+    "phase": "return",
+    "uid": 1,
+    "obj": "sphere/hard_slick",
+    "released": true,
+    "in_box": true,
+    "still": true,
+    "no_arm_contact": true
+   },
+   {
+    "t": 17.16,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 2,
+    "obj": "long/heavy",
+    "attempt": 1,
+    "x": 0.18057,
+    "y": -0.0061,
+    "yaw": 1.71042,
+    "l": 0.08006,
+    "w": 0.02022,
+    "h": 0.02
+   },
+   {
+    "t": 20.4,
+    "ev": "grasp",
+    "phase": "lift",
+    "uid": 2,
+    "obj": "long/heavy"
+   },
+   {
+    "t": 20.54,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 2,
+    "obj": "long/heavy",
+    "dz_mm": 21.1
+   },
+   {
+    "t": 21.67,
+    "ev": "spawn",
+    "phase": "transport",
+    "uid": 3,
+    "obj": "cyl/hard_grip",
+    "x": 0.2109,
+    "y": 0.0144,
+    "yaw": 2.3885,
+    "wait_s": 1.13
+   },
+   {
+    "t": 22.12,
+    "ev": "release_cmd",
+    "phase": "place",
+    "uid": 2,
+    "obj": "long/heavy",
+    "over_box": true,
+    "held": true,
+    "bumped": []
+   },
+   {
+    "t": 23.62,
+    "ev": "placed",
+    "phase": "return",
+    "uid": 2,
+    "obj": "long/heavy",
+    "released": true,
+    "in_box": true,
+    "still": true,
+    "no_arm_contact": true
+   },
+   {
+    "t": 24.33,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 3,
+    "obj": "cyl/hard_grip",
+    "attempt": 1,
+    "x": 0.21089,
+    "y": 0.01443,
+    "yaw": 0.75049,
+    "l": 0.02994,
+    "w": 0.02994,
+    "h": 0.04999
+   },
+   {
+    "t": 29.99,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 3,
+    "obj": "cyl/hard_grip",
+    "attempt": 2,
+    "x": 0.21103,
+    "y": 0.01428,
+    "yaw": 0.61959,
+    "l": 0.02994,
+    "w": 0.02994,
+    "h": 0.04999
+   },
+   {
+    "t": 35.31,
+    "ev": "abandoned",
+    "phase": "idle",
+    "uid": 3,
+    "obj": "cyl/hard_grip"
+   },
+   {
+    "t": 35.34,
+    "ev": "spawn",
+    "phase": "idle",
+    "uid": 4,
+    "obj": "cube_S/light",
+    "x": 0.1711,
+    "y": 0.0609,
+    "yaw": 2.2408,
+    "wait_s": 0.03
+   },
+   {
+    "t": 35.65,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 4,
+    "obj": "cube_S/light",
+    "attempt": 1,
+    "x": 0.17114,
+    "y": 0.06093,
+    "yaw": 0.67195,
+    "l": 0.02004,
+    "w": 0.02004,
+    "h": 0.02
+   },
+   {
+    "t": 37.94,
+    "ev": "grasp",
+    "phase": "grasp",
+    "uid": 4,
+    "obj": "cube_S/light"
+   },
+   {
+    "t": 38.25,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 4,
+    "obj": "cube_S/light",
+    "dz_mm": 20.6
+   },
+   {
+    "t": 40.05,
+    "ev": "spawn",
+    "phase": "transport",
+    "uid": 5,
+    "obj": "flat/mid",
+    "x": 0.1654,
+    "y": 0.0693,
+    "yaw": 0.4334,
+    "wait_s": 1.8
+   },
+   {
+    "t": 40.77,
+    "ev": "release_cmd",
+    "phase": "place",
+    "uid": 4,
+    "obj": "cube_S/light",
+    "over_box": true,
+    "held": true,
+    "bumped": []
+   },
+   {
+    "t": 42.28,
+    "ev": "placed",
+    "phase": "return",
+    "uid": 4,
+    "obj": "cube_S/light",
+    "released": true,
+    "in_box": true,
+    "still": true,
+    "no_arm_contact": true
+   },
+   {
+    "t": 42.97,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 5,
+    "obj": "flat/mid",
+    "attempt": 1,
+    "x": 0.16539,
+    "y": 0.06928,
+    "yaw": 0.43633,
+    "l": 0.0501,
+    "w": 0.03515,
+    "h": 0.00997
+   },
+   {
+    "t": 45.97,
+    "ev": "grasp",
+    "phase": "grasp",
+    "uid": 5,
+    "obj": "flat/mid"
+   },
+   {
+    "t": 46.28,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 5,
+    "obj": "flat/mid",
+    "dz_mm": 20.9
+   },
+   {
+    "t": 48.11,
+    "ev": "dropped",
+    "phase": "transport",
+    "uid": 5,
+    "obj": "flat/mid"
+   },
+   {
+    "t": 48.26,
+    "ev": "spawn",
+    "phase": "recover",
+    "uid": 6,
+    "obj": "wedge/mid",
+    "x": 0.1742,
+    "y": 0.0679,
+    "yaw": 2.1873,
+    "wait_s": 1.98
+   },
+   {
+    "t": 51.06,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 6,
+    "obj": "wedge/mid",
+    "attempt": 1,
+    "x": 0.17417,
+    "y": 0.06785,
+    "yaw": 0.61959,
+    "l": 0.04009,
+    "w": 0.03014,
+    "h": 0.02996
+   },
+   {
+    "t": 54.18,
+    "ev": "grasp",
+    "phase": "lift",
+    "uid": 6,
+    "obj": "wedge/mid"
+   },
+   {
+    "t": 54.37,
+    "ev": "lift",
+    "phase": "lift",
+    "uid": 6,
+    "obj": "wedge/mid",
+    "dz_mm": 21.1
+   },
+   {
+    "t": 56.76,
+    "ev": "release_cmd",
+    "phase": "place",
+    "uid": 6,
+    "obj": "wedge/mid",
+    "over_box": true,
+    "held": true,
+    "bumped": []
+   },
+   {
+    "t": 58.27,
+    "ev": "placed",
+    "phase": "return",
+    "uid": 6,
+    "obj": "wedge/mid",
+    "released": true,
+    "in_box": true,
+    "still": true,
+    "no_arm_contact": true
+   },
+   {
+    "t": 58.32,
+    "ev": "spawn",
+    "phase": "return",
+    "uid": 7,
+    "obj": "cube_L/light",
+    "x": 0.1703,
+    "y": 0.0631,
+    "yaw": 0.8539,
+    "wait_s": 3.95
+   },
+   {
+    "t": 58.72,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 7,
+    "obj": "cube_L/light",
+    "attempt": 1,
+    "x": 0.17031,
+    "y": 0.06307,
+    "yaw": 2.42601,
+    "l": 0.04506,
+    "w": 0.04506,
+    "h": 0.045
+   },
+   {
+    "t": 66.41,
+    "ev": "percept",
+    "phase": "idle",
+    "uid": 7,
+    "obj": "cube_L/light",
+    "attempt": 2,
+    "x": 0.16827,
+    "y": 0.06068,
+    "yaw": 0.85521,
+    "l": 0.04503,
+    "w": 0.04503,
+    "h": 0.045
+   },
+   {
+    "t": 72.56,
+    "ev": "abandoned",
+    "phase": "idle",
+    "uid": 7,
+    "obj": "cube_L/light"
+   }
+  ],
+  "unwanted": {
+   "arm_table": 0,
+   "arm_box": 0,
+   "armlink_object": 0,
+   "pad_other_object": 0,
+   "carried_hit": 0
+  },
+  "box_drift_mm": 0.006,
+  "stats": {
+   "max_qd": 0.8955,
+   "max_qdd": 96.1242,
+   "v_exceed_ticks": 0,
+   "spawn_rejects": 287,
+   "spawn_wait_ticks": 909,
+   "pose_writes": 8
+  },
+  "seed": 4242,
+  "queue": [
+   "cube_M/mid",
+   "sphere/hard_slick",
+   "long/heavy",
+   "cyl/hard_grip",
+   "cube_S/light",
+   "flat/mid",
+   "wedge/mid",
+   "cube_L/light"
+  ],
+  "complete": true,
+  "stopped_by": null,
+  "T_sim": 74.55999999999196,
+  "T_wall": 42.208728875004454,
+  "build_wall": 0.2084528749983292,
+  "resets": 0,
+  "auto_resets": 0,
+  "controller": {
+   "flags": {
+    "range": 1
+   },
+   "slow_settle": 0,
+   "plan_wall": 0.0
+  },
+  "safety_stats": {
+   "classical:reach": {
+    "ticks": 37280,
+    "range": 1
+   },
+   "classical:open": {
+    "ticks": 4505
+   },
+   "classical:search": {
+    "ticks": 1443
+   },
+   "snn:legT2L": {
+    "ticks": 1508
+   }
+  },
+  "mujoco": "3.17.0"
+ }
+}
