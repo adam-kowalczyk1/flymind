@@ -1,0 +1,62 @@
+{
+ "experiment_id": "FLYMIND-V5v4-r3",
+ "status": "POTWIERDZAJĄCY",
+ "frozen_at": "2026-10-29T22:17:01",
+ "protocol_file": "validation/v5v4_protocol.md",
+ "protocol_sha256": "f648c7ea3d8631fc257a398f2c168798d32a823dc5a3667dfab0cfa9da790ce0",
+ "seed_registry": "validation/v5v4_seed_registry.md",
+ "seed_registry_sha256": "92df813624fb9cb74076d8f38a9eebee3e74446f9d6aacf2deaf51cbbb06fbdf",
+ "redteam": [
+  "results/redteam/v5v4_protocol_redteam_r1.md",
+  "results/redteam/v5v4_protocol_redteam_r2.md",
+  "results/redteam/v5v4_protocol_redteam_r3.md"
+ ],
+ "redteam_sha256": {
+  "results/redteam/v5v4_protocol_redteam_r1.md": "0edce40d609eb8ae12e019049ce1253311f6fa7d9e4dca571178189956b9a14b",
+  "results/redteam/v5v4_protocol_redteam_r2.md": "b29790211ec0f8cb66be01115730a386c2daa5fde4ba9b7cab4402678c879afe",
+  "results/redteam/v5v4_protocol_redteam_r3.md": "34622b1e3cfabb5fc1856ccb47f1cb41d653fb5163c745f903540d7ce818454b"
+ },
+ "code_sha256": {
+  "v5v4.py": "8df7e05bd83c2937d942a51b68ae19431f1aa9f54e018149f651c59a72bf2f08",
+  "side_shuffle.py": "5895ab2a64ae2bb43ebb2dc89d6b0826eedf2e2acd30a18aeb02450ebdf43112",
+  "v5v2_topology.py": "657a24d4e8f4964df1a9b84912c3f3407e2b0f793d733162f0abb97e89358597",
+  "loop.py": "05bc8cdf09b848c9d822c011c54e638781ff11a2aa7b91073d620c4eb5a376c8",
+  "loop_v2.py": "689d81323b5253c87bebdac1d7c4fa90b9f03b82722bf4cb817951f1b3603fbc",
+  "v4_open_loop.py": "48c862753f1844f6d4e1046ba715dc6ee35b2b6ecff3a9476256603f4985b88b",
+  "visual_path.py": "4d81dfd7d4d0ea937284a6e377d18ad5fb062eaf89f1f7f9888f2497b3105fe5",
+  "so101.py": "3ad95d3822ad060e5540311670c492aad8ac34ed9b2e9508c778350e25f333b0",
+  "encoder.py": "d134599053fa50125bb7fe0c665a2e48ff67a7278ad05a205b5a5d9da1f51ae6",
+  "alif.py": "13e36619f211f399ce71bc4e5dc3b0337486fae6c892b5f2dc6ae00e8cc60aff",
+  "decoder.py": "0efbc34f38e1f46197adb7d1414035fdd508d4271d3853551ab1e0fc22ea3247",
+  "safety.py": "703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16",
+  "sensory.py": "4cd88b59c1b55d2f9d405e6d9a8ceb2572a908a5472c1118cb008d937ded1361",
+  "snn_interface.py": "ed06464dd963f1365345bc3844191e5884ffd520974689d8571947bdc26f6a59",
+  "connectome.py": "f0d38e7ec6694fd4715ab587046b0d458425ad83f1e28ecb8d0e1cdc48f5daf3",
+  "latency.py": "24b51d06c956df5f47ec9235d635e349a6e8bbc3e1e664aa9c8463e5d3b13bd6",
+  "test_v5v4.py": "e8b3c3b9cdc28a9cacdb3e9a4f526b00c051046f5a76d25e586989a1dd64ed9f",
+  "v5v4_power_r2.py": "0bcd22834de03d4e91632b740465a13271338cb8cc1754a3f47723ee9605c312"
+ },
+ "data_files_stat": {
+  "data/malecns/body-annotations-male-cns-v1.0-minconf-0.5.feather": [
+   14483314,
+   1792771834,
+   1792771805
+  ],
+  "data/malecns/body-neurotransmitters-male-cns-v1.0.feather": [
+   43282834,
+   1792771839,
+   1792771807
+  ],
+  "data/malecns/connectome-weights-male-cns-v1.0-minconf-0.5.feather": [
+   1051241946,
+   1792771914,
+   1792771839
+  ]
+ },
+ "git_head": "23ff1632a95430856b270511f10bb9dc041a733c (+ niezacommitowane zmiany flymind/)",
+ "commands": {
+  "shard_A": ".venv/bin/python -I -B flymind/v5v4.py --seeds 4001-4225 --shard A --out flymind/results/v5v4 --approved-protocol-sha256 f648c7ea3d8631fc257a398f2c168798d32a823dc5a3667dfab0cfa9da790ce0",
+  "shard_B": ".venv/bin/python -I -B flymind/v5v4.py --seeds 4226-4450 --shard B --out flymind/results/v5v4 --approved-protocol-sha256 f648c7ea3d8631fc257a398f2c168798d32a823dc5a3667dfab0cfa9da790ce0",
+  "analysis": ".venv/bin/python -I -B flymind/v5v4.py --analyze flymind/results/v5v4/raw_v5v4_A.jsonl flymind/results/v5v4/raw_v5v4_B.jsonl --expect 4001-4450"
+ }
+}

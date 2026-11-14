@@ -1,0 +1,431 @@
+{
+ "tag": "test_dt01_N_g1_L",
+ "arm": "N",
+ "glu": 1.0,
+ "shuffle_seed": null,
+ "seed": 20201,
+ "poses": 1,
+ "version": "test_dt01",
+ "lift_cfg": {
+  "version": "test_dt01",
+  "k": 0.005,
+  "s1": -1.0,
+  "tau_r": 0.05,
+  "J0": 0.2,
+  "touch_mV_per_N": 40.0,
+  "touch_max_mV": 40.0,
+  "v_reflex": 0.5,
+  "lift_max": 30.0,
+  "z_min": 0.005,
+  "proprio": "none",
+  "net": "it2",
+  "dt_ms": 0.1
+ },
+ "fly_cfg": {
+  "glu_sign": 1.0,
+  "trigger": "search",
+  "tau_search": 0.3,
+  "search_max": 4.0,
+  "push": 0.004,
+  "v_side": 0.02,
+  "tau_engage": 0.1,
+  "engage_ticks": 10,
+  "loss_ticks": 5,
+  "hold_max": 1.5,
+  "q_mid": 0.8,
+  "q_span": 0.9,
+  "qd_ref": 1.0,
+  "feco_mV": 40.0
+ },
+ "argv": [
+  "/Users/admin/so101_fly_project/flymind/experiments/step2_whole_arm/lift_b.py",
+  "--arm",
+  "N",
+  "--glu",
+  "1",
+  "--seed",
+  "20201",
+  "--poses",
+  "1",
+  "--only",
+  "L/hard_grip",
+  "L/hard_slick",
+  "L/heavy",
+  "L/light",
+  "L/mid",
+  "--version",
+  "test_dt01",
+  "--net",
+  "it2",
+  "--lift-max",
+  "30",
+  "--dt",
+  "0.1",
+  "--tag",
+  "test_dt01_N_g1_L",
+  "--out",
+  "/Users/admin/so101_fly_project/flymind/results/step2_whole_arm_20261113/lift_b/test_dt01"
+ ],
+ "build_s": 456.3,
+ "lift_net": {
+  "N": 2593,
+  "T2L": 1507,
+  "T1L": 992,
+  "net": "it2",
+  "added_T1_IN": 104,
+  "edges": {
+   "edges": 188613,
+   "synapses": 1427093,
+   "self_loops": 0,
+   "bodies": 2587
+  },
+  "swing": 2,
+  "stance": 6,
+  "W_sha256": "2dfbb84e657c657ac8a43f25908c8ed56a86d18e1e50a02a33fe87c1b4a9ee26"
+ },
+ "wall_s": 4686.0,
+ "max_rss_MB": 534.1,
+ "code_sha256": {
+  "lift_b.py": "182f14677b2e03cc0beae8da6aa40a7084b9b7ae04d1a74bdd5258824622b317",
+  "sensory_manipulation.py": "260c2c25401cd52ab672858406c54a993da72abab5311eff70ef1866dd7a6807",
+  "object_handling.py": "0bf03d36c6dd408ddf38fbb4daeef7ea318dc8e2d541db170038eeca13b36939"
+ },
+ "runs": [
+  {
+   "item": "L/hard_grip",
+   "seed": 20201350,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "final": "zone",
+   "attempts": 2,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 14.45,
+   "T_wall": 795.22,
+   "fmax_by_phase": {},
+   "fmax": 0.0,
+   "unwanted": {
+    "arm_table": 0,
+    "arm_box": 0,
+    "armlink_object": 0,
+    "pad_other_object": 0,
+    "carried_hit": 0
+   },
+   "prelift_sha": "c89896a6151cdfa1ae77ec911e04aa817c998a18be1409b9a4ba1ee32848de16",
+   "prelift_ticks": 334,
+   "lift_log": [
+    {
+     "ticks": 22,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 0.3
+    },
+    {
+     "ticks": 6,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 0.0
+    }
+   ],
+   "guard": 0,
+   "lift_ticks": 28,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 7085
+    },
+    "classical:open": {
+     "ticks": 1089
+    },
+    "classical:search": {
+     "ticks": 328
+    },
+    "script:hold_grasp_pose": {
+     "ticks": 112
+    },
+    "snn:legT1L": {
+     "ticks": 28
+    },
+    "snn:legT2L": {
+     "ticks": 28
+    }
+   },
+   "pen_mm": 0.2
+  },
+  {
+   "item": "L/hard_slick",
+   "seed": 20201360,
+   "truth": {
+    "grasp": true,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "final": "zone",
+   "attempts": 2,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 35.83,
+   "T_wall": 1934.15,
+   "fmax_by_phase": {},
+   "fmax": 0.0,
+   "unwanted": {
+    "arm_table": 0,
+    "arm_box": 0,
+    "armlink_object": 0,
+    "pad_other_object": 0,
+    "carried_hit": 0
+   },
+   "prelift_sha": "ecd06d7a625da784e032abf18380c1cd4aa398c604387b8143c6a9784cfc3e95",
+   "prelift_ticks": 428,
+   "lift_log": [
+    {
+     "ticks": 828,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 11.3
+    },
+    {
+     "ticks": 823,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 11.0
+    }
+   ],
+   "guard": 0,
+   "lift_ticks": 1651,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 9660
+    },
+    "classical:open": {
+     "ticks": 1575
+    },
+    "classical:search": {
+     "ticks": 357
+    },
+    "script:hold_grasp_pose": {
+     "ticks": 6604
+    },
+    "snn:legT1L": {
+     "ticks": 1651
+    },
+    "snn:legT2L": {
+     "ticks": 1651
+    }
+   },
+   "pen_mm": 0.59
+  },
+  {
+   "item": "L/heavy",
+   "seed": 20201370,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": false,
+    "release": true,
+    "placed": false
+   },
+   "success": false,
+   "final": "zone",
+   "attempts": 1,
+   "reasons": [
+    "no_lift"
+   ],
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 39.08,
+   "T_wall": 567.36,
+   "fmax_by_phase": {},
+   "fmax": 0.0,
+   "unwanted": {
+    "arm_table": 0,
+    "arm_box": 0,
+    "armlink_object": 0,
+    "pad_other_object": 0,
+    "carried_hit": 0
+   },
+   "prelift_sha": "7cbf1b3ed5dd9718485d47ddc5eab59a513f8a729d4d91e21a5b1bae2eef9b4e",
+   "prelift_ticks": 359,
+   "lift_log": [
+    {
+     "ticks": 3000,
+     "guard": 0,
+     "ok": 0.0,
+     "dz_mm": 41.3
+    }
+   ],
+   "guard": 0,
+   "lift_ticks": 3000,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4540
+    },
+    "classical:open": {
+     "ticks": 745
+    },
+    "classical:search": {
+     "ticks": 163
+    },
+    "script:hold_grasp_pose": {
+     "ticks": 12000
+    },
+    "snn:legT1L": {
+     "ticks": 3000
+    },
+    "snn:legT2L": {
+     "ticks": 3000
+    }
+   },
+   "pen_mm": 0.19
+  },
+  {
+   "item": "L/light",
+   "seed": 20201380,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": false,
+    "release": true,
+    "placed": false
+   },
+   "success": false,
+   "final": "zone",
+   "attempts": 1,
+   "reasons": [
+    "no_lift"
+   ],
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 38.87,
+   "T_wall": 623.93,
+   "fmax_by_phase": {},
+   "fmax": 0.0,
+   "unwanted": {
+    "arm_table": 0,
+    "arm_box": 0,
+    "armlink_object": 0,
+    "pad_other_object": 0,
+    "carried_hit": 0
+   },
+   "prelift_sha": "bc4ac8714fb02fb467c4b48dad720bdfeb27b692a219a17f7b02ef2928a3775c",
+   "prelift_ticks": 401,
+   "lift_log": [
+    {
+     "ticks": 3000,
+     "guard": 0,
+     "ok": 0.0,
+     "dz_mm": 39.3
+    }
+   ],
+   "guard": 0,
+   "lift_ticks": 3000,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4435
+    },
+    "classical:open": {
+     "ticks": 637
+    },
+    "classical:search": {
+     "ticks": 250
+    },
+    "script:hold_grasp_pose": {
+     "ticks": 12000
+    },
+    "snn:legT1L": {
+     "ticks": 3000
+    },
+    "snn:legT2L": {
+     "ticks": 3000
+    }
+   },
+   "pen_mm": 1.4
+  },
+  {
+   "item": "L/mid",
+   "seed": 20201390,
+   "truth": {
+    "grasp": true,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "final": "zone",
+   "attempts": 2,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 19.12,
+   "T_wall": 292.91,
+   "fmax_by_phase": {},
+   "fmax": 0.0,
+   "unwanted": {
+    "arm_table": 0,
+    "arm_box": 0,
+    "armlink_object": 0,
+    "pad_other_object": 0,
+    "carried_hit": 0
+   },
+   "prelift_sha": "891bf5b08839d04ccf43a67cb26fe5b4e7cd8b216912ccbd280356ca1367338a",
+   "prelift_ticks": 404,
+   "lift_log": [
+    {
+     "ticks": 31,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 2.9
+    },
+    {
+     "ticks": 16,
+     "guard": 0,
+     "ok": false,
+     "dz_mm": 1.5
+    }
+   ],
+   "guard": 0,
+   "lift_ticks": 47,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 9325
+    },
+    "classical:open": {
+     "ticks": 1523
+    },
+    "classical:search": {
+     "ticks": 342
+    },
+    "script:hold_grasp_pose": {
+     "ticks": 188
+    },
+    "snn:legT1L": {
+     "ticks": 47
+    },
+    "snn:legT2L": {
+     "ticks": 47
+    }
+   },
+   "pen_mm": 1.07
+  }
+ ]
+}

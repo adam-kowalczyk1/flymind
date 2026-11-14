@@ -1,0 +1,62 @@
+n 1440 err 0 uniq 1440
+Counter({('G1', 'classical_p', 'DATA', 496.46, '{}'): 120, ('G1', 'snn', 'DATA', 496.46, '{}'): 120, ('G1', 'snn', 'SWS', 496.46, '{}'): 120, ('G2', 'snn', 'SWS', 496.46, '{}'): 120, ('G2', 'classical_p', 'DATA', 496.46, '{}'): 120, ('G2', 'snn', 'DATA', 496.46, '{}'): 120, ('G3', 'snn', 'DATA', 472.16, '{"noise": 6.0}'): 120, ('G3', 'snn', 'SWS', 472.16, '{"noise": 6.0}'): 120, ('G3', 'classical_p', 'DATA', 472.16, '{"noise": 6.0}'): 120, ('G4', 'snn', 'DATA', 496.46, '{}'): 120, ('G4', 'snn', 'SWS', 496.46, '{}'): 120, ('G4', 'classical_p', 'DATA', 496.46, '{}'): 120})
+cal SG6 472.16 D0 496.46
+scene/drive-index mismatches 0
+SWS instance mapping ((i-1) mod 50)+1 ok True
+
+block half n | err mean/med DATA SWS P | succ D/S/P | moved D/S | d_SWS [cl CI] [scene CI] med zeros | d_P [cl] | drive med [IQR] | ovsh D-S | rule(code) mine
+G1 ALL  120 | 12.56/11.86 12.88/12.04 0.52/0.52 | 0.15/0.15/1.00 | 0.24/0.23 | -0.327 [-0.565;-0.100] [-0.584;-0.082] +0.000  91 | +12.03 [+10.77;+13.32] | 4.79 [4.02;5.80] | +0.00 | pattern holds / holds  (analysis.json CI -0.570;-0.102)
+G2 ALL  120 | 2.35/1.92 2.44/1.63 0.25/0.19 | 0.85/0.79/1.00 | 1.00/1.00 | -0.091 [-0.280;+0.095] [-0.318;+0.129] +0.080   0 | +2.10 [+1.83;+2.39] | 9.95 [9.07;10.68] | +0.39 |  /   (analysis.json CI -0.275;+0.098)
+G2 near  54 | 1.99/1.96 1.79/1.59 0.42/0.39 | 0.87/0.85/1.00 | 1.00/1.00 | +0.206 [+0.044;+0.381] [+0.039;+0.390] +0.139   0 | +1.58 [+1.48;+1.68] | 10.73 [10.51;11.10] | +0.48 | pattern holds / holds  (analysis.json CI +0.041;+0.378)
+G2 far   66 | 2.65/1.90 2.98/1.71 0.12/0.12 | 0.83/0.74/1.00 | 1.00/1.00 | -0.334 [-0.665;-0.029] [-0.719;+0.028] -0.067   0 | +2.53 [+2.07;+3.01] | 9.26 [8.80;9.80] | +0.31 | pattern holds / holds  (analysis.json CI -0.665;-0.030)
+G3 ALL  120 | 1.38/1.47 1.31/1.47 0.24/0.23 | 0.97/0.97/1.00 | 1.00/1.00 | +0.070 [+0.007;+0.136] [-0.003;+0.145] +0.065   0 | +1.14 [+1.03;+1.25] | 8.07 [6.85;9.21] | +0.24 |  /   (analysis.json CI +0.006;+0.135)
+G3 near  65 | 1.84/1.84 1.78/1.76 0.30/0.33 | 0.95/0.95/1.00 | 1.00/1.00 | +0.060 [-0.040;+0.164] [-0.046;+0.167] +0.106   0 | +1.54 [+1.45;+1.62] | 9.11 [8.15;9.80] | +0.21 | not shown / not shown  (analysis.json CI -0.039;+0.163)
+G3 far   55 | 0.84/0.72 0.76/0.58 0.17/0.16 | 1.00/1.00/1.00 | 1.00/1.00 | +0.081 [-0.007;+0.169] [-0.017;+0.179] +0.056   0 | +0.68 [+0.52;+0.83] | 6.92 [6.00;7.84] | +0.27 | not shown / not shown  (analysis.json CI -0.007;+0.172)
+G4 ALL  120 | 2.90/2.77 3.10/3.02 0.98/0.94 | 0.17/0.09/1.00 | 1.00/1.00 | -0.201 [-0.344;-0.059] [-0.339;-0.060] -0.209   0 | +1.92 [+1.82;+2.04] | 10.77 [10.07;11.25] | -0.74 | not shown / not shown  (analysis.json CI -0.341;-0.061)
+
+G1 moved D only 2 S only 0 both 27 neither 91 zeros 91
+  G1 d over both: sum -33.61 mean -1.245
+  G1 d over D only: sum -5.62 mean -2.809
+  G1 d over S only: sum +0.00 mean +nan
+  G1 P err mean 0.522 DATA err | moved 13.76
+G4 DATA: e_sd_last1s med 2.560 | signed final err * sign(az0) mean +0.01 | late |e| max med 5.41 | frac final |e|>=5 0.17 | succ 0.17
+G4 SWS: e_sd_last1s med 3.125 | signed final err * sign(az0) mean -0.22 | late |e| max med 5.94 | frac final |e|>=5 0.18 | succ 0.09
+G4 P: e_sd_last1s med 0.002 | signed final err * sign(az0) mean -0.02 | late |e| max med 0.94 | frac final |e|>=5 0.00 | succ 1.00
+  G4 |az0| 0-10: n 44 DATA err 2.89 P err 0.94 d +0.001
+  G4 |az0| 10-20: n 34 DATA err 2.87 P err 0.96 d -0.400
+  G4 |az0| 20-30: n 42 DATA err 2.94 P err 1.03 d -0.253
+
+V6 scene drive (max g * I_max) medians by stratum:
+  I8 S1: median 5.97 IQR [5.45;6.34]
+  I8 S2: median 4.48 IQR [3.95;5.09]
+  I10 S1: median 7.46 IQR [6.81;7.92]
+  I10 S2: median 5.60 IQR [4.93;6.36]
+  I12 S1: median 8.95 IQR [8.17;9.51]
+  I12 S2: median 6.71 IQR [5.92;7.63]
+  I14 S1: median 10.44 IQR [9.54;11.09]
+  I14 S2: median 7.83 IQR [6.91;8.90]
+  I16 S1: median 11.94 IQR [10.90;12.68]
+  I16 S2: median 8.95 IQR [7.90;10.17]
+  G2 near drive [10,12) n  48 d +0.154
+  G2 far  drive [6,10) n  55 d -0.434
+  G2 far  drive [10,12) n  11 d +0.166
+  G3 near drive [6,10) n  53 d +0.011
+  G3 near drive [10,12) n  12 d +0.278
+  G3 far  drive [0,6) n  14 d +0.048
+  G3 far  drive [6,10) n  41 d +0.092
+  G4 ALL  drive [6,10) n  27 d -0.236
+  G4 ALL  drive [10,12) n  93 d -0.191
+  G1 ALL  drive [0,6) n  95 d -0.160
+  G1 ALL  drive [6,10) n  25 d -0.961
+
+Drive-split sensitivity (cut 7.83 mV = midpoint of V6 S1/S2 medians at I12):
+  G2 hi-drive: n 119 d -0.080 [-0.270;+0.103]
+  G2 lo-drive: n 1 d -1.335 [-1.335;-1.335]
+  G3 hi-drive: n 73 d +0.066 [-0.031;+0.166]
+  G3 lo-drive: n 47 d +0.076 [-0.005;+0.167]
+  G2 rho split 0.2: near d +0.082 [-0.151;+0.334] n 36 | far d -0.165 [-0.431;+0.094] n 84
+  G2 rho split 0.21: near d +0.144 [-0.040;+0.350] n 44 | far d -0.227 [-0.499;+0.030] n 76
+  G2 rho split 0.23: near d +0.244 [+0.096;+0.397] n 61 | far d -0.437 [-0.782;-0.111] n 59
+  G2 rho split 0.24: near d +0.163 [+0.012;+0.311] n 71 | far d -0.459 [-0.864;-0.053] n 49
+
+P err range across blocks: [np.float64(0.522), np.float64(0.251), np.float64(0.239), np.float64(0.977)]

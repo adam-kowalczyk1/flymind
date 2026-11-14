@@ -1,0 +1,90 @@
+{
+ "steer_index_hz": {
+  "data": {
+   "9": 216.1,
+   "6": 182.6,
+   "5": 118.4,
+   "4": 42.3
+  },
+  "abl_AOTU_exc": {
+   "9": 81.1,
+   "6": 42.9,
+   "5": 21.8,
+   "4": 9.2
+  },
+  "abl_AOTU019": {
+   "9": 171.2,
+   "6": 160.0,
+   "5": 108.3,
+   "4": 38.9
+  },
+  "abl_LAL": {
+   "9": 192.6,
+   "6": 173.8,
+   "5": 114.4,
+   "4": 36.5
+  },
+  "abl_LLPC1": {
+   "9": 216.1,
+   "6": 182.6,
+   "5": 118.4,
+   "4": 42.3
+  },
+  "abl_other": {
+   "9": 217.8,
+   "6": 186.3,
+   "5": 131.5,
+   "4": 41.4
+  },
+  "no_mid_mid": {
+   "9": 217.0,
+   "6": 182.1,
+   "5": 117.0,
+   "4": 42.5
+  },
+  "no_LC_LC": {
+   "9": 177.2,
+   "6": 147.8,
+   "5": 121.1,
+   "4": 24.5
+  },
+  "eqshuffle_1301": {
+   "9": 40.2,
+   "6": 35.3,
+   "5": 24.9,
+   "4": 7.7
+  },
+  "eqshuffle_1302": {
+   "9": 45.3,
+   "6": 50.7,
+   "5": 30.4,
+   "4": 7.5
+  },
+  "eqshuffle_1303": {
+   "9": 56.1,
+   "6": 40.6,
+   "5": 29.2,
+   "4": 8.4
+  },
+  "toy_relay": {
+   "9": 139.6,
+   "6": 118.5,
+   "5": 96.8,
+   "4": 17.9
+  }
+ },
+ "group_sizes": {
+  "abl_AOTU_exc": 49,
+  "abl_AOTU019": 2,
+  "abl_LAL": 28,
+  "abl_LLPC1": 43,
+  "abl_other": 25
+ },
+ "protocol": "flymind/v5_ablation.py — skąd przewaga topologii z danych w V5 v2? EKSPLORACJA (ziarna rozwojowe), protokół zapisany\n2026-10-29 PRZED uruchomieniem. Nic tu nie jest potwierdzeniem (pula 2001–2100 wyczerpana).\n\nMapa ścieżek (obliczona przed protokołem): wpływ 2-skokowy LC10a → pośrednie → DNa02 idzie prawie wyłącznie przez AOTU —\npobudzenie ipsilateralne przez 49 pobudzających AOTU (+63/+66 ×10³), hamowanie kontralateralne przez 2 × AOTU019 (GABA,\nground truth; −70/−82 ×10³); LAL +11/+15 ×10³; LLPC1 (43 neurony) ≈ 0. Tasowanie equal_weight niszczy pobudzenie\nipsilateralne (75 ×10³ → −1…12 ×10³), a częściowo zachowuje hamowanie kontralateralne (wagi hamujące są rzadkie).\n\nWarianty (sieć z danych J0 0,2; ablacja = wyzerowanie wierszy i kolumn neuronów w W_data; dekoder sieci z danych):\n  data, abl_AOTU_exc (pobudzające AOTU*), abl_AOTU019 (2 neurony), abl_LAL (LAL*), abl_LLPC1, abl_other (reszta pośrednich),\n  no_mid_mid (bez krawędzi pośrednie → pośrednie), no_LC_LC (bez krawędzi LC10a → LC10a),\n  eqshuffle (visual_path.shuffle equal_weight, ziarna 1301–1303), toy_relay (loop_v2.toy_relay, własna kalibracja).\nCzęść A (pętla otwarta, spot_clip, enkoder V4 v2, ziarna 1001–1003): indeks skrętu S(r) = [L−P(az +20°) − L−P(az −20°)]/2\n  [Hz] dla promienia plamki r ∈ {9, 6, 5, 4} px (mniejsza plamka = dalsza piłeczka = słabszy napęd).\nCzęść B (pętla zamknięta, ziarna 1201–1220): cele na granicy czułości — |az0| ~ U[15°, 30°] (znak losowy),\n  ρ ~ U[0,24; 0,30]; sukces jak V5 (|e| < 5° w 2,5–3,0 s). Warianty: data, eqshuffle (ziarno + 100 000),\n  abl_AOTU_exc, abl_AOTU019, abl_LAL, abl_LLPC1, no_mid_mid, toy_relay.\nPrzewidywania (zapisane teraz): abl_AOTU_exc obniża S(5) o > 50 % i zachowanie do poziomu eqshuffle lub niżej;\n  abl_AOTU019 — umiarkowany spadek (traci się push-pull); abl_LLPC1 i abl_other — bez istotnej zmiany;\n  no_mid_mid — mała zmiana. Liczebności małe (n = 20) — wynik wskazuje kierunek dalszych badań, nie rozstrzyga.\nUruchom: .venv/bin/python -I -B flymind/v5_ablation.py --part {A,B} --out KATALOG\n",
+ "wall_s": 18.58593816699795,
+ "stage1_post": {
+  "n": 28,
+  "mismatched": [],
+  "manifest_sha256": "2f061a60b1d3481578443b16640f7bd92d90d578a47ef72d4d37b2ffc0b2c94f"
+ }
+}

@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ustawienia pada SO-101</title>
+<style>
+:root {
+  --bg: #f4f5f7; --card: #ffffff; --ink: #16181d; --muted: #646b78; --line: #e2e5ea;
+  --accent: #2f6fed; --accent-soft: #e6eefe; --ok: #1f9d55; --warn: #c27c0e; --danger: #d23b3b; --danger-soft: #fdeaea;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
+  --pad-hi: #ffffff; --pad-lo: #dde0e5; --pad-edge: #aeb4bd; --dot: rgba(20,24,32,.16); --well: #c3c8cf; --well-lo: #8e959f;
+  --stick-hi: #ffffff; --stick-lo: #d2d6dc; --cap-edge: #9aa1ab; --btn-hi: #ffffff; --btn-lo: #e2e5ea; --btn-edge: #a9afb8;
+  --glyph: #4b515b; --guide: #ffffff;
+  --kA: #2e9e4f; --kB: #d23b3b; --kX: #2f6fed; --kY: #c9a10b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --card: #181b21; --ink: #eceef2; --muted: #9aa2b1; --line: #2a2f38;
+    --accent: #6b9bff; --accent-soft: #1d2a45; --ok: #43c47a; --warn: #e3a43a; --danger: #ff6b6b; --danger-soft: #3a1f22;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    --pad-hi: #3b3f47; --pad-lo: #1a1c20; --pad-edge: #0b0c0e; --dot: rgba(255,255,255,.08); --well: #2a2d33; --well-lo: #0d0e10;
+    --stick-hi: #464a52; --stick-lo: #1e2024; --cap-edge: #0e0f11; --btn-hi: #3e424a; --btn-lo: #202328; --btn-edge: #0e0f11;
+    --glyph: #c9ced6; --guide: #f4f6fa;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115; --card: #181b21; --ink: #eceef2; --muted: #9aa2b1; --line: #2a2f38;
+  --accent: #6b9bff; --accent-soft: #1d2a45; --ok: #43c47a; --warn: #e3a43a; --danger: #ff6b6b; --danger-soft: #3a1f22;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    --pad-hi: #3b3f47; --pad-lo: #1a1c20; --pad-edge: #0b0c0e; --dot: rgba(255,255,255,.08); --well: #2a2d33; --well-lo: #0d0e10;
+    --stick-hi: #464a52; --stick-lo: #1e2024; --cap-edge: #0e0f11; --btn-hi: #3e424a; --btn-lo: #202328; --btn-edge: #0e0f11;
+    --glyph: #c9ced6; --guide: #f4f6fa;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+@media (max-width: 600px) { header { position: static; } }
+.bar { max-width: 1120px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+h1 small { color: var(--muted); font-weight: 450; margin-left: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px;
+  background: var(--card); border: 1px solid var(--line); color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.ok .dot { background: var(--ok); } .chip.warn .dot { background: var(--warn); } .chip.bad .dot { background: var(--danger); }
+.spacer { flex: 1; }
+button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  padding: 8px 14px; transition: background .15s, border-color .15s; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.primary:disabled { opacity: .45; cursor: default; }
+button.ghost { background: transparent; }
+main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 80px; display: grid; gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 18px 20px; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.card h2 { font-size: 15px; margin: 0 0 4px; font-weight: 650; }
+.card p.sub { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
+.banner { grid-column: 1 / -1; border-radius: 12px; padding: 12px 16px; background: var(--danger-soft); color: var(--danger); display: none; }
+.banner.show { display: block; }
+/* pad — rysunek wzorowany na kontrolerze Xbox Series (jasny = biały, ciemny = czarny); bez logo */
+.cardhead { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.cardhead > div:first-child { flex: 1 1 320px; }
+.tools { display: flex; gap: 10px; align-items: center; }
+.tools .opt { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); }
+@media (max-width: 760px) { .tools .opt { display: none; } }
+svg.pad { width: 100%; height: auto; display: block; max-height: 460px; margin: 4px 0 6px; }
+.pad .shell { fill: url(#gBody); stroke: var(--pad-edge); stroke-width: 1.4; }
+.pad .sheen { fill: url(#gSheen); pointer-events: none; }
+.pad .grip { fill: url(#pDots); }
+.pad .seam { fill: none; stroke: var(--pad-edge); stroke-width: 1; opacity: .45; }
+.pad .trig { fill: url(#gTrig); stroke: var(--pad-edge); stroke-width: 1.2; }
+.pad .trigfill { fill: var(--accent); opacity: .9; }
+.pad .bump-o { fill: none; stroke: var(--pad-edge); stroke-width: 17; stroke-linecap: round; }
+.pad .bump { fill: none; stroke: var(--pad-lo); stroke-width: 14; stroke-linecap: round; transition: stroke .08s; }
+.pad .bump.on { stroke: var(--accent); }
+.pad .tlbl { font: 700 10px -apple-system, sans-serif; fill: var(--muted); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pad .well { fill: url(#gWell); }
+.pad .cap { fill: url(#gCap); stroke: var(--cap-edge); stroke-width: 1; }
+.pad .capin { fill: url(#gCapIn); transition: fill .08s; }
+.pad .knurl { fill: none; stroke: var(--cap-edge); stroke-width: 2.2; stroke-dasharray: 1.1 2.1; opacity: .55; }
+.pad .stick.moved .knurl { stroke: var(--accent); opacity: 1; }
+.pad .stick.on .capin { fill: var(--accent); }
+.pad .btn .cap { fill: url(#gBtn); stroke: var(--btn-edge); transition: fill .06s; }
+.pad .btn.on { transform: translateY(1px); }
+.pad .btn.on .cap { fill: var(--c, var(--accent)); stroke: var(--c, var(--accent)); }
+.pad .glyph { font: 700 12.5px -apple-system, sans-serif; fill: var(--c); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pad .btn.on .glyph { fill: #fff; }
+.pad .icon { fill: none; stroke: var(--glyph); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pad .btn.on .icon { stroke: #fff; }
+.pad .dish { fill: url(#gWell); }
+.pad .arm { fill: url(#gBtn); stroke: var(--btn-edge); stroke-width: .8; transition: fill .06s; }
+.pad .arm.on { fill: var(--accent); stroke: var(--accent); }
+.pad .glow { fill: var(--guide); opacity: .0; transition: opacity .1s; }
+.pad .btn.on .glow { opacity: .9; }
+.callouts path { fill: none; stroke: var(--muted); stroke-width: 1; opacity: .5; }
+.callouts circle { fill: var(--muted); opacity: .7; }
+.callouts text { font: 500 11px -apple-system, BlinkMacSystemFont, sans-serif; fill: var(--ink); dominant-baseline: central; }
+.callouts .k { font-weight: 700; fill: var(--muted); }
+.callouts .l2 { font-size: 10px; fill: var(--muted); }
+.callouts .free text { fill: var(--muted); font-style: italic; }
+.callouts .on path { stroke: var(--accent); opacity: 1; stroke-width: 1.6; }
+.callouts .on circle { fill: var(--accent); opacity: 1; }
+.callouts .on text, .callouts .on .k { fill: var(--accent); font-weight: 700; }
+.live { display: grid; grid-template-columns: 116px 116px minmax(0, 1fr); gap: 18px; align-items: center; }
+@media (max-width: 640px) { .live { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .live .readout { grid-column: 1 / -1; } }
+.map { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+.map svg { width: 100%; max-width: 116px; display: block; margin: 0 auto 4px; }
+.map .rim { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.map .ax { stroke: var(--line); stroke-width: 1; }
+.map .dz { fill: var(--warn); fill-opacity: .12; stroke: var(--warn); stroke-dasharray: 2 2; stroke-width: 1.2; }
+.map .trail { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: .35; stroke-linecap: round; stroke-linejoin: round; }
+.map .dot { fill: var(--muted); }
+.map .dot.on { fill: var(--accent); }
+.readout { display: grid; gap: 10px; font-size: 13.5px; }
+.meter { display: grid; grid-template-columns: 92px 1fr 46px; align-items: center; gap: 8px; }
+.meter .track { height: 8px; border-radius: 99px; background: var(--line); position: relative; overflow: hidden; }
+.meter .fill { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+.meter span:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.now { padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); min-height: 42px; }
+.now b { color: var(--accent); }
+/* kontrolki */
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.row:first-of-type { border-top: 0; }
+.row label, .row .name { font-weight: 550; }
+.row .hint { grid-column: 1 / -1; color: var(--muted); font-size: 13px; margin-top: -2px; }
+.row output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; min-width: 74px; text-align: right; }
+input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0; }
+.switch { position: relative; width: 44px; height: 26px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .15s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .15s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(18px); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 6px 12px; background: transparent; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+@media (max-width: 520px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.gear { border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px 8px; margin-top: 10px; }
+.gear h3 { font-size: 13.5px; margin: 8px 0 0; color: var(--muted); font-weight: 600; }
+svg.curve { width: 100%; height: 120px; display: block; margin-top: 6px; }
+.curve .ax { stroke: var(--line); }
+.curve .dzr { fill: var(--warn); opacity: .14; }
+.curve path { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.curve text { font-size: 10px; fill: var(--muted); }
+/* przyciski */
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+@media (max-width: 760px) { .actions { grid-template-columns: minmax(0, 1fr); } }
+.act { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.act.danger .name { color: var(--danger); }
+.act .name { font-weight: 550; overflow-wrap: anywhere; }
+.act select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.act.listen { background: var(--accent-soft); border-radius: 10px; padding-left: 8px; padding-right: 8px; }
+.act.flash { animation: flash .9s; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.kbd { display: inline-block; min-width: 26px; text-align: center; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg); font-weight: 600; font-size: 12.5px; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(30px); opacity: 0; transition: .25s;
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 550; max-width: calc(100% - 32px); z-index: 9; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--danger); color: #fff; }
+.joints { display: grid; gap: 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Pad SO-101 <small>ustawienia sterowania</small></h1>
+    <span class="chip" id="padChip"><span class="dot"></span><span id="padText">pad: naciśnij dowolny przycisk</span></span>
+    <span class="chip" id="saveChip"><span class="dot"></span><span id="saveText">wczytywanie…</span></span>
+    <span class="spacer"></span>
+    <button class="ghost" id="resetBtn" title="Przywraca wartości domyślne (trzeba jeszcze zapisać)">Domyślne</button>
+    <button class="primary" id="saveBtn" disabled>Zapisz</button>
+  </div>
+</header>
+
+<main>
+  <div class="banner" id="banner"></div>
+
+  <section class="card wide" aria-labelledby="h-live">
+    <div class="cardhead">
+      <div><h2 id="h-live">Pad na żywo</h2>
+        <p class="sub">Ruszaj gałkami i wciskaj przyciski — rysunek pokazuje to samo co pad w dłoni, a opisy mówią, co zrobi ramię.
+          Pomarańczowe kółko na mapkach gałek to martwa strefa (ruch w środku jest ignorowany).</p></div>
+      <div class="tools">
+        <span class="opt">Opisy <label class="switch"><input type="checkbox" id="showCallouts" checked aria-label="Pokaż opisy przycisków na rysunku"><span></span></label></span>
+        <button id="rumbleTest">Sprawdź wibracje</button>
+      </div>
+    </div>
+    <svg class="pad" id="padSvg" viewBox="-60 0 880 330" role="img" aria-label="Rysunek pada Xbox z podświetleniem wciśniętych przycisków i opisem ich akcji">
+      <defs>
+        <path id="body" d="M380 68C340 66 300 56 262 56C222 56 200 70 192 96C182 128 176 176 186 238C194 284 222 300 246 290C268 282 282 262 298 246C314 230 342 226 380 226C418 226 446 230 462 246C478 262 492 282 514 290C538 300 566 284 574 238C584 176 578 128 568 96C560 70 538 56 498 56C460 56 420 66 380 68Z"/>
+        <path id="trigL" d="M232 50C230 30 244 16 268 14L300 14C316 15 322 26 320 50Z"/>
+        <path id="trigR" d="M528 50C530 30 516 16 492 14L460 14C444 15 438 26 440 50Z"/>
+        <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--pad-hi)"/><stop offset="1" style="stop-color:var(--pad-lo)"/></linearGradient>
+        <radialGradient id="gSheen" cx=".5" cy=".05" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="gTrig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--pad-hi)"/><stop offset="1" style="stop-color:var(--pad-edge)"/></linearGradient>
+        <radialGradient id="gWell" cx=".5" cy=".42" r=".6"><stop offset=".55" style="stop-color:var(--well-lo)"/><stop offset="1" style="stop-color:var(--well)"/></radialGradient>
+        <radialGradient id="gCap" cx=".38" cy=".3" r=".85"><stop offset="0" style="stop-color:var(--stick-hi)"/><stop offset="1" style="stop-color:var(--stick-lo)"/></radialGradient>
+        <radialGradient id="gCapIn" cx=".6" cy=".7" r=".75"><stop offset="0" style="stop-color:var(--stick-hi)"/><stop offset="1" style="stop-color:var(--stick-lo)"/></radialGradient>
+        <radialGradient id="gBtn" cx=".38" cy=".3" r=".85"><stop offset="0" style="stop-color:var(--btn-hi)"/><stop offset="1" style="stop-color:var(--btn-lo)"/></radialGradient>
+        <pattern id="pDots" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r=".95" style="fill:var(--dot)"/></pattern>
+        <clipPath id="cBody"><use href="#body"/></clipPath>
+        <clipPath id="cLT"><use href="#trigL"/></clipPath>
+        <clipPath id="cRT"><use href="#trigR"/></clipPath>
+        <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#000" flood-opacity=".22"/></filter>
+      </defs>
+
+      <g filter="url(#shadow)">
+        <g id="g-LT"><use class="trig" href="#trigL"/><rect class="trigfill" id="f-LT" x="228" y="14" width="96" height="0" clip-path="url(#cLT)"/><text class="tlbl" x="276" y="28">LT</text></g>
+        <g id="g-RT"><use class="trig" href="#trigR"/><rect class="trigfill" id="f-RT" x="436" y="14" width="96" height="0" clip-path="url(#cRT)"/><text class="tlbl" x="484" y="28">RT</text></g>
+        <path class="bump-o" d="M198 92C206 62 232 46 268 45C296 44 318 47 334 54"/>
+        <path class="bump" id="k-LB" d="M198 92C206 62 232 46 268 45C296 44 318 47 334 54"/>
+        <path class="bump-o" d="M562 92C554 62 528 46 492 45C464 44 442 47 426 54"/>
+        <path class="bump" id="k-RB" d="M562 92C554 62 528 46 492 45C464 44 442 47 426 54"/>
+        <text class="tlbl" x="270" y="45">LB</text><text class="tlbl" x="490" y="45">RB</text>
+        <use class="shell" href="#body"/>
+      </g>
+      <g clip-path="url(#cBody)">
+        <ellipse class="grip" cx="206" cy="252" rx="46" ry="70"/><ellipse class="grip" cx="554" cy="252" rx="46" ry="70"/>
+        <path class="seam" d="M236 296C246 262 262 238 300 220M524 296C514 262 498 238 460 220"/>
+      </g>
+      <use class="sheen" href="#body"/>
+
+      <g id="callouts" class="callouts"></g>
+
+      <!-- gałki -->
+      <circle class="well" cx="281" cy="129" r="28"/>
+      <g class="stick" id="k-LEFTSTICK"><g id="capL">
+        <circle class="cap" cx="281" cy="129" r="20"/><circle class="knurl" cx="281" cy="129" r="17.6"/><circle class="capin" cx="281" cy="129" r="13"/></g></g>
+      <circle class="well" cx="431" cy="189" r="28"/>
+      <g class="stick" id="k-RIGHTSTICK"><g id="capR">
+        <circle class="cap" cx="431" cy="189" r="20"/><circle class="knurl" cx="431" cy="189" r="17.6"/><circle class="capin" cx="431" cy="189" r="13"/></g></g>
+
+      <!-- D-pad (miska z krzyżem) -->
+      <circle class="dish" cx="329" cy="189" r="25"/>
+      <rect class="arm" id="k-DPAD_UP" x="322" y="168" width="14" height="16" rx="3"/>
+      <rect class="arm" id="k-DPAD_DOWN" x="322" y="194" width="14" height="16" rx="3"/>
+      <rect class="arm" id="k-DPAD_LEFT" x="308" y="182" width="16" height="14" rx="3"/>
+      <rect class="arm" id="k-DPAD_RIGHT" x="334" y="182" width="16" height="14" rx="3"/>
+      <rect class="arm" x="321" y="181" width="16" height="16" rx="2" style="stroke:none"/>
+
+      <!-- środek: przycisk główny, View, Share, Menu -->
+      <g class="btn" id="k-GUIDE"><circle class="cap" cx="380" cy="94" r="14"/><circle class="glow" cx="380" cy="94" r="10"/>
+        <circle class="icon" cx="380" cy="94" r="7"/></g>
+      <g class="btn" id="k-BACK"><circle class="cap" cx="353" cy="136" r="7.5"/>
+        <rect class="icon" x="348.5" y="131.8" width="6" height="5" rx="1" style="stroke-width:1"/><rect class="icon" x="351.5" y="134.8" width="6" height="5" rx="1" style="stroke-width:1"/></g>
+      <g class="btn" id="k-START"><circle class="cap" cx="407" cy="136" r="7.5"/>
+        <path class="icon" d="M403 133h8M403 136h8M403 139h8" style="stroke-width:1.1"/></g>
+      <g class="btn" id="k-SHARE"><rect class="cap" x="372" y="153" width="16" height="10" rx="5"/>
+        <path class="icon" d="M380 160.5v-5M377.8 157.6l2.2-2.2 2.2 2.2" style="stroke-width:1"/></g>
+
+      <!-- ABXY -->
+      <g class="btn" id="k-Y" style="--c:var(--kY)"><circle class="cap" cx="479" cy="105" r="11.5"/><text class="glyph" x="479" y="105.5">Y</text></g>
+      <g class="btn" id="k-X" style="--c:var(--kX)"><circle class="cap" cx="455" cy="129" r="11.5"/><text class="glyph" x="455" y="129.5">X</text></g>
+      <g class="btn" id="k-B" style="--c:var(--kB)"><circle class="cap" cx="503" cy="129" r="11.5"/><text class="glyph" x="503" y="129.5">B</text></g>
+      <g class="btn" id="k-A" style="--c:var(--kA)"><circle class="cap" cx="479" cy="153" r="11.5"/><text class="glyph" x="479" y="153.5">A</text></g>
+    </svg>
+
+    <div class="live">
+      <figure class="map"><svg viewBox="-50 -50 100 100" aria-hidden="true">
+        <circle class="rim" r="47"/><line class="ax" x1="-47" x2="47"/><line class="ax" y1="-47" y2="47"/>
+        <circle class="dz" id="dzL" r="7"/><polyline class="trail" id="trL"/><circle class="dot" id="dotL" r="5"/></svg>
+        <figcaption>Lewa gałka</figcaption></figure>
+      <figure class="map"><svg viewBox="-50 -50 100 100" aria-hidden="true">
+        <circle class="rim" r="47"/><line class="ax" x1="-47" x2="47"/><line class="ax" y1="-47" y2="47"/>
+        <circle class="dz" id="dzR" r="7"/><polyline class="trail" id="trR"/><circle class="dot" id="dotR" r="5"/></svg>
+        <figcaption>Prawa gałka</figcaption></figure>
+      <div class="readout">
+        <div class="meter"><span>Lewa ←→</span><div class="track"><div class="fill" id="m-lx"></div></div><span id="v-lx">0</span></div>
+        <div class="meter"><span>Lewa ↑↓</span><div class="track"><div class="fill" id="m-ly"></div></div><span id="v-ly">0</span></div>
+        <div class="meter"><span>Prawa ←→</span><div class="track"><div class="fill" id="m-rx"></div></div><span id="v-rx">0</span></div>
+        <div class="meter"><span>Prawa ↑↓</span><div class="track"><div class="fill" id="m-ry"></div></div><span id="v-ry">0</span></div>
+        <div class="meter"><span>Chwytak</span><div class="track"><div class="fill" id="m-g"></div></div><span id="v-g">0</span></div>
+        <div class="now" id="nowAct" aria-live="polite">Wciśnij przycisk, aby zobaczyć jego akcję.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-sticks">
+    <h2 id="h-sticks">Gałki</h2>
+    <p class="sub">Jak czuły jest pad. Wykres pokazuje, jaka prędkość wychodzi z danego wychylenia.</p>
+    <div class="row"><label for="deadzone">Martwa strefa</label><output id="o-deadzone"></output>
+      <input type="range" id="deadzone" min="0.02" max="0.4" step="0.01">
+      <div class="hint">Większa = pad nie „pełza”, gdy gałka nie wraca idealnie na środek.</div></div>
+    <div class="row"><label for="expo">Krzywa precyzji</label><output id="o-expo"></output>
+      <input type="range" id="expo" min="1" max="3" step="0.1">
+      <div class="hint">1 = liniowo. Więcej = mały wychył daje bardzo powolny, dokładny ruch.</div></div>
+    <svg class="curve" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
+      <rect class="dzr" id="cDz" x="20" y="8" width="0" height="96"/>
+      <line class="ax" x1="20" y1="104" x2="292" y2="104"/><line class="ax" x1="20" y1="8" x2="20" y2="104"/>
+      <path id="cPath"/><text x="22" y="117">0</text><text x="270" y="117">wychył</text><text x="24" y="16">prędkość</text>
+    </svg>
+    <div class="grid2" style="margin-top:8px">
+      <div class="row"><span class="name">Odwróć lewą ↑↓</span><label class="switch"><input type="checkbox" id="inv-ly" aria-label="Odwróć lewą gałkę góra-dół"><span></span></label></div>
+      <div class="row"><span class="name">Odwróć prawą ↑↓</span><label class="switch"><input type="checkbox" id="inv-ry" aria-label="Odwróć prawą gałkę góra-dół"><span></span></label></div>
+      <div class="row"><span class="name">Odwróć lewą ←→</span><label class="switch"><input type="checkbox" id="inv-lx" aria-label="Odwróć lewą gałkę lewo-prawo"><span></span></label></div>
+      <div class="row"><span class="name">Odwróć prawą ←→</span><label class="switch"><input type="checkbox" id="inv-rx" aria-label="Odwróć prawą gałkę lewo-prawo"><span></span></label></div>
+    </div>
+    <div class="row"><span class="name">Zamień spusty (LT zamyka chwytak)</span><label class="switch"><input type="checkbox" id="swap_triggers" aria-label="Zamień spusty"><span></span></label></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-speed">
+    <h2 id="h-speed">Prędkości</h2>
+    <p class="sub">Trzy biegi przełączane D-padem. Stawy w rad/s, tryb kartezjański w cm/s.</p>
+    <div class="row"><span class="name">Bieg na start</span>
+      <div class="seg" id="startGear" role="group" aria-label="Bieg na start">
+        <button data-v="1">1 wolno</button><button data-v="2">2 normalnie</button><button data-v="3">3 szybko</button></div></div>
+    <div id="gears"></div>
+    <div class="row"><label for="grip_speed">Prędkość chwytaka</label><output id="o-grip_speed"></output>
+      <input type="range" id="grip_speed" min="0.2" max="3" step="0.1">
+      <div class="hint">Pełne wciśnięcie spustu: ile „pełnych otwarć” na sekundę.</div></div>
+  </section>
+
+  <section class="card wide" aria-labelledby="h-btn">
+    <h2 id="h-btn">Przyciski</h2>
+    <p class="sub">Kliknij <b>Naucz</b> i wciśnij przycisk na padzie — albo wybierz z listy. Gdy przycisk był zajęty, dwie akcje zamienią się miejscami.</p>
+    <div class="actions" id="actions"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-safe">
+    <h2 id="h-safe">Bezpieczeństwo i odczucia</h2>
+    <p class="sub">Granice zakresów i maksymalna prędkość stawów są zawsze pilnowane przez warstwę bezpieczeństwa projektu.</p>
+    <div class="row"><span class="name">Wibracje pada</span><label class="switch"><input type="checkbox" id="rumble" aria-label="Wibracje pada"><span></span></label>
+      <div class="hint">Krótka: zapisano, długa: STOP, słaba: staw na krańcu.</div></div>
+    <div class="row"><label for="max_lead">Maks. wyprzedzenie celu</label><output id="o-max_lead"></output>
+      <input type="range" id="max_lead" min="0.05" max="0.5" step="0.01">
+      <div class="hint">O ile cel może uciec przed ramieniem. Mniej = ramię nie „dociąga” po zablokowaniu, ale reaguje bardziej miękko.</div></div>
+    <div class="row"><label for="grip_kp">Siła chwytu (symulacja)</label><output id="o-grip_kp"></output>
+      <input type="range" id="grip_kp" min="0.5" max="6" step="0.1">
+      <div class="hint">Jak mocno chwytak dociska do zadanej pozycji. Moment i tak ograniczony do 1 N·m.</div></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-real">
+    <h2 id="h-real">Prawdziwe ramię</h2>
+    <p class="sub">Tylko dla <code>--real</code>. Jeśli któryś staw rusza w złą stronę — przełącz go tutaj (sprawdzaj na biegu 1).</p>
+    <div class="joints" id="joints"></div>
+    <div class="row"><span class="name">Chwytak otwarty przy</span>
+      <div class="seg" id="gripOpen" role="group" aria-label="Wartość otwartego chwytaka">
+        <button data-v="100">100</button><button data-v="0">0</button></div></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API = "/api/settings";
+const ACTIONS = [
+  ["mode", "Tryb STAWY / KARTEZJAŃSKI"], ["home", "Pozycja startowa"], ["goto", "Jedź do slotu"], ["save", "Zapisz pozycję w slocie"],
+  ["stop", "STOP (zatrzaśnięty)"], ["play", "Odtwórz trasę / wznów po STOP"], ["record", "Nagrywanie trasy start/stop"],
+  ["gear_up", "Bieg w górę"], ["gear_down", "Bieg w dół"], ["slot_prev", "Poprzedni slot"], ["slot_next", "Następny slot"],
+  ["pitch_up", "Nos chwytaka w górę"], ["pitch_down", "Nos chwytaka w dół"]];
+const BTN = ["A","B","X","Y","LB","RB","BACK","START","LEFTSTICK","RIGHTSTICK","DPAD_UP","DPAD_DOWN","DPAD_LEFT","DPAD_RIGHT"];
+const LABEL = {BACK: "View", START: "Menu", LEFTSTICK: "L3 (lewa gałka)", RIGHTSTICK: "R3 (prawa gałka)",
+  DPAD_UP: "D-pad ▲", DPAD_DOWN: "D-pad ▼", DPAD_LEFT: "D-pad ◀", DPAD_RIGHT: "D-pad ▶"};
+// standardowe mapowanie Gamepad API (W3C) → nazwy SDL używane w pad.py
+const STD = {0:"A",1:"B",2:"X",3:"Y",4:"LB",5:"RB",8:"BACK",9:"START",10:"LEFTSTICK",11:"RIGHTSTICK",12:"DPAD_UP",13:"DPAD_DOWN",14:"DPAD_LEFT",15:"DPAD_RIGHT"};
+const JOINTS = [["shoulder_pan","Podstawa (obrót)"],["shoulder_lift","Bark"],["elbow_flex","Łokieć"],["wrist_flex","Nadgarstek (pochylenie)"],["wrist_roll","Nadgarstek (obrót)"]];
+const $ = id => document.getElementById(id);
+const lab = b => LABEL[b] || b;
+let S = null, SAVED = "", DEF = null, listening = null, offline = false;
+
+function toast(msg, err) {
+  const t = $("toast"); t.textContent = msg; t.className = "toast show" + (err ? " err" : "");
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.className = "toast" + (err ? " err" : ""), 2600);
+}
+function dirty() {
+  const d = JSON.stringify(S) !== SAVED;
+  $("saveBtn").disabled = !d || offline;
+  $("saveChip").className = "chip " + (offline ? "bad" : d ? "warn" : "ok");
+  $("saveText").textContent = offline ? "tylko podgląd (brak serwera)" : d ? "niezapisane zmiany" : "zapisane — program wczyta w ciągu 1 s";
+}
+function shape(x) {
+  const a = (Math.abs(x) - S.deadzone) / (1 - S.deadzone);
+  return a <= 0 ? 0 : Math.sign(x) * Math.pow(Math.min(a, 1), S.expo);
+}
+const fmt = {deadzone: v => Math.round(v * 100) + " %", expo: v => v.toFixed(1), grip_speed: v => v.toFixed(1) + " /s",
+  max_lead: v => v.toFixed(2) + " rad", grip_kp: v => v.toFixed(1)};
+
+function bindRange(id) {
+  const el = $(id);
+  el.addEventListener("input", () => { S[id] = parseFloat(el.value); $("o-" + id).textContent = fmt[id](S[id]); refresh(); });
+}
+function bindSwitch(el, get, set) {
+  el.addEventListener("change", () => { set(el.checked); dirty(); });
+  bindSwitch.list.push(() => el.checked = get());
+}
+bindSwitch.list = [];
+function seg(id, get, set) {
+  const g = $(id);
+  g.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; set(Number(b.dataset.v)); render(); });
+  seg.list.push(() => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.v) === get()))));
+}
+seg.list = [];
+
+function buildGears() {
+  const names = ["Bieg 1 — wolno", "Bieg 2 — normalnie", "Bieg 3 — szybko"];
+  $("gears").innerHTML = names.map((n, i) => `
+    <div class="gear"><h3>${n}</h3>
+      <div class="row"><label for="g${i}r">Stawy</label><output id="o-g${i}r"></output>
+        <input type="range" id="g${i}r" min="0.05" max="1.5" step="0.05"></div>
+      <div class="row"><label for="g${i}m">Kartezjański</label><output id="o-g${i}m"></output>
+        <input type="range" id="g${i}m" min="0.01" max="0.3" step="0.01"></div></div>`).join("");
+  for (let i = 0; i < 3; i++) for (const [k, j] of [["r", 0], ["m", 1]]) {
+    const el = $(`g${i}${k}`);
+    el.addEventListener("input", () => { S.gears[i][j] = parseFloat(el.value); refresh(); });
+  }
+}
+function buildActions() {
+  $("actions").innerHTML = ACTIONS.map(([a, n]) => `
+    <div class="act${a === "stop" ? " danger" : ""}" id="act-${a}">
+      <span class="name">${n}</span>
+      <select id="sel-${a}" aria-label="Przycisk dla: ${n}">${BTN.map(b => `<option value="${b}">${lab(b)}</option>`).join("")}</select>
+      <button data-learn="${a}" aria-label="Naucz z pada: ${n}">Naucz</button>
+    </div>`).join("");
+  ACTIONS.forEach(([a]) => $("sel-" + a).addEventListener("change", e => assign(a, e.target.value)));
+  $("actions").addEventListener("click", e => {
+    const b = e.target.closest("[data-learn]"); if (!b) return;
+    setListen(listening === b.dataset.learn ? null : b.dataset.learn);
+  });
+}
+function setListen(a) {
+  listening = a;
+  document.querySelectorAll(".act").forEach(r => r.classList.toggle("listen", r.id === "act-" + a));
+  document.querySelectorAll("[data-learn]").forEach(b => b.textContent = b.dataset.learn === a ? "Wciśnij na padzie… (Esc)" : "Naucz");
+}
+function assign(action, btn) {
+  const prev = S.buttons[action];
+  const other = Object.keys(S.buttons).find(k => k !== action && S.buttons[k] === btn);
+  S.buttons[action] = btn;
+  if (other) { S.buttons[other] = prev; toast(`Zamieniono: ${lab(btn)} ↔ ${lab(prev)}`); flash(other); }
+  flash(action); setListen(null); render();
+}
+function flash(a) { const r = $("act-" + a); r.classList.remove("flash"); void r.offsetWidth; r.classList.add("flash"); }
+function buildJoints() {
+  $("joints").innerHTML = JOINTS.map(([j, n], i) => `
+    <div class="row"><span class="name">${n}</span>
+      <div class="seg" id="js${i}" role="group" aria-label="Kierunek: ${n}"><button data-v="1">normalny</button><button data-v="-1">odwrócony</button></div></div>`).join("");
+  JOINTS.forEach((_, i) => seg("js" + i, () => S.real_sign[i], v => S.real_sign[i] = v));
+}
+
+function refresh() {   // wykres + etykiety po zmianie suwaka (bez przebudowy DOM)
+  ["deadzone", "expo", "grip_speed", "max_lead", "grip_kp"].forEach(k => $("o-" + k).textContent = fmt[k](S[k]));
+  S.gears.forEach(([r, m], i) => { $(`o-g${i}r`).textContent = r.toFixed(2) + " rad/s"; $(`o-g${i}m`).textContent = Math.round(m * 100) + " cm/s"; });
+  const W = 272, H = 96, pts = [];
+  for (let i = 0; i <= 60; i++) { const x = i / 60; pts.push(`${(20 + x * W).toFixed(1)},${(104 - shape(x) * H).toFixed(1)}`); }
+  $("cPath").setAttribute("d", "M" + pts.join(" L"));
+  $("cDz").setAttribute("width", (S.deadzone * W).toFixed(1));
+  $("dzL").setAttribute("r", S.deadzone * 47); $("dzR").setAttribute("r", S.deadzone * 47);
+  dirty();
+}
+function render() {
+  ["deadzone", "expo", "grip_speed", "max_lead", "grip_kp"].forEach(k => $(k).value = S[k]);
+  S.gears.forEach(([r, m], i) => { $(`g${i}r`).value = r; $(`g${i}m`).value = m; });
+  ACTIONS.forEach(([a]) => $("sel-" + a).value = S.buttons[a]);
+  bindSwitch.list.forEach(f => f()); seg.list.forEach(f => f());
+  buildCallouts(); refresh();
+}
+
+// --- opisy na rysunku: [element fizyczny, strona, wiersz y, linia od opisu do elementu] ---
+const CALL = [
+  ["LT", "L", 26, "M174 26H246"], ["LB", "L", 56, "M174 56L208 68"], ["LSTICK", "L", 102, "M174 108L254 122"],
+  ["BACK", "L", 148, "M174 148L290 163L348 139"], ["DPAD_UP", "L", 176, "M174 176L323 169"],
+  ["DPAD_LEFT", "L", 204, "M174 204L309 190"], ["DPAD_DOWN", "L", 232, "M174 232H329V210"],
+  ["DPAD_RIGHT", "L", 262, "M174 262H356L349 196"],
+  ["RT", "R", 26, "M586 26H514"], ["RB", "R", 56, "M586 56L552 68"], ["Y", "R", 90, "M586 90L490 101"],
+  ["B", "R", 122, "M586 122L514 127"], ["A", "R", 154, "M586 154L490 155"], ["X", "R", 186, "M586 186H470L447 137"],
+  ["START", "R", 216, "M586 216H470L448 166L411 141"], ["RSTICK", "R", 250, "M586 256L456 202"]];
+const SHORT = {mode: "tryb", home: "start", goto: "do slotu", save: "zapisz slot", stop: "STOP", play: "odtwórz", record: "nagrywanie",
+  gear_up: "bieg +", gear_down: "bieg −", slot_prev: "slot ←", slot_next: "slot →", pitch_up: "nos ↑", pitch_down: "nos ↓"};
+const actOf = b => ACTIONS.find(([k]) => S.buttons[k] === b);
+const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function callText(k) {   // [klucz, opis, druga linia, wolny?]
+  const trig = open => open ? "otwieraj chwytak" : "zamykaj chwytak";
+  if (k === "LT") return ["LT", trig(!S.swap_triggers)];
+  if (k === "RT") return ["RT", trig(S.swap_triggers)];
+  const press = b => { const a = actOf(b); return a ? SHORT[a[0]] : "wolny"; };
+  if (k === "LSTICK") return ["Lewa gałka", "←→ podstawa, ↑↓ bark", `KART: ↑↓ dalej/bliżej · L3: ${press("LEFTSTICK")}`];
+  if (k === "RSTICK") return ["Prawa gałka", "←→ obrót, ↑↓ łokieć", `KART: ↑↓ wyżej/niżej · R3: ${press("RIGHTSTICK")}`];
+  const a = actOf(k);
+  return [lab(k).replace(" (lewa gałka)", "").replace(" (prawa gałka)", ""), a ? a[1] : "wolny", null, !a];
+}
+function buildCallouts() {
+  $("callouts").innerHTML = CALL.map(([k, side, y, d]) => {
+    const [key, txt, l2, free] = callText(k), L = side === "L", x = L ? 168 : 592;
+    const [ex, ey] = endPoint(d);
+    return `<g data-k="${k}"${free ? ' class="free"' : ""}><path d="${d}"/><circle cx="${ex}" cy="${ey}" r="2"/>
+      <text x="${x}" y="${y}" text-anchor="${L ? "end" : "start"}"><tspan class="k">${esc(key)}</tspan> · ${esc(txt)}</text>
+      ${l2 ? `<text class="l2" x="${x}" y="${y + 14}" text-anchor="${L ? "end" : "start"}">${esc(l2)}</text>` : ""}</g>`;
+  }).join("");
+}
+function endPoint(d) {   // ostatni punkt ścieżki z poleceń M/L/H/V
+  let x = 0, y = 0;
+  for (const [, c, args] of d.matchAll(/([MLHV])([^MLHV]*)/g)) {
+    const n = args.trim().split(/[\s,]+/).map(Number);
+    if (c === "H") x = n[0]; else if (c === "V") y = n[0]; else [x, y] = n.slice(-2);
+  }
+  return [x, y];
+}
+const narrow = matchMedia("(max-width: 760px)");
+function layoutPad() {
+  const full = !narrow.matches && $("showCallouts").checked;
+  $("padSvg").setAttribute("viewBox", full ? "-60 0 880 330" : "170 6 420 300");
+  $("callouts").style.display = full ? "" : "none";
+}
+
+// --- pad na żywo (Gamepad API) ---
+let prevBtn = new Set();
+const trails = {L: [], R: []};
+function stickView(side, x, y) {
+  const moved = shape(Math.hypot(x, y)) > 0;
+  $("cap" + side).setAttribute("transform", `translate(${(x * 8).toFixed(2)} ${(y * 8).toFixed(2)})`);
+  $(side === "L" ? "k-LEFTSTICK" : "k-RIGHTSTICK").classList.toggle("moved", moved);
+  const t = trails[side]; t.push(`${(x * 47).toFixed(1)},${(y * 47).toFixed(1)}`); if (t.length > 24) t.shift();
+  $("tr" + side).setAttribute("points", t.join(" "));
+  $("dot" + side).setAttribute("cx", x * 47); $("dot" + side).setAttribute("cy", y * 47);
+  $("dot" + side).classList.toggle("on", moved);
+  return moved;
+}
+function loop() {
+  const gp = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(g => g && g.connected);
+  if (gp) {
+    $("padChip").className = "chip ok"; $("padText").textContent = "pad: " + gp.id.replace(/\(.*?\)/g, "").trim().slice(0, 40);
+    const on = new Set(); Object.entries(STD).forEach(([i, n]) => gp.buttons[i]?.pressed && on.add(n));
+    BTN.forEach(b => $("k-" + b)?.classList.toggle("on", on.has(b)));
+    $("k-GUIDE").classList.toggle("on", !!gp.buttons[16]?.pressed);
+    let lt = gp.buttons[6]?.value || 0, rt = gp.buttons[7]?.value || 0;
+    $("f-LT").setAttribute("height", 36 * lt); $("f-RT").setAttribute("height", 36 * rt);
+    $("g-LT").setAttribute("transform", `translate(0 ${(lt * 5).toFixed(2)})`); $("g-RT").setAttribute("transform", `translate(0 ${(rt * 5).toFixed(2)})`);
+    const active = new Set(on);
+    if (lt > .05) active.add("LT"); if (rt > .05) active.add("RT");
+    const a = [0, 1, 2, 3].map(i => gp.axes[i] || 0);
+    if (stickView("L", a[0], a[1]) || on.has("LEFTSTICK")) active.add("LSTICK");
+    if (stickView("R", a[2], a[3]) || on.has("RIGHTSTICK")) active.add("RSTICK");
+    document.querySelectorAll("#callouts > g").forEach(g => g.classList.toggle("on", active.has(g.dataset.k)));
+    if (S.swap_triggers) [lt, rt] = [rt, lt];
+    const inv = k => S.invert[k] ? -1 : 1;
+    const ax = {lx: inv("lx") * a[0], ly: -inv("ly") * a[1], rx: inv("rx") * a[2], ry: -inv("ry") * a[3]};
+    for (const [k, v] of Object.entries({...ax, g: lt - rt})) {
+      const y = k === "g" ? v : shape(v), f = $("m-" + k);
+      f.style.left = (50 + Math.min(0, y) * 50) + "%"; f.style.width = Math.abs(y) * 50 + "%";
+      $("v-" + k).textContent = (y >= 0 ? "+" : "") + y.toFixed(2);
+    }
+    const fresh = [...on].filter(b => !prevBtn.has(b));
+    if (fresh.length) {
+      const b = fresh[0];
+      if (listening) assign(listening, b);
+      else {
+        const act = actOf(b);
+        $("nowAct").innerHTML = `<span class="kbd">${lab(b)}</span> → <b>${act ? act[1] : "brak akcji (wolny)"}</b>`;
+        if (act) flash(act[0]);
+      }
+    }
+    prevBtn = on;
+  } else {
+    $("padChip").className = "chip"; $("padText").textContent = "pad: połącz i naciśnij dowolny przycisk";
+  }
+  requestAnimationFrame(loop);
+}
+$("rumbleTest").addEventListener("click", async () => {
+  const gp = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(g => g && g.connected);
+  if (!gp) return toast("Najpierw połącz pad i naciśnij na nim dowolny przycisk", true);
+  if (!gp.vibrationActuator?.playEffect) return toast("Ta przeglądarka nie umie włączyć wibracji pada — spróbuj w Chrome", true);
+  try {
+    await gp.vibrationActuator.playEffect("dual-rumble", {duration: 400, strongMagnitude: .9, weakMagnitude: .6});
+    toast("Wibracja wysłana — czujesz ją w dłoniach?");
+  } catch { toast("Pad nie przyjął wibracji", true); }
+});
+try { $("showCallouts").checked = localStorage.getItem("pad_callouts") !== "0"; } catch {}
+$("showCallouts").addEventListener("change", e => { try { localStorage.setItem("pad_callouts", e.target.checked ? "1" : "0"); } catch {} layoutPad(); });
+narrow.addEventListener("change", layoutPad);
+layoutPad();
+
+async function load() {
+  try {
+    const r = await fetch(API, {cache: "no-store"}); const j = await r.json();
+    S = j.settings; DEF = j.defaults; SAVED = JSON.stringify(S);
+    if (j.warning) toast(j.warning, true);
+  } catch {
+    offline = true;
+    $("banner").textContent = "Strona otwarta bez serwera — zmiany nie zostaną zapisane. Uruchom: .venv/bin/python pad_so101/settings.py";
+    $("banner").classList.add("show");
+    S = {deadzone: .15, expo: 2, invert: {lx: false, ly: false, rx: false, ry: false}, swap_triggers: false,
+      gears: [[.35, .04], [.8, .1], [1.4, .2]], start_gear: 2, grip_speed: 1.2,
+      buttons: {mode: "X", home: "Y", goto: "A", save: "B", stop: "BACK", play: "START", record: "RIGHTSTICK", gear_up: "DPAD_UP",
+        gear_down: "DPAD_DOWN", slot_prev: "DPAD_LEFT", slot_next: "DPAD_RIGHT", pitch_up: "RB", pitch_down: "LB"},
+      rumble: true, max_lead: .25, grip_kp: 3, real_sign: [1, 1, 1, 1, 1], real_grip_open: 100};
+    DEF = structuredClone(S); SAVED = JSON.stringify(S);
+  }
+  render();
+}
+async function save() {
+  try {
+    const r = await fetch(API, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(S)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    S = j.settings; SAVED = JSON.stringify(S); render(); toast("Zapisano ✓");
+  } catch (e) { toast("Nie zapisano: " + e.message, true); }
+}
+
+["deadzone", "expo", "grip_speed", "max_lead", "grip_kp"].forEach(bindRange);
+["lx", "ly", "rx", "ry"].forEach(k => bindSwitch($("inv-" + k), () => S.invert[k], v => S.invert[k] = v));
+bindSwitch($("swap_triggers"), () => S.swap_triggers, v => S.swap_triggers = v);
+bindSwitch($("rumble"), () => S.rumble, v => S.rumble = v);
+buildGears(); buildActions(); buildJoints();
+seg("startGear", () => S.start_gear, v => S.start_gear = v);
+seg("gripOpen", () => S.real_grip_open, v => S.real_grip_open = v);
+$("saveBtn").addEventListener("click", save);
+$("resetBtn").addEventListener("click", () => { S = structuredClone(DEF); render(); toast("Przywrócono domyślne — kliknij Zapisz"); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && listening) setListen(null);
+  if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); if (!$("saveBtn").disabled) save(); }
+});
+window.addEventListener("beforeunload", e => { if (S && JSON.stringify(S) !== SAVED && !offline) e.preventDefault(); });
+load().then(() => requestAnimationFrame(loop));
+</script>
+</body>
+</html>

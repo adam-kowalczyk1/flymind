@@ -1,0 +1,166 @@
+{
+ "protocol": "FLYMIND-F1-STAGE0-r3.2",
+ "status": "frozen before any pilot or confirmatory run (r1 FAIL, r2 PASS_WITH_FIXES, r3 fixes, r3.1 budget amendment \u00a713)",
+ "time_s": 3.0,
+ "frame_ms": 10,
+ "snn_steps_per_frame": 10,
+ "window_frames": [
+  100,
+  300
+ ],
+ "q_pose": [
+  0.0,
+  -0.4,
+  1.0,
+  0.0,
+  1.571,
+  0.5
+ ],
+ "motion_axis": "world vertical through the camera optical centre (pure rotation); theta > 0 = camera turned left; true bearing = az0 - theta",
+ "sin_f_hz": [
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "sin_A_deg": [
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "jvel_vel_tolerance": 0.2,
+ "jvel_max_draws": 1000,
+ "range_D": {
+  "k": 1.0,
+  "rho_m": [
+   0.22,
+   0.36
+  ],
+  "abs_az_deg": [
+   8.0,
+   12.0
+  ],
+  "ball_r_m": 0.025
+ },
+ "range_C": {
+  "rho_m": 0.3,
+  "k": [
+   0.04,
+   0.24
+  ],
+  "abs_az_deg": [
+   8.0,
+   12.0
+  ],
+  "ball_r_m": 0.025
+ },
+ "contrast_definition": "ball rgb = 0.75 + k * (default_ball_rgb - 0.75) on the in-memory model (0.75 = table grey)",
+ "pixel_noise_sigma": 10.0,
+ "alif_noise_mV": 2.0,
+ "J0": 0.2,
+ "p_tau_s": 0.1,
+ "th_grid_mV": [
+  4.0,
+  8.0,
+  0.01
+ ],
+ "fa_max": 0.05,
+ "sesoi_bsc": 0.07,
+ "sesoi_note": "0.07 BSC on range D = 1 cm Spearman-Karber threshold shift (0.07 x 0.14 m)",
+ "measurable_bsc": [
+  0.1,
+  0.9
+ ],
+ "alpha": 0.05,
+ "n_boot": 10000,
+ "power_h1": 0.9,
+ "power_secondary": 0.8,
+ "pilot": {
+  "units": [
+   9101001,
+   9101060
+  ],
+  "b1_instances": [
+   9105001,
+   9105005
+  ],
+  "sws_instances": [
+   9105101,
+   9105105
+  ]
+ },
+ "confirm": {
+  "units_first": 9102001,
+  "n_min": 200,
+  "n_max": 400,
+  "b1_instances": [
+   9104001,
+   9104010
+  ],
+  "sws_instances": [
+   9104101,
+   9104110
+  ]
+ },
+ "robust": {
+  "units_first": 9103001,
+  "n": 200,
+  "b1_instances": [
+   9104001,
+   9104010
+  ],
+  "sws_instances": [
+   9104101,
+   9104110
+  ],
+  "variants": {
+   "az4to8": {
+    "abs_az_deg": [
+     4.0,
+     8.0
+    ]
+   },
+   "az12to16": {
+    "abs_az_deg": [
+     12.0,
+     16.0
+    ]
+   },
+   "small_ball": {
+    "ball_r_m": 0.018,
+    "rho_m": [
+     0.1584,
+     0.2592
+    ]
+   },
+   "pix20": {
+    "pixel_noise_sigma": 20.0
+   }
+  }
+ },
+ "analysis_rng": {
+  "pilot": 9107002,
+  "confirm": 9107001,
+  "robust": 9107003
+ },
+ "smoke_units": [
+  9108001,
+  9108099
+ ],
+ "redteam_pool": [
+  9109001,
+  9109999
+ ],
+ "th_lp_tau_ms": 20.0,
+ "th_match_max": 0.05,
+ "sk_edge_frac": 0.15,
+ "sk_edge_hit": [
+  0.8,
+  0.2
+ ],
+ "sk_bins": 7,
+ "sk_monotone_tol": 0.15,
+ "r3_halfwidth_k": 0.12,
+ "r3d_halfwidth_rho": 0.07
+}

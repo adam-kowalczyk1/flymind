@@ -34,6 +34,10 @@ for t in connectome snn_interface alif sensory decoder safety latency epg_ring e
 | V4 część B v2 | `.venv/bin/python -I -B flymind/v4_open_loop.py --part B --version 2 --j0 0.2 --out <katalog>` | `results/v4/v4_partB_v2_*.json` |
 | V5 potwierdzenie | polecenie w `validation/v5_confirm_manifest.json`; kod zamrożony w `validation/v5_frozen_code/` (uruchamiać po skopiowaniu do `flymind/` — ścieżki liczone od położenia pliku; bieżący kod z `--max-age 0.05` daje te same trajektorie) | `results/v5/v5_confirm_*.json` |
 | V5 v2 (potwierdzenie) | polecenie w `validation/v5_v2_manifest.json`; analiza: `.venv/bin/python -I -B flymind/loop_v2.py --analyze <wynik>` | `results/v5/v5v2_20261029T065804.json`, `analysis_v5v2_confirm.json` |
+| V5 ablacje (eksploracja) | `.venv/bin/python -I -B flymind/v5_ablation.py --part A --out <katalog>` (i `--part B`) | `results/v5_ablation/` |
+| V5 v2 topologia (potwierdzenie) | polecenie w `validation/v5v2_topology_manifest.json`; analiza `--analyze` | `results/v5v2_topology/` |
+| V5 v3 (potwierdzenie, zatwierdzone) | polecenie w `validation/v5v3_manifest.json`; reanaliza `.venv/bin/python -I -B flymind/audit_v5v3_independent.py`; nachylenia `v5v3_post_slopes.py` | `results/v5v3/` |
+| V5 v3 — skala sygnału (eksploracja po przebiegu) | `.venv/bin/python -I -B flymind/v5v3_gain_check.py` | `results/v5v3/post_gain_check_dev1501_1520.json` |
 | V5 analiza | `.venv/bin/python -I -B flymind/analyze_v5.py flymind/results/v5/v5_confirm_<czas>.json` | `results/v5/analysis_confirm.json` |
 
 Uwaga: ponowny przebieg potwierdzający na tych samych ziarnach to odtworzenie, nie nowe potwierdzenie.

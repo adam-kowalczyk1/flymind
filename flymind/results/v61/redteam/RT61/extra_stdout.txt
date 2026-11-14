@@ -1,0 +1,40 @@
+SWS d~Imax dummies+drive+S2      : int +0.080 [-0.483;+0.596] i10 +0.023 [-0.310;+0.386] i12 +0.382 [+0.049;+0.742] i14 +0.873 [+0.556;+1.197] i16 +1.049 [+0.685;+1.422] drive -0.087 [-0.144;-0.033] S2 -0.215 [-0.459;+0.047]
+SWS d~Imax dummies+gsum+rho      : int -2.428 [-5.495;+0.360] i10 -0.304 [-0.710;+0.069] i12 -0.272 [-0.844;+0.221] i14 -0.108 [-0.841;+0.560] i16 -0.259 [-1.218;+0.599] gsum +0.122 [-0.009;+0.266] rho +4.622 [-3.001;+13.009]
+SWS d~Imax dummies+gsum+|az|+rho : int +0.620 [-2.428;+3.418] i10 -0.075 [-0.445;+0.278] i12 +0.185 [-0.341;+0.658] i14 +0.577 [-0.087;+1.173] i16 +0.654 [-0.252;+1.474] gsum -0.005 [-0.129;+0.135] absaz -0.030 [-0.042;-0.019] rho -2.974 [-10.862;+5.481]
+SWS Imax>=12: d~drive+S2         : int -0.512 [-0.991;-0.062] drive +0.062 [+0.021;+0.107] S2 -0.128 [-0.348;+0.085]
+SWS Imax>=12: d~Imax dum+drive+S2: int -0.086 [-0.648;+0.568] i14 +0.391 [+0.085;+0.698] i16 +0.467 [+0.085;+0.863] drive -0.007 [-0.083;+0.058] S2 -0.295 [-0.626;-0.013]
+B1 d~Imax dummies+drive+S2      : int +0.071 [-0.449;+0.579] i10 -0.044 [-0.345;+0.276] i12 +0.534 [+0.200;+0.897] i14 +0.671 [+0.255;+1.140] i16 +0.918 [+0.460;+1.443] drive -0.082 [-0.155;-0.017] S2 -0.090 [-0.319;+0.147]
+B1 d~Imax dummies+gsum+rho      : int -1.904 [-6.083;+1.904] i10 -0.270 [-0.699;+0.142] i12 +0.083 [-0.536;+0.683] i14 -0.004 [-0.835;+0.779] i16 +0.018 [-1.094;+1.065] gsum +0.069 [-0.100;+0.252] rho +4.438 [-6.361;+16.299]
+B1 d~Imax dummies+gsum+|az|+rho : int +0.355 [-3.673;+4.223] i10 -0.100 [-0.489;+0.288] i12 +0.422 [-0.187;+1.055] i14 +0.503 [-0.297;+1.301] i16 +0.695 [-0.368;+1.758] gsum -0.026 [-0.190;+0.146] absaz -0.022 [-0.034;-0.012] rho -1.192 [-12.279;+10.363]
+B1 Imax>=12: d~drive+S2         : int -0.362 [-0.790;+0.076] drive +0.034 [-0.005;+0.074] S2 +0.110 [-0.135;+0.338]
+B1 Imax>=12: d~Imax dum+drive+S2: int -0.187 [-0.813;+0.493] i14 +0.022 [-0.284;+0.322] i16 +0.153 [-0.249;+0.553] drive +0.011 [-0.069;+0.087] S2 +0.055 [-0.271;+0.367]
+== I8/I10 progress (deg of initial error removed) DATA vs SWS, both-moved pairs
+I8S1 mean|az0| 14.89 progress DATA 6.51 SWS 5.31; nonzero pairs 23; of which |d|>1deg 15; err==|az0|(no progress) DATA 17 SWS 19
+I8S2 mean|az0| 12.49 progress DATA 0.31 SWS 0.16; nonzero pairs 5; of which |d|>1deg 4; err==|az0|(no progress) DATA 75 SWS 77
+I10S1 mean|az0| 14.89 progress DATA 13.00 SWS 12.68; nonzero pairs 38; of which |d|>1deg 14; err==|az0|(no progress) DATA 2 SWS 2
+I10S2 mean|az0| 12.49 progress DATA 4.40 SWS 3.69; nonzero pairs 32; of which |d|>1deg 21; err==|az0|(no progress) DATA 49 SWS 52
+I8 S2 nonzero pairs: [(8600064, -4.5, True, False, 22.7), (8600070, -1.12, True, True, 25.9), (8600102, -2.44, True, True, 24.1), (8600108, -0.58, True, False, 25.2), (8600118, -3.12, True, True, 29.2)]
+== corr(d_SWS, d_B1) and corr(err_SWS, err_B1) per cell; share var(d) from DATA err
+I8   S1 r(d) +0.62 r(errctrl) +0.94 mean(err_SWS-err_B1) +0.230
+I8   S2 r(d) +0.95 r(errctrl) +1.00 mean(err_SWS-err_B1) +0.036
+I10  S1 r(d) +0.90 r(errctrl) +0.96 mean(err_SWS-err_B1) +0.142
+I10  S2 r(d) +0.88 r(errctrl) +0.99 mean(err_SWS-err_B1) -0.013
+I12  S1 r(d) +0.69 r(errctrl) +0.74 mean(err_SWS-err_B1) -0.125
+I12  S2 r(d) +0.73 r(errctrl) +0.93 mean(err_SWS-err_B1) +0.460
+I14  S1 r(d) +0.56 r(errctrl) +0.78 mean(err_SWS-err_B1) -0.177
+I14  S2 r(d) +0.75 r(errctrl) +0.78 mean(err_SWS-err_B1) -0.035
+I16  S1 r(d) +0.51 r(errctrl) +0.61 mean(err_SWS-err_B1) -0.136
+I16  S2 r(d) +0.45 r(errctrl) +0.64 mean(err_SWS-err_B1) +0.061
+zero pairs 167 of which neither moved 167
+I8 wall mean 6.13
+I10 wall mean 8.70
+I14 wall mean 8.78
+I16 wall mean 6.66
+order of configs in file (run-length): [('I8', 354), ('I10', 2), ('I8', 2), ('I10', 4), ('I8', 2), ('I10', 4), ('I8', 2), ('I10', 348), ('I14', 4), ('I10', 2), ('I14', 350), ('I16', 2)]
+I8 DATA not moved: max |err-|az0|| = 0.003403343270743875
+SWS band [6,8) S1-S2 diff -0.179 CI [-0.813;+0.421] nS1 56 nS2 137
+SWS band [8,11) S1-S2 diff +0.156 CI [-0.090;+0.403] nS1 79 nS2 98
+SWS band [11,13) S1-S2 diff -0.082 CI [-0.282;+0.112] nS1 35 nS2 10
+B1 band [6,8) S1-S2 diff -0.079 CI [-0.788;+0.587] nS1 56 nS2 137
+B1 band [8,11) S1-S2 diff -0.079 CI [-0.355;+0.202] nS1 79 nS2 98
+B1 band [11,13) S1-S2 diff -0.195 CI [-0.509;+0.103] nS1 35 nS2 10
