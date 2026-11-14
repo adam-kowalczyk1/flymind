@@ -1,0 +1,57 @@
+# Zamrożenie przed przebiegiem ramion (v3)
+data: 2026-11-10 14:08:01 +0100
+HEAD: 664b61133f138b79b275840845cdf66d91f75fda (flymind/fly-first-control)
+sha256:
+  5c1da2f25a48b1c573ef8a4336250bed62080370de428668a26417f5f8c59488  flymind/vision_manipulation.py
+  cd97f454a0437d18775f5ff9a1b40b7123472fff926430b512fe75e411dfb952  flymind/test_vision_manipulation.py
+  260c2c25401cd52ab672858406c54a993da72abab5311eff70ef1866dd7a6807  flymind/sensory_manipulation.py
+  0bf03d36c6dd408ddf38fbb4daeef7ea318dc8e2d541db170038eeca13b36939  flymind/object_handling.py
+  7104d901afd16e0236568d9e858ff4ad15a10f1d2799b9cb49ddc1f537b1ca7d  flymind/fly_jaw.py
+  cc1064b073ae4c3fe2d5a1a45936e4e6cebd8e43cf977f943fcfdf52bfb1b643  flymind/leg_circuit.py
+  4d81dfd7d4d0ea937284a6e377d18ad5fb062eaf89f1f7f9888f2497b3105fe5  flymind/visual_path.py
+  d134599053fa50125bb7fe0c665a2e48ff67a7278ad05a205b5a5d9da1f51ae6  flymind/encoder.py
+  0efbc34f38e1f46197adb7d1414035fdd508d4271d3853551ab1e0fc22ea3247  flymind/decoder.py
+  4cd88b59c1b55d2f9d405e6d9a8ceb2572a908a5472c1118cb008d937ded1361  flymind/sensory.py
+  13e36619f211f399ce71bc4e5dc3b0337486fae6c892b5f2dc6ae00e8cc60aff  flymind/alif.py
+  2c10ac736555039e087c7c42253184942ddf9a2ff8374b10584d9196c39a8724  flymind/alif_sparse.py
+  ed06464dd963f1365345bc3844191e5884ffd520974689d8571947bdc26f6a59  flymind/snn_interface.py
+  f0d38e7ec6694fd4715ab587046b0d458425ad83f1e28ecb8d0e1cdc48f5daf3  flymind/connectome.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  d75253eb568e8a7214db9c631ab7bed4217f608a26f7276ebe9a7636cac82580  assets/so101_upstream.xml
+  2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2  data/malecns/body-annotations-male-cns-v1.0-minconf-0.5.feather
+  95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621  data/malecns/body-neurotransmitters-male-cns-v1.0.feather
+  e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1  data/malecns/connectome-weights-male-cns-v1.0-minconf-0.5.feather
+katalog roboczy: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.6WmeYy8Nbn
+testy: kod wyjścia 0
+$ vision_manipulation.py bench --arm A_cam --tag A_cam_v3
+$ vision_manipulation.py bench --arm B_cam --tag B_cam_v3
+$ vision_manipulation.py bench --arm D_vis --tag D_vis_v3
+$ vision_manipulation.py bench --arm E_vis_touch --tag E_vis_touch_v3
+$ vision_manipulation.py bench --arm E_blind_grasp --tag E_blind_grasp_v3
+$ vision_manipulation.py bench --arm F_vis_touch_feco --tag F_vis_touch_feco_v3
+kod wyjścia A_cam_v3: 0
+kod wyjścia B_cam_v3: 0
+kod wyjścia D_vis_v3: 0
+kod wyjścia E_vis_touch_v3: 0
+kod wyjścia E_blind_grasp_v3: 0
+kod wyjścia F_vis_touch_feco_v3: 0
+$ vision_manipulation.py bench --arm F_vis_touch_feco --only … --tag latency_v3   (pojedynczo, bez innych procesów)
+kod wyjścia latency_v3: 0
+data końca: 2026-11-10 15:47:16 +0100
+kod po przebiegu: IDENTYCZNY
+Etap 1 (17 plików historycznych) OK: 17
+## sha256 wyników:
+  8972809cc22ada303c8b3abbf8897f0caac61d72ba0388f6a6f83e55de8d271d  flymind/results/vision_manipulation/A_cam_v3.json
+  2c88c5b795cfea0437f35a25608ee3ef60f768fb8336564f8a86fe904329d911  flymind/results/vision_manipulation/B_cam_v3.json
+  424c86f4be56250538d8de69bc6f0438ac412760de1fc8ceb96381efd413d406  flymind/results/vision_manipulation/D_vis_v3.json
+  fb8fe3177c720cae7b1b59cb7e3c0b74f162ff2a08d969e803f1216589914012  flymind/results/vision_manipulation/E_blind_grasp_v3.json
+  ea4ba4b62642764fc57d2c0b6d12b129ffe71bb4e17a1c2967449acca0d7cacd  flymind/results/vision_manipulation/E_vis_touch_v3.json
+  9986e0637b09897e53151ca009dcc0a140d6a671f805d4638f3a62ae240c4353  flymind/results/vision_manipulation/F_vis_touch_feco_v3.json
+  221f856c9dbf5f4835056ce194d6d861d901dc664abf2526a5a13536d22aa5e5  flymind/results/vision_manipulation/latency_v3.json
+  0c2a663b7ad2b6792703fe86ae15e18cbe4b8e1d49c3640c777a1ef097f0b447  flymind/results/vision_manipulation/tracking_classical_v3.json
+  686591cdbbc1b741deed60dffea3d596a5fafc5ef4987e64b6199cc1faf7474f  flymind/results/vision_manipulation/tracking_snn_swap_v3.json
+  5c509e74cd8c54eecfbef5dd5db9538528770e3fceae1a489f44555bf849f6a3  flymind/results/vision_manipulation/tracking_snn_v3.json

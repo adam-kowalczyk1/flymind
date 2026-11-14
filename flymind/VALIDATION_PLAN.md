@@ -247,6 +247,166 @@ przekaźnik modelowy; (3) jako sterownik SNN pozostaje wyraźnie gorsza od regul
 (zasięg, opóźnienia, dystraktor). Ograniczenia: jedna sieć (s_min 5, J0 0,2), jeden enkoder i dekoder, efekt na 8 parach,
 tolerancja 5°; próg czułości zależy od J0 (RT: okno ~×2).
 
+#### V5 — mechanizm przewagi topologii: ablacje (EKSPLORACJA 2026-10-29, `v5_ablation.py`, ziarna rozwojowe)
+
+Protokół i przewidywania w nagłówku skryptu przed uruchomieniem (hash: `results/v5_ablation/protocol_sha256_before_run.txt`).
+Mapa ścieżek: wpływ 2-skokowy LC10a → DNa02 idzie prawie wyłącznie przez AOTU — pobudzenie ipsilateralne przez 49
+pobudzających AOTU (+63/+66 ×10³ syn·mV), hamowanie kontralateralne przez 2 × AOTU019 (GABA, ground truth; −70/−82 ×10³);
+LAL +11/+15 ×10³; LLPC1 ≈ 0. Tasowanie equal_weight niszczy pobudzenie ipsilateralne (75 → −1…12 ×10³).
+
+| Wariant | A: indeks skrętu, plamka r 9 / 5 / 4 px (% sieci z danych) | B: mediana |e| końc. (sukces /20) | B: różnica w parach vs dane (Wilcoxon) |
+|---|---|---|---|
+| dane | 216 / 118 / 42 Hz (100 %) | 7,1° (5) | — |
+| tasowanie equal_weight (×3) | 19–26 / 21–26 / 18–20 % | 14,2° (0) | +6,0°, p < 10⁻⁴ |
+| przekaźnik modelowy | 65 / 82 / 42 % | 12,9° (2) | +4,5°, p < 10⁻⁴ |
+| bez pobudzających AOTU (49) | 38 / 18 / 22 % | 9,7° (1) | +2,1°, p < 10⁻⁴ |
+| bez AOTU019 (2) | 79 / 91 / 92 % | 5,9° (8) | −0,4°, p = 0,20 |
+| bez LAL (28) | 89 / 97 / 86 % | 7,4° (7) | +0,7°, p = 0,52 |
+| bez LLPC1 (43) | 100 / 100 / 100 % | identyczne co do bitu (5) | 0 — LLPC1 nie dochodzą do progu w tej sieci |
+| bez pozostałych pośrednich (25) | 101 / 111 / 98 % | — | — |
+| bez krawędzi pośrednie → pośrednie | 100 / 99 / 100 % | 6,8° (6) | −0,1°, p = 0,72 |
+| bez krawędzi LC10a → LC10a | 82 / 102 / **58 %** | — | — |
+
+Część B: ziarna 1201–1220, |az0| 15–30°, ρ 0,24–0,30 m (granica czułości — sieć z danych tylko 5/20, więc sukces ma niską
+moc; miara główna: błąd końcowy). 7 porównań — przy Bonferronim (α 0,007) istotne: tasowanie, przekaźnik, ablacja AOTU.
+
+**Wniosek (eksploracja, do potwierdzenia na nowej puli ziaren):** przewaga sieci z danych nad tasowaniem przy słabym bodźcu
+pochodzi przede wszystkim ze zbieżnej ścieżki pobudzającej LC10a → AOTU → DNa02 tej samej strony (49 neuronów AOTU); jej
+usunięcie odtwarza w pętli otwartej deficyt tasowania, a w zamkniętej wyjaśnia ok. 1/3 różnicy błędu (+2,1° z +6,0°).
+Rekurencja LC10a → LC10a podnosi odpowiedź na najsłabszy bodziec (58 % bez niej przy r = 4 px; w pętli zamkniętej nie
+testowano). Hamowanie kontralateralne AOTU019, LAL, LLPC1 i rekurencja pośrednich nie mają mierzalnego udziału w tym
+zadaniu. Przewidywania z protokołu: spełnione dla AOTU (> 50 % spadku), LLPC1, other, mid→mid; AOTU019 — spadek mniejszy
+niż „umiarkowany” w pętli otwartej i brak efektu w zamkniętej. Ograniczenia: n = 20, jedna sieć (J0 0,2, s_min 5),
+reszta deficytu tasowania niewyjaśniona (kandydaci: rekurencja LC10a, rozmieszczenie wejść AOTU019).
+
+#### V5 v2 — topologia vs lateralizacja: POTWIERDZENIE (2026-10-29, `v5v2_topology.py`, ziarna 3001–3050)
+
+Protokół (9 warunków narzuconych przez użytkownika, statusy DATA/MODEL/ENGINEERING) i manifest zamrożone przed przebiegiem:
+`validation/v5v2_topology_protocol.md`, `v5v2_topology_manifest.json`, kod `v5v2_topology_frozen_code/`.
+Weryfikacja kontroli: `results/v5v2_topology_verification.json`. Wynik: `results/v5v2_topology/`. Integralność przed
+i po: `results/v5v2_topology_integrity.txt` (Stage 1 28/28, zmiany tylko w `flymind/`).
+
+| Warunek | błąd końc. mediana / średnia | sukces | d vs DATA (śr., 95 % CI) | d_z | p Holm |
+|---|---|---|---|---|---|
+| DATA | 3,11 / 6,36° | 31/50 | — | — | — |
+| SHUF_DEG | 17,62 / 17,24° | 12/50 | +10,88 (7,33; 14,77) | 0,81 | 3,2·10⁻⁸ |
+| **SHUF_STR** | 4,05 / 7,97° | 27/50 | **+1,61 (0,92; 2,36)** | 0,61 | **2,5·10⁻⁴** |
+| CUT_LC10a_AOTU | 3,49 / 7,05° | 30/50 | +0,69 (0,30; 1,15) | 0,46 | 7,0·10⁻³ |
+| ABL_AOTU019 | 2,74 / 6,40° | 33/50 | +0,04 (−0,31; 0,37) | 0,04 | 0,65 |
+| TOY_RELAY | 3,81 / 7,39° | 29/50 | +1,04 (0,38; 1,74) | 0,41 | 0,066 |
+| P_CTRL | 0,36 / 0,33° | 50/50 | −6,03 (−7,89; −4,24) | −0,89 | 7,1·10⁻¹⁴ |
+| NO_VISION | 17,44 / 15,65° | 10/50 | +9,30 (6,89; 11,80) | 1,05 | 8,2·10⁻¹⁰ |
+| SWAP | 54,92 / 41,77° | 8/50 | +35,42 (28,20; 42,53) | 1,37 | 8,2·10⁻¹⁰ |
+
+- **H1 potwierdzona wg reguły zapisanej z góry** (SHUF_STR: p_Holm < 0,05, średnie d > 0, CI > 0). Mediana d tylko +0,06°:
+  efekt w podzbiorze — 20 par gorszych o > 1°, 4 lepsze, 26 w ±1°; skupiony w ρ 0,24–0,30 m (średnie d +3,7°; 0,16–0,24:
+  +0,4°). Odporny: bez 3 największych d +1,21°, minimum leave-one-out +1,47°. Sukces: 27 vs 31, McNemar p 0,22 (n.i.).
+- **Zastrzeżenie zapisane przed przebiegiem:** SHUF_STR zachowuje tylko 11–32 % indeksu lateralizacji (w tym przebiegu
+  0,11–0,32). Pomocniczo: Spearman(indeks lateralizacji instancji, błąd) = −0,26, p = 0,07 — trend (mniej lateralizacji →
+  większy błąd), nieistotny. Nie da się więc wykluczyć, że deficyt SHUF_STR wynika z utraty lateralizacji;
+  „topologia PONAD lateralizację” pozostaje NIEWYKAZANA.
+- **Mechanizm:** CUT_LC10a_AOTU daje +0,69° = 43 % deficytu SHUF_STR (95 % CI 25–61 %); niewyjaśnione 57 %. AOTU019
+  (hamowanie kontralateralne) bez mierzalnego efektu (CI −0,31; +0,37°).
+- Przekaźnik modelowy nieistotnie gorszy od DATA po korekcie (p_Holm 0,066). Regulator P lepszy od DATA o 6,0° (50/50).
+- Red Team wyników: odtwarzalność 18/18 prób (ziarna 3001–3002, wszystkie warunki) identyczna; brak interwencji warstwy
+  bezpieczeństwa; brak błędów symulatora.
+
+**Wniosek:** organizacja połączeń z danych MaleCNS (LC10a → pośrednie → DNa02) daje mały, powtarzalny (dwie niezależne
+pule ziaren: 2051–2100 i 3001–3050) i istotny zysk dokładności względem losowej organizacji o tych samych stopniach
+i siłach — tylko na granicy czułości, ok. 43 % przez połączenia LC10a → AOTU. Nie wykazano, że zysk wykracza poza
+lateralizację; nie wykazano przewagi nad regulatorem P (P lepszy).
+
+#### Sesja autonomiczna 2026-10-29 — audyt V5 v2, kontrola V5 v3, mechanizm, stabilność, enkoder (dziennik: `AUTONOMOUS_RESEARCH_LOG.md`)
+
+**Audyt V5 v2 (niezależny skrypt `audit_v5v2_independent.py`):** liczby odtworzone; p zależą od obsługi zer (16/50 par d = 0):
+SHUF_STR istotne w każdej metodzie (p_Holm 0,00025–0,036), CUT_LC10a_AOTU nie w teście znaków (0,36). **Zakłócenie skalą
+sygnału (`audit_shared_decoder.py`):** własne nachylenie kalibracji SHUF_STR 101–147 Hz/rad, CUT 196 vs DATA 496 — ze wspólnym
+dekoderem kontrole pracowały przy 20–40 % wzmocnienia pętli DATA. Wnioski V5 v2 o „topologii” i „43 % przez LC10a → AOTU”
+mieszają topologię, lateralizację i skalę sygnału.
+
+**Mechanizm LC10a → AOTU (`v5_mech_strength.py`, eksploracja, ziarna dev 1241–1290):** (1) ścieżka istnieje w danych (62 %
+synaps wyjściowych LC10a); (2) dynamika: CUT, losowe cięcie tej samej liczby synaps i skalowanie obniżają odpowiedź DNa02
+podobnie (nachylenie 196 / 262–276 / 253); (3) zachowanie: d vs DATA CUT +0,73° (CI 0,27–1,22), RAND_CUT +1,94° (0,99–2,90),
+SCALE +2,51° (1,46–3,58); CUT − RAND_CUT = −1,21° (−1,85; −0,62), post hoc. Usunięcie bloku AOTU szkodzi MNIEJ niż
+niespecyficzna utrata tej samej ilości sygnału — prawdopodobnie bo CUT nie narusza rekurencji LC10a×LC10a (RAND i SCALE tak).
+**Twierdzenie „LC10a → AOTU wyjaśnia 43 % deficytu tasowania” wycofane jako mechanizm specyficzny.**
+
+**Kontrola SHUF_WITHIN_SIDE:** v1 (strona somy) — FAIL izolacji (RT r1). v2 (warstwa × strona) — PASS kodu (RT r2), zachowuje 17
+własności, lateralizacja 1,0000, wejścia DNa02 i architektura identyczne, nachylenie 491–494. Różnica dynamiczna wyłącznie
+w bloku LC10a×LC10a (wzajemność 2450 → ~560, trójkąty −67 %, klasteryzacja 0,60 → 0,31 — zmieniają się razem).
+Protokół V5 v3: `validation/v5v3_protocol_DRAFT.md` r3 (blokery RT B1–B3 usunięte) — **BLOCKED: czeka na zatwierdzenie.**
+
+**Stabilność (`v6_stability.py`, eksploracja):** przesunięcie progu DATA vs SWS v2 dodatnie w 18/20 ustawień (J0 0,15–0,25,
+szum 1–3 mV, b_a 0/0,5, opóźnienie 1/1,8/3 ms), wielkość ≤ 0,014 g; brak aktywności spontanicznej, kontra 0, nasycenie ≤ 1,3 %.
+Kierunek odporny na granicy kryterium; efekt bardzo mały.
+
+**Enkoder (`v7_encoder_distance.py`):** prąd LC10a 12 mV·g spada poniżej progu (~7 mV) dla ρ ≥ 0,28 m (6,45 mV przy 15°) →
+martwa strefa SNN to interakcja ENGINEERING (stała nasycenia enkodera, I_max) × MODEL (próg ALIF), nie topologii.
+
+#### V5 v3 — POTWIERDZENIE (2026-10-29, FLYMIND-V5v3-r3, ziarna 3051–3100, n = 50) — zatwierdzone przez użytkownika
+
+Protokół `validation/v5v3_protocol.md` (sha256 a0f09809…, = szkic r3), manifest `v5v3_manifest.json`, kod `v5v3_frozen_code/`.
+Wynik `results/v5v3/v5v3_20261029T210706.json`; analiza `analysis_summary.txt`; niezależna reanaliza `audit_independent.txt`
+(inna implementacja — te same decyzje); nachylenia kalibracji `post_slopes.txt`; integralność przed/po `results/v5v3_run_integrity.txt`
+(Stage 1 28/28, kod = manifest, dane bez zmian). Wykluczeń 0, błędów symulatora 0.
+Znak: d = błąd(pierwszy) − błąd(drugi); d < 0 ⇔ pierwszy lepszy.
+
+| Warunek | błąd końc. mediana / średnia | sukces |
+|---|---|---|
+| DATA | 3,02 / 5,95° | 27/50 |
+| SHUF_WITHIN_SIDE v2 (CONTROL) | 2,91 / 6,14° | 27/50 |
+| SHUF_STR (CONTROL) | 6,15 / 8,35° | 24/50 |
+| TOY_RELAY (MODEL) | 3,77 / 7,20° | 26/50 |
+| P_CTRL (ENGINEERING) | 0,30 / 0,31° | 50/50 |
+
+| Test | d śr. | CI95 | CI90 | d_z | p | decyzja |
+|---|---|---|---|---|---|---|
+| **H1** DATA − SWS v2 (główna, bez korekty) | **−0,19°** | −0,58; +0,16 | −0,51; +0,10 | −0,14 | 0,33 | **równoważne w granicach SESOI 1°** |
+| H2 DATA − SHUF_STR (Holm z 2) | −2,40° | −3,43; −1,45 | −3,27; −1,59 | −0,66 | 2·10⁻⁵ | DATA lepsza, ≥ SESOI |
+| H3 SWS v2 − SHUF_STR (Holm z 2) | −2,21° | −3,07; −1,42 | −2,93; −1,53 | −0,73 | 2·10⁻⁵ | SWS lepsza, ≥ SESOI |
+| D1 DATA − TOY_RELAY (opis) | −1,25° | −2,20; −0,40 | — | −0,38 | 0,008 (Pratt 0,37) | opis |
+| D2 DATA − P_CTRL (opis) | +5,64° | +4,08; +7,35 | — | +0,95 | 10⁻⁵ | opis |
+
+Warstwy ρ (opis, bez decyzji) dla H1: 0,16–0,24 m (n 21) +0,53° (CI +0,20; +0,86 — kontrola lepsza); 0,24–0,30 (n 13) −1,02°
+(−2,06; −0,18 — DATA lepsza); 0,30–0,35 (n 16) −0,47° (−1,05; 0,00). Przeciwne znaki zgodne z pętlą otwartą (znak efektu zależy
+od siły napędu). 17/50 par d = 0 (oba warunki bez ruchu lub identyczny wynik). Nachylenia kalibracji: SWS 492–495 Hz/rad,
+SHUF_STR 59–157 (DATA 496).
+
+**Werdykt protokołu (H1): „Hipoteza nie została potwierdzona.”** Wzorzec połączeń z danych wewnątrz bloków warstwa×strona
+(w praktyce LC10a×LC10a) nie zmienia średniego błędu końcowego o więcej niż ~0,5–0,6° (CI90 ⊂ ±1°) przy zachowanej lateralizacji,
+warstwach, wejściach DNa02 i skali sygnału. H2/H3: przewaga DATA nad SHUF_STR (replikacja V5 v2) w ~92 % znika, gdy kontrola
+zachowuje lateralizację, warstwy i skalę (SWS v2) — deficyt SHUF_STR wynika z utraty lateralizacji/warstw/skali sygnału, nie
+z wzorca wewnątrz bloków. Interpretacja biologiczna: brak — wynik dotyczy tego modelu (J0 0,2, ALIF, enkoder ENGINEERING),
+nie muchy.
+
+**Red Team wyniku (`results/redteam/v5v3_result_redteam.md`): PASS_WITH_LIMITATIONS.** Protokół wykonany dokładnie (kod = manifest
+= kopia; ziarna, offsety, metryka, znak, test, CI, SESOI, reguła, Holm, warstwy, przerwania); liczby przeliczone własnym kodem
+(10⁶ permutacji, p ≈ 0,33); ziarna 3051–3052 odtworzone co do bitu; TOST poprawny i odporny (t, bootstrap studentyzowany, BCa,
+leave-one-out, bez 17 zer). Zastrzeżenia: (1) SESOI 1° hojne — równoważność zachodzi już od ~0,52°, a 1° ≈ cała różnica DATA − TOY;
+(2) „równoważne” = średnia po rozkładzie scen V5 v2; w ρ 0,24–0,30 efekt ≥ 1° na korzyść DATA NIE jest wykluczony (TOST p 0,51);
+struktura warstw nie powtórzyła się na ziarnach dev RT — ani „kasowanie”, ani „równoważność w każdej warstwie” nie są wykazane;
+(3) H2/H3 zakłócone skalą sygnału. **Weryfikacja moim kodem (`v5v3_gain_check.py`, eksploracja, ziarna dev 1501–1520):**
+SHUF_STR z własną kalibracją dekodera poprawia się o 1,17° (CI −2,38; −0,18); DATA − SHUF_STR: −2,62° (wspólny dekoder) →
+−1,45° (CI −2,43; −0,51, własny) — ok. 45 % H2 to skala sygnału (RT: ~50 % na ziarnach 1001–1044).
+Testy rozstrzygające (proponowane, niewykonane): nowa pula ziaren, sceny ρ < 0,28, TOST per warstwa ±0,5°; pętla przy stałym
+napędzie g 0,5 vs 0,7 (czy znak d się odwraca); SHUF_STR z własną kalibracją jako warunek potwierdzający.
+
+**Wniosek końcowy V5 (dane vs model):**
+- DATA: istnieje lateralizowana droga LC10a → pośrednie → DNa02 (push-pull przez AOTU/AOTU019).
+- Wynik eksperymentów (ten model, MuJoCo): orientacja zależy od lateralizacji połączeń i skali sygnału; wzorzec połączeń wewnątrz
+  bloków warstwa×strona (w praktyce rekurencja LC10a×LC10a) nie zmienia średniego błędu o więcej niż ~0,5° (potwierdzające,
+  rozkład scen V5 v2); regulator P lepszy o 5,6°.
+- Nierozstrzygnięte: efekt wzorca w wąskim zakresie słabego napędu (ρ 0,24–0,30); rola topologii poza blokiem LC×LC
+  (57 % masy |w| nietestowane przez kontrolę). Interpretacja biologiczna: brak podstaw (model ALIF, J0, enkoder ENGINEERING).
+
+#### V5 v4 — POTWIERDZENIE (2026-10-30, FLYMIND-V5v4-r3, ziarna 4001–4450, n = 450) — PASS_WITH_LIMITATIONS
+Raport: `V5v4_FINAL_REPORT.md`. Protokół r3 po 3 rundach Red Team (osobna instancja modelu). H1 per warstwa (d = DATA − SWS v2):
+S1 ρ [0,16; 0,22) **+0,51°** (CI +0,41; +0,61) — kontrola lepsza; S2 ρ [0,22; 0,28) **−0,52°** (−0,71; −0,33) — DATA lepsza; p_Holm 2·10⁻⁵ obie;
+równoważność nie wykazana; łącznie −0,18° (kancelacja). H2a DATA − STR_OWN −1,38° (−1,82; −1,03); H2b STR_SHARED − STR_OWN +1,41°
+(+0,99; +1,77). DATA − P +2,68°. 0 błędów, 0 wykluczeń, VALID. **Wniosek:** wzorzec połączeń z danych wewnątrz bloków (w praktyce
+LC10a×LC10a) ma mierzalny wpływ ponad lateralizację i skalę, o znaku zależnym od reżimu napędu i wielkości ≈ 0,5°; nie jest jednoznacznie
+lepszy; regulator P lepszy. Pule 4001–4450, 5001–5003, 6001–6002 zużyte.
+
 ### V3.3 Kontrole kodowania skrętu — droga LC10a WYKONANA w V4/V5; droga PFL3 DO ZROBIENIA (nie używana w pętli)
 
 Kalibracja i test na rozłącznych ziarnach i wartościach bodźca (wg zamrożonego protokołu) oraz kontrole:
@@ -376,12 +536,16 @@ warstwy bezpieczeństwa — zachowanie wtedy częściowo kształtuje warstwa bez
   `loop.py` sprawdza hashe Stage 1 przed i po każdym przebiegu); sprzęt — tylko za osobną zgodą.
 - Przydział ziaren potwierdzających (zużyte): 2001–2005 (V3.2 v3) + tasowanie 2101–2105; 2011–2050 (V5) + tasowanie
   102 011–102 050; bootstrap analizy 2201. 2051–2100 (V5 v2) + tasowania 102 051–102 100 i 202 051–202 100. Wolne: 2006–2010 (za mało na nowy test — przed
-  kolejnym potwierdzeniem trzeba ustalić nową pulę, np. 3001–3100).
+  kolejnym potwierdzeniem trzeba ustalić nową pulę).
+- **Nowa pula potwierdzająca (ustalona 2026-10-29 przed użyciem): 3001–3100**, jednorazowo; rozwojowe nadal 1001–1999.
+  Zużyte: 3001–3050 V5 v2 topologia + tasowania 103 001–103 050 (SHUF_DEG), 203 001–203 050 (SHUF_STR); bootstrap 3301.
+  Zużyte także: 3051–3100 (V5 v3) + tasowania 203 051–203 100, 403 051–403 100; bootstrap/perm 3401–3402.
+  Pula 3001–3100 WYCZERPANA — kolejne potwierdzenie wymaga nowej, udokumentowanej puli.
 
 ## Kolejność
 
-1. Mechanizm przewagi topologii (V5 v2): które pośrednie/ścieżki podnoszą czułość na słaby bodziec — ablacje grup
-   pośrednich (LLPC1, AOTU) na ziarnach dev; nowe potwierdzenie wymaga nowej puli ziaren (2001–2100 wyczerpane).
+1. Potwierdzenie mechanizmu (nowa pula ziaren, np. 3001–3100 — do ustalenia): ablacja pobudzających AOTU i usunięcie
+   rekurencji LC10a → LC10a w pętli zamkniętej, z protokołem zamrożonym na podstawie eksploracji `v5_ablation.py`.
 2. Odporność pętli w scenie 3D (oświetlenie, dystraktory, ruchomy cel) — nowy protokół na ziarnach 2051+.
 3. Opóźnienia: źródło cyklu granicznego SNN (próg ALIF → odpowiedź quasi-dwustanowa, filtry odczytu) — nowa wersja dekodera/dynamiki jako eksploracja, potem potwierdzenie na 2051+.
 4. Chwyt: tylko jako jawny regulator klasyczny, jeśli zadanie go wymaga (V3.4: brak podstaw w danych).

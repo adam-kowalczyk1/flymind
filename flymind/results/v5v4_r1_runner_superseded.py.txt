@@ -1,0 +1,238 @@
+"""flymind/v5v4.py — V5 v4 (runner + analiza). Protokół: validation/v5v4_protocol.md (zamrożony przed przebiegiem); runner odmawia
+bez sha256 zatwierdzonego protokołu. Pętla/enkoder/bezpieczeństwo/symulator — loop.run_trial (bez zmian), kontrole — side_shuffle /
+visual_path, przekaźnik — loop_v2.toy_relay. Nie modyfikuje loop.py, loop_v2.py ani artefaktów V5 v3.
+
+Warunki (6): DATA, SWS (SHUF_WITHIN_SIDE v2), STR_OWN (SHUF_STR + własny dekoder), STR_SHARED (ta sama instancja SHUF_STR + dekoder
+DATA), TOY (przekaźnik, własny dekoder), P (regulator P). Każdy dekoder SNN kalibrowany TĄ SAMĄ procedurą `calibrate` (CONTROL):
+spot_clip az −30…30° co 10° + pusty obraz, ziarna ALIF CAL_SEEDS (pula kalibracyjna 5001–5003), offset = L−P dla pustego obrazu,
+slope = MNK przez offset; slope ≤ 2 Hz/rad → odmowa (próba „calibration_refused”, błąd = |namiar| bez ruchu, patrz protokół).
+Sceny: trial_spec_v4 — warstwa wg parzystości ziarna (parzyste → S1 ρ ∈ [0,16; 0,22), nieparzyste → S2 ρ ∈ [0,22; 0,28)), az0 ~ U(−30°, 30°).
+Ziarna instancji: SWS = ziarno + 400 000, STR = ziarno + 200 000. Znak: d = błąd(pierwszy) − błąd(drugi); d < 0 ⇔ pierwszy lepszy.
+Surowe wyniki: JSONL, jeden rekord na ziarno (wszystkie warunki); wznowienie pomija ziarna z kompletnym rekordem.
+"""
+import argparse
+import hashlib
+import json
+import math
+import os
+import sys
+import time
+
+import numpy as np
+from scipy.stats import wilcoxon
+
+if __name__ == "__main__" and not sys.flags.dont_write_bytecode:
+    sys.exit("uruchom z python -B")
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+CONDS = ("DATA", "SWS", "STR_OWN", "STR_SHARED", "TOY", "P")
+CAL_SEEDS = (5001, 5002, 5003)
+STRATA = {"S1": (0.16, 0.22), "S2": (0.22, 0.28)}
+SESOI, ALPHA, N_PERM, N_BOOT, PERM_SEED, BOOT_SEED = 0.5, 0.05, 100_000, 10_000, 4401, 4402
+MAX_ERR_PER_COND, MAX_ERR_FRAC = 5, 0.02
+FORBIDDEN = set(range(0, 40)) | set(range(300, 400)) | set(range(1001, 2000)) | set(range(2001, 2006)) | \
+    set(range(2011, 2101)) | set(range(3001, 3101))
+
+
+def trial_spec_v4(seed):
+    rng = np.random.default_rng(seed)
+    st = "S1" if seed % 2 == 0 else "S2"
+    lo, hi = STRATA[st]
+    return dict(seed=seed, stratum=st, az0_deg=float(rng.uniform(-30, 30)), rho=float(rng.uniform(lo, hi)))
+
+
+def calibrate(spec, idx, seeds=CAL_SEEDS):
+    """Procedura kalibracji (CONTROL) — jak V4 v2, ale z jawnymi ziarnami ALIF. Bez danych z pętli zamkniętej."""
+    import v4_open_loop as V4
+    V4.V.update(V4.VERSION[2])
+    az = np.arange(-30, 31, 10)
+    X = np.repeat(np.radians(az), len(seeds))
+    Y = np.array([V4.static_diff(spec, idx, s, V4.spot(a)) for a in az for s in seeds])
+    blank = np.full((*V4.SHAPE, 3), V4.BG, np.uint8)
+    off = float(np.mean([V4.static_diff(spec, idx, s, blank) for s in seeds]))
+    slope = float(((Y - off) * X).sum() / (X * X).sum())
+    return dict(offset=off, slope=slope, refused=bool(slope <= V4.MIN_SLOPE))
+
+
+# ---------------- statystyka ----------------
+def perm_test(d, n=N_PERM, seed=PERM_SEED):
+    d = np.asarray(d, float)
+    sims = np.abs((np.random.default_rng(seed).choice([-1.0, 1.0], size=(n, len(d))) * d).mean(1))
+    return float((1 + (sims >= abs(d.mean()) - 1e-12).sum()) / (n + 1))
+
+
+def boot_ci(d, level, n=N_BOOT, seed=BOOT_SEED):
+    d = np.asarray(d, float)
+    m = d[np.random.default_rng(seed).integers(len(d), size=(n, len(d)))].mean(1)
+    a = (1 - level) / 2
+    return [float(np.percentile(m, 100 * a)), float(np.percentile(m, 100 * (1 - a)))]
+
+
+def holm(p):
+    p = np.asarray(p, float)
+    out, run = np.empty(len(p)), 0.0
+    for rank, i in enumerate(np.argsort(p)):
+        run = max(run, min(1.0, (len(p) - rank) * p[i]))
+        out[i] = run
+    return out
+
+
+def summarize_d(d):
+    sd = d.std(ddof=1) if len(d) > 1 else 0.0
+    return dict(n=int(len(d)), mean_d=float(d.mean()), median_d=float(np.median(d)), ci95=boot_ci(d, 0.95), ci90=boot_ci(d, 0.90),
+                dz=float(d.mean() / sd) if sd else None, zeros=int((d == 0).sum()), worse_gt1=int((d > 1).sum()),
+                better_gt1=int((d < -1).sum()), p_perm=perm_test(d),
+                p_wilcoxon_pratt=float(wilcoxon(d, zero_method="pratt").pvalue) if np.any(d) else 1.0)
+
+
+def h1_category(t, p_holm, sesoi=SESOI, alpha=ALPHA):
+    """Protokół §5: równoważność = CI95 (TOST α 0,025/warstwę) ⊂ (−SESOI; +SESOI); przewaga = p_Holm < α i CI95 bez 0."""
+    lo, hi = t["ci95"]
+    eq = -sesoi < lo and hi < sesoi
+    if p_holm < alpha and hi < 0:
+        return "DATA lepsza" + (" (różnica w granicach SESOI)" if eq else "")
+    if p_holm < alpha and lo > 0:
+        return "kontrola lepsza" + (" (różnica w granicach SESOI)" if eq else "")
+    if eq:
+        return "równoważne w granicach ±SESOI"
+    return "nie wykazano ani różnicy, ani równoważności"
+
+
+def analyze(records):
+    seeds = sorted(r["seed"] for r in records)
+    bad = sorted(r["seed"] for r in records if any(r["conds"][c].get("error") for c in CONDS))
+    ok = [r for r in records if r["seed"] not in bad]
+    E = lambda c, rs: np.array([r["conds"][c]["final_abs_err"] for r in rs])
+    out = dict(n_planned_seen=len(seeds), excluded_seeds=bad, n_analyzed=len(ok), conds={}, H1={}, H2={}, D={})
+    for c in CONDS:
+        out["conds"][c] = dict(mean=float(E(c, ok).mean()), median=float(np.median(E(c, ok))),
+                               success=int(sum(r["conds"][c]["success"] for r in records)),
+                               sim_errors=int(sum(bool(r["conds"][c].get("error")) for r in records)),
+                               calibration_refused=int(sum(bool(r["conds"][c].get("calibration_refused")) for r in records)),
+                               by_stratum={s: dict(n=len([r for r in ok if r["stratum"] == s]),
+                                                   mean=float(E(c, [r for r in ok if r["stratum"] == s]).mean()),
+                                                   success=int(sum(r["conds"][c]["success"] for r in records if r["stratum"] == s)))
+                                           for s in STRATA})
+    # H1: per warstwa (decyzje) + łącznie (opis)
+    t = {s: summarize_d(E("DATA", [r for r in ok if r["stratum"] == s]) - E("SWS", [r for r in ok if r["stratum"] == s])) for s in STRATA}
+    for s, ph in zip(STRATA, holm([t[s]["p_perm"] for s in STRATA])):
+        t[s]["p_holm"] = float(ph)
+        t[s]["category"] = h1_category(t[s], ph)
+    out["H1"] = dict(per_stratum=t, pooled_descriptive=summarize_d(E("DATA", ok) - E("SWS", ok)))
+    # H2: Holm z dwóch
+    h2 = dict(H2a=summarize_d(E("DATA", ok) - E("STR_OWN", ok)), H2b=summarize_d(E("STR_SHARED", ok) - E("STR_OWN", ok)))
+    for k, ph in zip(h2, holm([h2[k]["p_perm"] for k in h2])):
+        h2[k]["p_holm"] = float(ph)
+        h2[k]["significant"] = bool(ph < ALPHA and (h2[k]["ci95"][1] < 0 or h2[k]["ci95"][0] > 0))
+        h2[k]["per_stratum_descriptive"] = {s: float(np.mean(E(*{"H2a": ("DATA", [r for r in ok if r["stratum"] == s]),
+                                                                  "H2b": ("STR_SHARED", [r for r in ok if r["stratum"] == s])}[k]) -
+                                                               E("STR_OWN", [r for r in ok if r["stratum"] == s]))) for s in STRATA}
+    out["H2"] = h2
+    out["D"] = {"DATA-TOY": summarize_d(E("DATA", ok) - E("TOY", ok)), "DATA-P": summarize_d(E("DATA", ok) - E("P", ok))}
+    sl = lambda c: [r["conds"][c].get("slope") for r in records if r["conds"][c].get("slope") is not None]
+    out["calibration_slopes"] = {c: dict(min=float(min(sl(c))), median=float(np.median(sl(c))), max=float(max(sl(c))))
+                                 for c in ("DATA", "SWS", "STR_OWN", "TOY") if sl(c)}
+    if bad:
+        d = E("DATA", ok) - E("SWS", ok)
+        worst = np.r_[d, np.full(len(bad), np.abs(d).max())]
+        out["sensitivity_H1_pooled_excluded_as_worst"] = summarize_d(worst)
+    refused = [r["seed"] for r in records if any(r["conds"][c].get("calibration_refused") for c in CONDS)]
+    if refused:
+        keep = [r for r in ok if r["seed"] not in refused]
+        out["sensitivity_without_refused"] = dict(seeds=refused, H1_pooled=summarize_d(E("DATA", keep) - E("SWS", keep)))
+    return out
+
+
+# ---------------- przebieg ----------------
+def run(seeds, out_dir, proto_sha):
+    import loop as L
+    import loop_v2 as L2
+    from side_shuffle import KEYS, layer_side_labels, properties, shuffle_within_side
+    from so101 import SimError
+    from v5v2_topology import check_shuffle, lateralization
+    from visual_path import network, shuffle
+    pre = L.stage1_hashes()
+    if pre["mismatched"]:
+        sys.exit(f"STOP: Stage 1 niezgodny: {pre['mismatched']}")
+    raw = os.path.join(out_dir, "raw_v5v4.jsonl")
+    done = set()
+    if os.path.exists(raw):                                  # wznowienie: tylko kompletne rekordy, bez podwójnego liczenia
+        done = {json.loads(x)["seed"] for x in open(raw) if x.strip()}
+    spec, idx, _ = network(L.J0)
+    gr, _ = layer_side_labels(spec, idx)
+    li0 = lateralization(spec.W_data, idx)
+    toy, tidx, _ = L2.toy_relay(spec, idx)
+    cal_data, cal_toy = calibrate(spec, idx), calibrate(toy, tidx)
+    if cal_data["refused"] or cal_toy["refused"]:
+        sys.exit("STOP: kalibracja DATA lub TOY odrzucona")
+    base_cal = dict(slope_snn=cal_data["slope"], slope_p=L.calibrate_p((96, 128)))
+    errs = {c: 0 for c in CONDS}
+    for s in seeds:
+        if s in done:
+            continue
+        tr = trial_spec_v4(s)
+        trs = {k: tr[k] for k in ("seed", "az0_deg", "rho")}
+        sws = shuffle_within_side(spec, gr, s + 400_000)
+        p = properties(spec, sws, gr)
+        if not all(p[k] for k in KEYS) or not sws.report["shuffle_within_side"]["complete"]:
+            sys.exit(f"STOP: SWS ziarno {s}: naruszone {[k for k in KEYS if not p[k]]}")
+        st = shuffle(spec, s + 200_000, equal_weight=True)
+        check_shuffle(spec, st, True)
+        cal_sws, cal_st = calibrate(sws, idx), calibrate(st, idx)
+        plan = {"DATA": ("snn", (spec, idx), cal_data), "SWS": ("snn", (sws, idx), cal_sws),
+                "STR_OWN": ("snn", (st, idx), cal_st), "STR_SHARED": ("snn", (st, idx), dict(cal_data, refused=False)),
+                "TOY": ("snn", (toy, tidx), cal_toy), "P": ("classical_p", (spec, idx), None)}
+        rec = dict(seed=s, stratum=tr["stratum"], az0_deg=tr["az0_deg"], rho=tr["rho"], conds={},
+                   sws_li_rel=lateralization(sws.W_data, idx) / li0, str_li_rel=lateralization(st.W_data, idx) / li0,
+                   sws_changed_frac=p["changed_frac"])
+        for c, (cond, base, cal) in plan.items():
+            r0 = dict(slope=cal["slope"] if cal else None)
+            if cal and cal["refused"]:
+                rec["conds"][c] = dict(r0, calibration_refused=True, success=False, final_abs_err=abs(tr["az0_deg"]), error=None)
+                continue
+            try:
+                r = L.run_trial(cond, s, base, base_cal, tr=trs, slope=cal["slope"] if cal else None)
+                r.update(L.metrics(r))
+                if not math.isfinite(r["final_abs_err"]):
+                    raise SimError("final_abs_err nieskończony/NaN")
+                rec["conds"][c] = dict(r0, success=r["success"], final_abs_err=r["final_abs_err"], t_first_within=r["t_first_within"],
+                                       overshoot_deg=r["overshoot_deg"], safety_ticks_flagged=r["safety_ticks_flagged"], error=None)
+            except SimError as e:
+                errs[c] += 1
+                rec["conds"][c] = dict(r0, success=False, final_abs_err=float("nan"), error=str(e))
+        with open(raw, "a") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        print(f"{s} {tr['stratum']} ρ {tr['rho']:.3f}: " + " ".join(f"{c} {rec['conds'][c]['final_abs_err']:.2f}" for c in CONDS), flush=True)
+        if max(errs.values()) > MAX_ERR_PER_COND or sum(errs.values()) > MAX_ERR_FRAC * len(CONDS) * len(seeds):
+            sys.exit("STOP: przekroczony limit błędów symulatora (protokół §6)")
+    post = L.stage1_hashes()
+    meta = dict(protocol_sha256=proto_sha, seeds=[seeds[0], seeds[-1]], cal_data=cal_data, cal_toy=cal_toy, stage1_pre=pre, stage1_post=post,
+                code_sha256={f: hashlib.sha256(open(os.path.join(HERE, f), "rb").read()).hexdigest()
+                             for f in ("v5v4.py", "side_shuffle.py", "v5v2_topology.py", "loop.py", "loop_v2.py", "visual_path.py", "v4_open_loop.py")})
+    with open(os.path.join(out_dir, f"run_meta_{time.strftime('%Y%m%dT%H%M%S')}.json"), "x") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=1)
+    print("zakończono | Stage 1 po:", "OK" if not post["mismatched"] else post["mismatched"])
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument("--seeds")
+    ap.add_argument("--out")
+    ap.add_argument("--approved-protocol-sha256")
+    ap.add_argument("--analyze", help="plik raw_v5v4.jsonl")
+    a = ap.parse_args()
+    if a.analyze:
+        recs = [json.loads(x) for x in open(a.analyze) if x.strip()]
+        print(json.dumps(analyze(recs), indent=1, ensure_ascii=False))
+        sys.exit()
+    proto = os.path.join(HERE, "validation", "v5v4_protocol.md")
+    if not os.path.exists(proto) or hashlib.sha256(open(proto, "rb").read()).hexdigest() != a.approved_protocol_sha256:
+        sys.exit("odmowa: brak zamrożonego validation/v5v4_protocol.md albo niezgodny sha256")
+    lo, hi = map(int, a.seeds.split("-"))
+    seeds = list(range(lo, hi + 1))
+    import loop as _L
+    dev_ok = set(seeds) <= set(range(6001, 6011))                 # test dymny tylko na puli dev 6001–6010
+    if (set(seeds) & FORBIDDEN) or not (dev_ok or set(seeds) <= set(range(4001, 4241))) or not _L._allowed(a.out):
+        sys.exit("odmowa: ziarna spoza zarejestrowanych pul (4001–4240 potwierdzające, 6001–6010 dev) albo --out poza flymind/$TMPDIR")
+    run(seeds, a.out, a.approved_protocol_sha256)

@@ -1,0 +1,3191 @@
+{
+ "tag": "conf_S2_g1_on",
+ "arm": "S",
+ "glu": 1.0,
+ "stim": "on",
+ "shuffle_seed": 20980002,
+ "seed": 20971,
+ "poses": 1,
+ "offset": [
+  -0.045,
+  0.0,
+  -0.1
+ ],
+ "win_ticks": 100,
+ "colors": "native",
+ "fly_cfg": {
+  "glu_sign": 1.0,
+  "trigger": "search",
+  "tau_search": 0.3,
+  "search_max": 4.0,
+  "push": 0.004,
+  "v_side": 0.02,
+  "tau_engage": 0.1,
+  "engage_ticks": 10,
+  "loss_ticks": 5,
+  "hold_max": 1.5,
+  "q_mid": 0.8,
+  "q_span": 0.9,
+  "qd_ref": 1.0,
+  "feco_mV": 40.0
+ },
+ "argv": [
+  "/Users/admin/so101_fly_project/flymind/experiments/step2_whole_arm/conflict_test.py",
+  "--arm",
+  "S",
+  "--shuffle-seed",
+  "20980002",
+  "--glu",
+  "1",
+  "--stim",
+  "on",
+  "--seed",
+  "20971",
+  "--poses",
+  "1",
+  "--tag",
+  "conf_S2_g1_on",
+  "--out",
+  "/Users/admin/so101_fly_project/flymind/results/step2_whole_arm_20261113/conflict_7/test"
+ ],
+ "build_s": 16606.6,
+ "net": {
+  "N": 1931,
+  "leg": 1507,
+  "visual": {
+   "in_L": 135,
+   "in_R": 140,
+   "mid": 147,
+   "DNa02_L": 1,
+   "DNa02_R": 1
+  },
+  "edges": {
+   "edges": 140676,
+   "synapses": 1121364,
+   "self_loops": 0,
+   "bodies": 1931
+  },
+  "cross_edges": {
+   "vis_to_leg": 91,
+   "leg_to_vis": 27,
+   "dna02L_to_leg": 70,
+   "dna02R_to_leg": 3
+  },
+  "W_sha256": "343ffeadc2ac1419917f7a14b3740811a69b492dbfaf9080b76692e6e89660ab",
+  "shuffle": {
+   "block": "LC2MID",
+   "seed": 20980002,
+   "swaps": 355,
+   "target": 455,
+   "attempts": 1365,
+   "complete": false,
+   "block_edges": 91,
+   "block_edges_swappable": 74
+  }
+ },
+ "wall_s": 19211.9,
+ "max_rss_MB": 1095.6,
+ "code_sha256": {
+  "conflict_test.py": "deb436ef84f667eded2db7ff533c9a0643b55707c13c41f51edc87f92afd39e8",
+  "vision_manipulation.py": "5c1da2f25a48b1c573ef8a4336250bed62080370de428668a26417f5f8c59488",
+  "sensory_manipulation.py": "260c2c25401cd52ab672858406c54a993da72abab5311eff70ef1866dd7a6807",
+  "object_handling.py": "0bf03d36c6dd408ddf38fbb4daeef7ea318dc8e2d541db170038eeca13b36939"
+ },
+ "runs": [
+  {
+   "item": "cube_S/hard_grip",
+   "seed": 20971000,
+   "noise_seed": 20990000,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8471,
+    "tau_min": 0.4474,
+    "g_mean": [
+     0.9993,
+     0.7714
+    ],
+    "dn_mean": [
+     166.0,
+     119.0
+    ],
+    "n_px_mean": 1291.2
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8471,
+     "tau_min": 0.4474,
+     "g_mean": [
+      0.9993,
+      0.7714
+     ],
+     "dn_mean": [
+      166.0,
+      119.0
+     ],
+     "n_px_mean": 1291.2
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.26,
+   "T_wall": 30.23,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4630
+    },
+    "classical:open": {
+     "ticks": 599
+    },
+    "classical:search": {
+     "ticks": 97
+    },
+    "snn:vis+legT2L": {
+     "ticks": 230
+    }
+   }
+  },
+  {
+   "item": "cube_S/hard_slick",
+   "seed": 20971010,
+   "noise_seed": 20990001,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.879,
+    "tau_min": 0.7043,
+    "g_mean": [
+     0.9988,
+     0.7753
+    ],
+    "dn_mean": [
+     163.0,
+     120.0
+    ],
+    "n_px_mean": 1298.1
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.879,
+     "tau_min": 0.7043,
+     "g_mean": [
+      0.9988,
+      0.7753
+     ],
+     "dn_mean": [
+      163.0,
+      120.0
+     ],
+     "n_px_mean": 1298.1
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.35,
+   "T_wall": 30.01,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4675
+    },
+    "classical:open": {
+     "ticks": 606
+    },
+    "classical:search": {
+     "ticks": 110
+    },
+    "snn:vis+legT2L": {
+     "ticks": 219
+    }
+   }
+  },
+  {
+   "item": "cube_S/heavy",
+   "seed": 20971020,
+   "noise_seed": 20990002,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8289,
+    "tau_min": 0.2815,
+    "g_mean": [
+     0.9994,
+     0.7717
+    ],
+    "dn_mean": [
+     162.0,
+     119.0
+    ],
+    "n_px_mean": 1295.5
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8289,
+     "tau_min": 0.2815,
+     "g_mean": [
+      0.9994,
+      0.7717
+     ],
+     "dn_mean": [
+      162.0,
+      119.0
+     ],
+     "n_px_mean": 1295.5
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.5,
+   "T_wall": 31.36,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4750
+    },
+    "classical:open": {
+     "ticks": 641
+    },
+    "classical:search": {
+     "ticks": 93
+    },
+    "snn:vis+legT2L": {
+     "ticks": 216
+    }
+   }
+  },
+  {
+   "item": "cube_S/light",
+   "seed": 20971030,
+   "noise_seed": 20990003,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8797,
+    "tau_min": 0.6869,
+    "g_mean": [
+     0.999,
+     0.9299
+    ],
+    "dn_mean": [
+     164.0,
+     162.0
+    ],
+    "n_px_mean": 1610.6
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8797,
+     "tau_min": 0.6869,
+     "g_mean": [
+      0.999,
+      0.9299
+     ],
+     "dn_mean": [
+      164.0,
+      162.0
+     ],
+     "n_px_mean": 1610.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.99,
+   "T_wall": 35.43,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4995
+    },
+    "classical:open": {
+     "ticks": 608
+    },
+    "classical:search": {
+     "ticks": 112
+    },
+    "snn:vis+legT2L": {
+     "ticks": 279
+    }
+   }
+  },
+  {
+   "item": "cube_S/mid",
+   "seed": 20971040,
+   "noise_seed": 20990004,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8724,
+    "tau_min": 0.6566,
+    "g_mean": [
+     0.9989,
+     0.7965
+    ],
+    "dn_mean": [
+     165.0,
+     125.0
+    ],
+    "n_px_mean": 1295.8
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8724,
+     "tau_min": 0.6566,
+     "g_mean": [
+      0.9989,
+      0.7965
+     ],
+     "dn_mean": [
+      165.0,
+      125.0
+     ],
+     "n_px_mean": 1295.8
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.4,
+   "T_wall": 35.77,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4700,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 606
+    },
+    "classical:search": {
+     "ticks": 111
+    },
+    "snn:vis+legT2L": {
+     "ticks": 223
+    }
+   }
+  },
+  {
+   "item": "cube_M/hard_grip",
+   "seed": 20971050,
+   "noise_seed": 20990005,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8704,
+    "tau_min": 0.7175,
+    "g_mean": [
+     0.9995,
+     0.7362
+    ],
+    "dn_mean": [
+     158.0,
+     104.0
+    ],
+    "n_px_mean": 1395.7
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8704,
+     "tau_min": 0.7175,
+     "g_mean": [
+      0.9995,
+      0.7362
+     ],
+     "dn_mean": [
+      158.0,
+      104.0
+     ],
+     "n_px_mean": 1395.7
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.65,
+   "T_wall": 44.87,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5325
+    },
+    "classical:open": {
+     "ticks": 665
+    },
+    "classical:search": {
+     "ticks": 133
+    },
+    "snn:vis+legT2L": {
+     "ticks": 267
+    }
+   }
+  },
+  {
+   "item": "cube_M/hard_slick",
+   "seed": 20971060,
+   "noise_seed": 20990006,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8756,
+    "tau_min": 0.6625,
+    "g_mean": [
+     0.9991,
+     0.7174
+    ],
+    "dn_mean": [
+     169.0,
+     98.0
+    ],
+    "n_px_mean": 1284.8
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8756,
+     "tau_min": 0.6625,
+     "g_mean": [
+      0.9991,
+      0.7174
+     ],
+     "dn_mean": [
+      169.0,
+      98.0
+     ],
+     "n_px_mean": 1284.8
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.75,
+   "T_wall": 44.99,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4875
+    },
+    "classical:open": {
+     "ticks": 613
+    },
+    "classical:search": {
+     "ticks": 145
+    },
+    "snn:vis+legT2L": {
+     "ticks": 217
+    }
+   }
+  },
+  {
+   "item": "cube_M/heavy",
+   "seed": 20971070,
+   "noise_seed": 20990007,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8346,
+    "tau_min": 0.4181,
+    "g_mean": [
+     0.999,
+     0.7125
+    ],
+    "dn_mean": [
+     170.0,
+     88.0
+    ],
+    "n_px_mean": 1284.3
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8346,
+     "tau_min": 0.4181,
+     "g_mean": [
+      0.999,
+      0.7125
+     ],
+     "dn_mean": [
+      170.0,
+      88.0
+     ],
+     "n_px_mean": 1284.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.61,
+   "T_wall": 44.68,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4805
+    },
+    "classical:open": {
+     "ticks": 577
+    },
+    "classical:search": {
+     "ticks": 128
+    },
+    "snn:vis+legT2L": {
+     "ticks": 256
+    }
+   }
+  },
+  {
+   "item": "cube_M/light",
+   "seed": 20971080,
+   "noise_seed": 20990008,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.866,
+    "tau_min": 0.5677,
+    "g_mean": [
+     0.9998,
+     0.9954
+    ],
+    "dn_mean": [
+     147.0,
+     167.0
+    ],
+    "n_px_mean": 2422.8
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.866,
+     "tau_min": 0.5677,
+     "g_mean": [
+      0.9998,
+      0.9954
+     ],
+     "dn_mean": [
+      147.0,
+      167.0
+     ],
+     "n_px_mean": 2422.8
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.55,
+   "T_wall": 51.43,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5275,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 673
+    },
+    "classical:search": {
+     "ticks": 140
+    },
+    "snn:vis+legT2L": {
+     "ticks": 242
+    }
+   }
+  },
+  {
+   "item": "cube_M/mid",
+   "seed": 20971090,
+   "noise_seed": 20990009,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.863,
+    "tau_min": 0.4957,
+    "g_mean": [
+     0.9993,
+     0.7927
+    ],
+    "dn_mean": [
+     160.0,
+     136.0
+    ],
+    "n_px_mean": 1461.3
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.863,
+     "tau_min": 0.4957,
+     "g_mean": [
+      0.9993,
+      0.7927
+     ],
+     "dn_mean": [
+      160.0,
+      136.0
+     ],
+     "n_px_mean": 1461.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.78,
+   "T_wall": 55.93,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5890
+    },
+    "classical:open": {
+     "ticks": 789
+    },
+    "classical:search": {
+     "ticks": 139
+    },
+    "snn:vis+legT2L": {
+     "ticks": 250
+    }
+   }
+  },
+  {
+   "item": "cube_L/hard_grip",
+   "seed": 20971100,
+   "noise_seed": 20990010,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 29,
+    "tau_mean": 0.4606,
+    "tau_min": 0.0363,
+    "g_mean": [
+     0.9981,
+     0.5048
+    ],
+    "dn_mean": [
+     217.24,
+     100.0
+    ],
+    "n_px_mean": 761.1
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 29,
+     "tau_mean": 0.4606,
+     "tau_min": 0.0363,
+     "g_mean": [
+      0.9981,
+      0.5048
+     ],
+     "dn_mean": [
+      217.24,
+      100.0
+     ],
+     "n_px_mean": 761.1
+    },
+    {
+     "n": 27,
+     "tau_mean": 0.4882,
+     "tau_min": 0.0345,
+     "g_mean": [
+      0.9979,
+      0.4865
+     ],
+     "dn_mean": [
+      214.81,
+      85.19
+     ],
+     "n_px_mean": 730.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 13.97,
+   "T_wall": 64.92,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 6985
+    },
+    "classical:open": {
+     "ticks": 965
+    },
+    "classical:search": {
+     "ticks": 376
+    },
+    "snn:vis+legT2L": {
+     "ticks": 56
+    }
+   }
+  },
+  {
+   "item": "cube_L/hard_slick",
+   "seed": 20971110,
+   "noise_seed": 20990011,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 18,
+    "tau_mean": 0.2334,
+    "tau_min": 0.0344,
+    "g_mean": [
+     0.9869,
+     0.2956
+    ],
+    "dn_mean": [
+     222.22,
+     0.0
+    ],
+    "n_px_mean": 537.9
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 18,
+     "tau_mean": 0.2334,
+     "tau_min": 0.0344,
+     "g_mean": [
+      0.9869,
+      0.2956
+     ],
+     "dn_mean": [
+      222.22,
+      0.0
+     ],
+     "n_px_mean": 537.9
+    },
+    {
+     "n": 10,
+     "tau_mean": 0.1198,
+     "tau_min": 0.036,
+     "g_mean": [
+      0.9734,
+      0.1796
+     ],
+     "dn_mean": [
+      200.0,
+      0.0
+     ],
+     "n_px_mean": 344.4
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 16.56,
+   "T_wall": 81.4,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 8280
+    },
+    "classical:open": {
+     "ticks": 1254
+    },
+    "classical:search": {
+     "ticks": 374
+    },
+    "snn:vis+legT2L": {
+     "ticks": 28
+    }
+   }
+  },
+  {
+   "item": "cube_L/heavy",
+   "seed": 20971120,
+   "noise_seed": 20990012,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 31,
+    "tau_mean": 0.4759,
+    "tau_min": 0.0337,
+    "g_mean": [
+     0.996,
+     0.4479
+    ],
+    "dn_mean": [
+     216.13,
+     67.74
+    ],
+    "n_px_mean": 783.2
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 31,
+     "tau_mean": 0.4759,
+     "tau_min": 0.0337,
+     "g_mean": [
+      0.996,
+      0.4479
+     ],
+     "dn_mean": [
+      216.13,
+      67.74
+     ],
+     "n_px_mean": 783.2
+    },
+    {
+     "n": 22,
+     "tau_mean": 0.4321,
+     "tau_min": 0.0388,
+     "g_mean": [
+      0.9926,
+      0.3719
+     ],
+     "dn_mean": [
+      218.18,
+      13.64
+     ],
+     "n_px_mean": 632.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 15.85,
+   "T_wall": 76.72,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 7925
+    },
+    "classical:open": {
+     "ticks": 1158
+    },
+    "classical:search": {
+     "ticks": 374
+    },
+    "snn:vis+legT2L": {
+     "ticks": 53
+    }
+   }
+  },
+  {
+   "item": "cube_L/light",
+   "seed": 20971130,
+   "noise_seed": 20990013,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 21,
+    "tau_mean": 0.4311,
+    "tau_min": 0.0386,
+    "g_mean": [
+     1.0,
+     0.9984
+    ],
+    "dn_mean": [
+     142.86,
+     166.67
+    ],
+    "n_px_mean": 3501.8
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 21,
+     "tau_mean": 0.4311,
+     "tau_min": 0.0386,
+     "g_mean": [
+      1.0,
+      0.9984
+     ],
+     "dn_mean": [
+      142.86,
+      166.67
+     ],
+     "n_px_mean": 3501.8
+    },
+    {
+     "n": 21,
+     "tau_mean": 0.4208,
+     "tau_min": 0.0372,
+     "g_mean": [
+      1.0,
+      0.9997
+     ],
+     "dn_mean": [
+      147.62,
+      157.14
+     ],
+     "n_px_mean": 3884.0
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 16.27,
+   "T_wall": 79.84,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 8135
+    },
+    "classical:open": {
+     "ticks": 1210
+    },
+    "classical:search": {
+     "ticks": 375
+    },
+    "snn:vis+legT2L": {
+     "ticks": 42
+    }
+   }
+  },
+  {
+   "item": "cube_L/mid",
+   "seed": 20971140,
+   "noise_seed": 20990014,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 21,
+    "tau_mean": 0.4087,
+    "tau_min": 0.0347,
+    "g_mean": [
+     0.9989,
+     0.9828
+    ],
+    "dn_mean": [
+     209.52,
+     180.95
+    ],
+    "n_px_mean": 2369.7
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 21,
+     "tau_mean": 0.4087,
+     "tau_min": 0.0347,
+     "g_mean": [
+      0.9989,
+      0.9828
+     ],
+     "dn_mean": [
+      209.52,
+      180.95
+     ],
+     "n_px_mean": 2369.7
+    },
+    {
+     "n": 23,
+     "tau_mean": 0.435,
+     "tau_min": 0.0333,
+     "g_mean": [
+      0.999,
+      0.9838
+     ],
+     "dn_mean": [
+      204.35,
+      182.61
+     ],
+     "n_px_mean": 2436.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 17.18,
+   "T_wall": 89.01,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 8590
+    },
+    "classical:open": {
+     "ticks": 1295
+    },
+    "classical:search": {
+     "ticks": 379
+    },
+    "snn:vis+legT2L": {
+     "ticks": 44
+    }
+   }
+  },
+  {
+   "item": "cyl/hard_grip",
+   "seed": 20971150,
+   "noise_seed": 20990015,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8694,
+    "tau_min": 0.7513,
+    "g_mean": [
+     0.9998,
+     0.7848
+    ],
+    "dn_mean": [
+     157.0,
+     148.0
+    ],
+    "n_px_mean": 1452.2
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8694,
+     "tau_min": 0.7513,
+     "g_mean": [
+      0.9998,
+      0.7848
+     ],
+     "dn_mean": [
+      157.0,
+      148.0
+     ],
+     "n_px_mean": 1452.2
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.58,
+   "T_wall": 55.19,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5290,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 733
+    },
+    "classical:search": {
+     "ticks": 87
+    },
+    "snn:vis+legT2L": {
+     "ticks": 238
+    }
+   }
+  },
+  {
+   "item": "cyl/hard_slick",
+   "seed": 20971160,
+   "noise_seed": 20990016,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8732,
+    "tau_min": 0.6917,
+    "g_mean": [
+     0.9992,
+     0.7075
+    ],
+    "dn_mean": [
+     162.0,
+     96.0
+    ],
+    "n_px_mean": 1281.0
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8732,
+     "tau_min": 0.6917,
+     "g_mean": [
+      0.9992,
+      0.7075
+     ],
+     "dn_mean": [
+      162.0,
+      96.0
+     ],
+     "n_px_mean": 1281.0
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.57,
+   "T_wall": 50.99,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4785
+    },
+    "classical:open": {
+     "ticks": 618
+    },
+    "classical:search": {
+     "ticks": 112
+    },
+    "snn:vis+legT2L": {
+     "ticks": 227
+    }
+   }
+  },
+  {
+   "item": "cyl/heavy",
+   "seed": 20971170,
+   "noise_seed": 20990017,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8326,
+    "tau_min": 0.3798,
+    "g_mean": [
+     0.9996,
+     0.7075
+    ],
+    "dn_mean": [
+     164.0,
+     109.0
+    ],
+    "n_px_mean": 1312.8
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8326,
+     "tau_min": 0.3798,
+     "g_mean": [
+      0.9996,
+      0.7075
+     ],
+     "dn_mean": [
+      164.0,
+      109.0
+     ],
+     "n_px_mean": 1312.8
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.48,
+   "T_wall": 54.96,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5240,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 717
+    },
+    "classical:search": {
+     "ticks": 87
+    },
+    "snn:vis+legT2L": {
+     "ticks": 244
+    }
+   }
+  },
+  {
+   "item": "cyl/light",
+   "seed": 20971180,
+   "noise_seed": 20990018,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.874,
+    "tau_min": 0.6836,
+    "g_mean": [
+     0.9995,
+     0.9871
+    ],
+    "dn_mean": [
+     159.0,
+     169.0
+    ],
+    "n_px_mean": 2357.0
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.874,
+     "tau_min": 0.6836,
+     "g_mean": [
+      0.9995,
+      0.9871
+     ],
+     "dn_mean": [
+      159.0,
+      169.0
+     ],
+     "n_px_mean": 2357.0
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.83,
+   "T_wall": 52.29,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4915
+    },
+    "classical:open": {
+     "ticks": 624
+    },
+    "classical:search": {
+     "ticks": 108
+    },
+    "snn:vis+legT2L": {
+     "ticks": 251
+    }
+   }
+  },
+  {
+   "item": "cyl/mid",
+   "seed": 20971190,
+   "noise_seed": 20990019,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 12,
+    "tau_mean": 0.1801,
+    "tau_min": 0.0402,
+    "g_mean": [
+     0.9937,
+     0.2621
+    ],
+    "dn_mean": [
+     241.67,
+     0.0
+    ],
+    "n_px_mean": 613.2
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 12,
+     "tau_mean": 0.1801,
+     "tau_min": 0.0402,
+     "g_mean": [
+      0.9937,
+      0.2621
+     ],
+     "dn_mean": [
+      241.67,
+      0.0
+     ],
+     "n_px_mean": 613.2
+    },
+    {
+     "n": 12,
+     "tau_mean": 0.1896,
+     "tau_min": 0.0211,
+     "g_mean": [
+      0.9939,
+      0.3991
+     ],
+     "dn_mean": [
+      241.67,
+      0.0
+     ],
+     "n_px_mean": 725.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 14.68,
+   "T_wall": 77.8,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 7340
+    },
+    "classical:open": {
+     "ticks": 1272
+    },
+    "classical:search": {
+     "ticks": 172
+    },
+    "snn:vis+legT2L": {
+     "ticks": 24
+    }
+   }
+  },
+  {
+   "item": "sphere/hard_grip",
+   "seed": 20971200,
+   "noise_seed": 20990020,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8701,
+    "tau_min": 0.7308,
+    "g_mean": [
+     0.9996,
+     0.7478
+    ],
+    "dn_mean": [
+     167.0,
+     103.0
+    ],
+    "n_px_mean": 1314.9
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8701,
+     "tau_min": 0.7308,
+     "g_mean": [
+      0.9996,
+      0.7478
+     ],
+     "dn_mean": [
+      167.0,
+      103.0
+     ],
+     "n_px_mean": 1314.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.35,
+   "T_wall": 53.22,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5175
+    },
+    "classical:open": {
+     "ticks": 626
+    },
+    "classical:search": {
+     "ticks": 162
+    },
+    "snn:vis+legT2L": {
+     "ticks": 247
+    }
+   }
+  },
+  {
+   "item": "sphere/hard_slick",
+   "seed": 20971210,
+   "noise_seed": 20990021,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8695,
+    "tau_min": 0.6868,
+    "g_mean": [
+     0.9992,
+     0.7223
+    ],
+    "dn_mean": [
+     161.0,
+     117.0
+    ],
+    "n_px_mean": 1340.8
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8695,
+     "tau_min": 0.6868,
+     "g_mean": [
+      0.9992,
+      0.7223
+     ],
+     "dn_mean": [
+      161.0,
+      117.0
+     ],
+     "n_px_mean": 1340.8
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.69,
+   "T_wall": 59.52,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5845,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 744
+    },
+    "classical:search": {
+     "ticks": 176
+    },
+    "snn:vis+legT2L": {
+     "ticks": 249
+    }
+   }
+  },
+  {
+   "item": "sphere/heavy",
+   "seed": 20971220,
+   "noise_seed": 20990022,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.7881,
+    "tau_min": 0.0414,
+    "g_mean": [
+     0.9992,
+     0.7093
+    ],
+    "dn_mean": [
+     163.0,
+     84.0
+    ],
+    "n_px_mean": 1313.5
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.7881,
+     "tau_min": 0.0414,
+     "g_mean": [
+      0.9992,
+      0.7093
+     ],
+     "dn_mean": [
+      163.0,
+      84.0
+     ],
+     "n_px_mean": 1313.5
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.16,
+   "T_wall": 59.02,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5580,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 723
+    },
+    "classical:search": {
+     "ticks": 163
+    },
+    "snn:vis+legT2L": {
+     "ticks": 230
+    }
+   }
+  },
+  {
+   "item": "sphere/light",
+   "seed": 20971230,
+   "noise_seed": 20990023,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.871,
+    "tau_min": 0.6935,
+    "g_mean": [
+     0.9999,
+     0.9937
+    ],
+    "dn_mean": [
+     152.0,
+     164.0
+    ],
+    "n_px_mean": 2228.7
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.871,
+     "tau_min": 0.6935,
+     "g_mean": [
+      0.9999,
+      0.9937
+     ],
+     "dn_mean": [
+      152.0,
+      164.0
+     ],
+     "n_px_mean": 2228.7
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.63,
+   "T_wall": 59.57,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5815,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 747
+    },
+    "classical:search": {
+     "ticks": 177
+    },
+    "snn:vis+legT2L": {
+     "ticks": 239
+    }
+   }
+  },
+  {
+   "item": "sphere/mid",
+   "seed": 20971240,
+   "noise_seed": 20990024,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8718,
+    "tau_min": 0.6814,
+    "g_mean": [
+     0.9993,
+     0.7827
+    ],
+    "dn_mean": [
+     164.0,
+     123.0
+    ],
+    "n_px_mean": 1367.2
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8718,
+     "tau_min": 0.6814,
+     "g_mean": [
+      0.9993,
+      0.7827
+     ],
+     "dn_mean": [
+      164.0,
+      123.0
+     ],
+     "n_px_mean": 1367.2
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.19,
+   "T_wall": 52.14,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5095
+    },
+    "classical:open": {
+     "ticks": 606
+    },
+    "classical:search": {
+     "ticks": 176
+    },
+    "snn:vis+legT2L": {
+     "ticks": 237
+    }
+   }
+  },
+  {
+   "item": "flat/hard_grip",
+   "seed": 20971250,
+   "noise_seed": 20990025,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8564,
+    "tau_min": 0.5859,
+    "g_mean": [
+     0.9996,
+     0.7538
+    ],
+    "dn_mean": [
+     161.0,
+     128.0
+    ],
+    "n_px_mean": 1348.0
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8564,
+     "tau_min": 0.5859,
+     "g_mean": [
+      0.9996,
+      0.7538
+     ],
+     "dn_mean": [
+      161.0,
+      128.0
+     ],
+     "n_px_mean": 1348.0
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.85,
+   "T_wall": 58.56,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5925,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 770
+    },
+    "classical:search": {
+     "ticks": 174
+    },
+    "snn:vis+legT2L": {
+     "ticks": 241
+    }
+   }
+  },
+  {
+   "item": "flat/hard_slick",
+   "seed": 20971260,
+   "noise_seed": 20990026,
+   "truth": {
+    "grasp": true,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 27,
+    "tau_mean": 0.4818,
+    "tau_min": 0.0361,
+    "g_mean": [
+     0.997,
+     0.515
+    ],
+    "dn_mean": [
+     233.33,
+     96.3
+    ],
+    "n_px_mean": 966.1
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 27,
+     "tau_mean": 0.4818,
+     "tau_min": 0.0361,
+     "g_mean": [
+      0.997,
+      0.515
+     ],
+     "dn_mean": [
+      233.33,
+      96.3
+     ],
+     "n_px_mean": 966.1
+    },
+    {
+     "n": 27,
+     "tau_mean": 0.4712,
+     "tau_min": 0.033,
+     "g_mean": [
+      0.997,
+      0.5172
+     ],
+     "dn_mean": [
+      225.93,
+      96.3
+     ],
+     "n_px_mean": 969.5
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 14.44,
+   "T_wall": 74.11,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 7220
+    },
+    "classical:open": {
+     "ticks": 1016
+    },
+    "classical:search": {
+     "ticks": 374
+    },
+    "snn:vis+legT2L": {
+     "ticks": 54
+    }
+   }
+  },
+  {
+   "item": "flat/heavy",
+   "seed": 20971270,
+   "noise_seed": 20990027,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8555,
+    "tau_min": 0.5717,
+    "g_mean": [
+     0.999,
+     0.7144
+    ],
+    "dn_mean": [
+     172.0,
+     95.0
+    ],
+    "n_px_mean": 1284.7
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8555,
+     "tau_min": 0.5717,
+     "g_mean": [
+      0.999,
+      0.7144
+     ],
+     "dn_mean": [
+      172.0,
+      95.0
+     ],
+     "n_px_mean": 1284.7
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.29,
+   "T_wall": 54.92,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5145
+    },
+    "classical:open": {
+     "ticks": 598
+    },
+    "classical:search": {
+     "ticks": 172
+    },
+    "snn:vis+legT2L": {
+     "ticks": 259
+    }
+   }
+  },
+  {
+   "item": "flat/light",
+   "seed": 20971280,
+   "noise_seed": 20990028,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released"
+   ],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.7934,
+    "tau_min": 0.0557,
+    "g_mean": [
+     0.9998,
+     0.9909
+    ],
+    "dn_mean": [
+     152.0,
+     162.0
+    ],
+    "n_px_mean": 2489.3
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.7934,
+     "tau_min": 0.0557,
+     "g_mean": [
+      0.9998,
+      0.9909
+     ],
+     "dn_mean": [
+      152.0,
+      162.0
+     ],
+     "n_px_mean": 2489.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.97,
+   "T_wall": 51.39,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4985
+    },
+    "classical:open": {
+     "ticks": 710
+    },
+    "classical:search": {
+     "ticks": 185
+    },
+    "snn:vis+legT2L": {
+     "ticks": 102
+    }
+   }
+  },
+  {
+   "item": "flat/mid",
+   "seed": 20971290,
+   "noise_seed": 20990029,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released"
+   ],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8736,
+    "tau_min": 0.671,
+    "g_mean": [
+     0.9996,
+     0.9528
+    ],
+    "dn_mean": [
+     156.0,
+     161.0
+    ],
+    "n_px_mean": 2093.9
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8736,
+     "tau_min": 0.671,
+     "g_mean": [
+      0.9996,
+      0.9528
+     ],
+     "dn_mean": [
+      156.0,
+      161.0
+     ],
+     "n_px_mean": 2093.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 8.88,
+   "T_wall": 44.59,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4440
+    },
+    "classical:open": {
+     "ticks": 543
+    },
+    "classical:search": {
+     "ticks": 185
+    },
+    "snn:vis+legT2L": {
+     "ticks": 160
+    }
+   }
+  },
+  {
+   "item": "long/hard_grip",
+   "seed": 20971300,
+   "noise_seed": 20990030,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8635,
+    "tau_min": 0.6976,
+    "g_mean": [
+     0.9995,
+     0.7835
+    ],
+    "dn_mean": [
+     164.0,
+     118.0
+    ],
+    "n_px_mean": 1305.9
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8635,
+     "tau_min": 0.6976,
+     "g_mean": [
+      0.9995,
+      0.7835
+     ],
+     "dn_mean": [
+      164.0,
+      118.0
+     ],
+     "n_px_mean": 1305.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.78,
+   "T_wall": 53.16,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4890
+    },
+    "classical:open": {
+     "ticks": 610
+    },
+    "classical:search": {
+     "ticks": 99
+    },
+    "snn:vis+legT2L": {
+     "ticks": 269
+    }
+   }
+  },
+  {
+   "item": "long/hard_slick",
+   "seed": 20971310,
+   "noise_seed": 20990031,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8755,
+    "tau_min": 0.6441,
+    "g_mean": [
+     0.9988,
+     0.753
+    ],
+    "dn_mean": [
+     165.0,
+     111.0
+    ],
+    "n_px_mean": 1275.6
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8755,
+     "tau_min": 0.6441,
+     "g_mean": [
+      0.9988,
+      0.753
+     ],
+     "dn_mean": [
+      165.0,
+      111.0
+     ],
+     "n_px_mean": 1275.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.36,
+   "T_wall": 50.07,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4680
+    },
+    "classical:open": {
+     "ticks": 595
+    },
+    "classical:search": {
+     "ticks": 111
+    },
+    "snn:vis+legT2L": {
+     "ticks": 230
+    }
+   }
+  },
+  {
+   "item": "long/heavy",
+   "seed": 20971320,
+   "noise_seed": 20990032,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.862,
+    "tau_min": 0.5801,
+    "g_mean": [
+     0.9991,
+     0.7656
+    ],
+    "dn_mean": [
+     157.0,
+     114.0
+    ],
+    "n_px_mean": 1300.3
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.862,
+     "tau_min": 0.5801,
+     "g_mean": [
+      0.9991,
+      0.7656
+     ],
+     "dn_mean": [
+      157.0,
+      114.0
+     ],
+     "n_px_mean": 1300.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.1,
+   "T_wall": 53.17,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5050
+    },
+    "classical:open": {
+     "ticks": 683
+    },
+    "classical:search": {
+     "ticks": 94
+    },
+    "snn:vis+legT2L": {
+     "ticks": 233
+    }
+   }
+  },
+  {
+   "item": "long/light",
+   "seed": 20971330,
+   "noise_seed": 20990033,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8718,
+    "tau_min": 0.6835,
+    "g_mean": [
+     0.9996,
+     0.9969
+    ],
+    "dn_mean": [
+     155.0,
+     164.0
+    ],
+    "n_px_mean": 2506.4
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8718,
+     "tau_min": 0.6835,
+     "g_mean": [
+      0.9996,
+      0.9969
+     ],
+     "dn_mean": [
+      155.0,
+      164.0
+     ],
+     "n_px_mean": 2506.4
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.45,
+   "T_wall": 57.38,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5725,
+     "range": 1
+    },
+    "classical:open": {
+     "ticks": 784
+    },
+    "classical:search": {
+     "ticks": 112
+    },
+    "snn:vis+legT2L": {
+     "ticks": 249
+    }
+   }
+  },
+  {
+   "item": "long/mid",
+   "seed": 20971340,
+   "noise_seed": 20990034,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.875,
+    "tau_min": 0.6424,
+    "g_mean": [
+     0.9997,
+     0.9889
+    ],
+    "dn_mean": [
+     157.0,
+     166.0
+    ],
+    "n_px_mean": 2450.7
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.875,
+     "tau_min": 0.6424,
+     "g_mean": [
+      0.9997,
+      0.9889
+     ],
+     "dn_mean": [
+      157.0,
+      166.0
+     ],
+     "n_px_mean": 2450.7
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 9.93,
+   "T_wall": 50.12,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 4965
+    },
+    "classical:open": {
+     "ticks": 659
+    },
+    "classical:search": {
+     "ticks": 110
+    },
+    "snn:vis+legT2L": {
+     "ticks": 224
+    }
+   }
+  },
+  {
+   "item": "L/hard_grip",
+   "seed": 20971350,
+   "noise_seed": 20990035,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8408,
+    "tau_min": 0.3401,
+    "g_mean": [
+     0.9994,
+     0.7945
+    ],
+    "dn_mean": [
+     166.0,
+     120.0
+    ],
+    "n_px_mean": 1304.4
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8408,
+     "tau_min": 0.3401,
+     "g_mean": [
+      0.9994,
+      0.7945
+     ],
+     "dn_mean": [
+      166.0,
+      120.0
+     ],
+     "n_px_mean": 1304.4
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.54,
+   "T_wall": 57.38,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5770
+    },
+    "classical:open": {
+     "ticks": 636
+    },
+    "classical:search": {
+     "ticks": 239
+    },
+    "snn:vis+legT2L": {
+     "ticks": 279
+    }
+   }
+  },
+  {
+   "item": "L/hard_slick",
+   "seed": 20971360,
+   "noise_seed": 20990036,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8758,
+    "tau_min": 0.6617,
+    "g_mean": [
+     0.9991,
+     0.7699
+    ],
+    "dn_mean": [
+     160.0,
+     114.0
+    ],
+    "n_px_mean": 1281.5
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8758,
+     "tau_min": 0.6617,
+     "g_mean": [
+      0.9991,
+      0.7699
+     ],
+     "dn_mean": [
+      160.0,
+      114.0
+     ],
+     "n_px_mean": 1281.5
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.41,
+   "T_wall": 57.17,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5705
+    },
+    "classical:open": {
+     "ticks": 631
+    },
+    "classical:search": {
+     "ticks": 250
+    },
+    "snn:vis+legT2L": {
+     "ticks": 260
+    }
+   }
+  },
+  {
+   "item": "L/heavy",
+   "seed": 20971370,
+   "noise_seed": 20990037,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.831,
+    "tau_min": 0.336,
+    "g_mean": [
+     0.9992,
+     0.7228
+    ],
+    "dn_mean": [
+     162.0,
+     95.0
+    ],
+    "n_px_mean": 1293.6
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.831,
+     "tau_min": 0.336,
+     "g_mean": [
+      0.9992,
+      0.7228
+     ],
+     "dn_mean": [
+      162.0,
+      95.0
+     ],
+     "n_px_mean": 1293.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.02,
+   "T_wall": 48.44,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5010
+    },
+    "classical:open": {
+     "ticks": 607
+    },
+    "classical:search": {
+     "ticks": 161
+    },
+    "snn:vis+legT2L": {
+     "ticks": 234
+    }
+   }
+  },
+  {
+   "item": "L/light",
+   "seed": 20971380,
+   "noise_seed": 20990038,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8757,
+    "tau_min": 0.664,
+    "g_mean": [
+     0.9996,
+     0.9604
+    ],
+    "dn_mean": [
+     158.0,
+     165.0
+    ],
+    "n_px_mean": 2076.3
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8757,
+     "tau_min": 0.664,
+     "g_mean": [
+      0.9996,
+      0.9604
+     ],
+     "dn_mean": [
+      158.0,
+      165.0
+     ],
+     "n_px_mean": 2076.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.26,
+   "T_wall": 56.62,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5630
+    },
+    "classical:open": {
+     "ticks": 629
+    },
+    "classical:search": {
+     "ticks": 250
+    },
+    "snn:vis+legT2L": {
+     "ticks": 247
+    }
+   }
+  },
+  {
+   "item": "L/mid",
+   "seed": 20971390,
+   "noise_seed": 20990039,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8769,
+    "tau_min": 0.6623,
+    "g_mean": [
+     0.9996,
+     0.9686
+    ],
+    "dn_mean": [
+     157.0,
+     167.0
+    ],
+    "n_px_mean": 2024.6
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8769,
+     "tau_min": 0.6623,
+     "g_mean": [
+      0.9996,
+      0.9686
+     ],
+     "dn_mean": [
+      157.0,
+      167.0
+     ],
+     "n_px_mean": 2024.6
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 11.35,
+   "T_wall": 58.7,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5675
+    },
+    "classical:open": {
+     "ticks": 615
+    },
+    "classical:search": {
+     "ticks": 250
+    },
+    "snn:vis+legT2L": {
+     "ticks": 270
+    }
+   }
+  },
+  {
+   "item": "wedge/hard_grip",
+   "seed": 20971400,
+   "noise_seed": 20990040,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8711,
+    "tau_min": 0.7258,
+    "g_mean": [
+     0.9994,
+     0.7717
+    ],
+    "dn_mean": [
+     168.0,
+     118.0
+    ],
+    "n_px_mean": 1326.7
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8711,
+     "tau_min": 0.7258,
+     "g_mean": [
+      0.9994,
+      0.7717
+     ],
+     "dn_mean": [
+      168.0,
+      118.0
+     ],
+     "n_px_mean": 1326.7
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.51,
+   "T_wall": 52.71,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5255
+    },
+    "classical:open": {
+     "ticks": 660
+    },
+    "classical:search": {
+     "ticks": 171
+    },
+    "snn:vis+legT2L": {
+     "ticks": 220
+    }
+   }
+  },
+  {
+   "item": "wedge/hard_slick",
+   "seed": 20971410,
+   "noise_seed": 20990041,
+   "truth": {
+    "grasp": true,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 29,
+    "tau_mean": 0.5086,
+    "tau_min": 0.0367,
+    "g_mean": [
+     0.9977,
+     0.6056
+    ],
+    "dn_mean": [
+     217.24,
+     117.24
+    ],
+    "n_px_mean": 944.3
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 29,
+     "tau_mean": 0.5086,
+     "tau_min": 0.0367,
+     "g_mean": [
+      0.9977,
+      0.6056
+     ],
+     "dn_mean": [
+      217.24,
+      117.24
+     ],
+     "n_px_mean": 944.3
+    },
+    {
+     "n": 30,
+     "tau_mean": 0.5145,
+     "tau_min": 0.0346,
+     "g_mean": [
+      0.9978,
+      0.613
+     ],
+     "dn_mean": [
+      220.0,
+      126.67
+     ],
+     "n_px_mean": 955.2
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 18.13,
+   "T_wall": 90.55,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 9065
+    },
+    "classical:open": {
+     "ticks": 1388
+    },
+    "classical:search": {
+     "ticks": 366
+    },
+    "snn:vis+legT2L": {
+     "ticks": 59
+    }
+   }
+  },
+  {
+   "item": "wedge/heavy",
+   "seed": 20971420,
+   "noise_seed": 20990042,
+   "truth": {
+    "grasp": false,
+    "lift": false,
+    "transport": false,
+    "release": false,
+    "placed": false
+   },
+   "success": false,
+   "reasons": [
+    "snn_released",
+    "snn_released"
+   ],
+   "attempts": 2,
+   "win_first": {
+    "n": 20,
+    "tau_mean": 0.3791,
+    "tau_min": 0.0357,
+    "g_mean": [
+     0.9972,
+     0.5322
+    ],
+    "dn_mean": [
+     230.0,
+     75.0
+    ],
+    "n_px_mean": 846.0
+   },
+   "n_windows": 2,
+   "windows": [
+    {
+     "n": 20,
+     "tau_mean": 0.3791,
+     "tau_min": 0.0357,
+     "g_mean": [
+      0.9972,
+      0.5322
+     ],
+     "dn_mean": [
+      230.0,
+      75.0
+     ],
+     "n_px_mean": 846.0
+    },
+    {
+     "n": 17,
+     "tau_mean": 0.3273,
+     "tau_min": 0.0352,
+     "g_mean": [
+      0.9965,
+      0.4818
+     ],
+     "dn_mean": [
+      229.41,
+      35.29
+     ],
+     "n_px_mean": 767.3
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 20.17,
+   "T_wall": 100.35,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 10085
+    },
+    "classical:open": {
+     "ticks": 1642
+    },
+    "classical:search": {
+     "ticks": 338
+    },
+    "snn:vis+legT2L": {
+     "ticks": 37
+    }
+   }
+  },
+  {
+   "item": "wedge/light",
+   "seed": 20971430,
+   "noise_seed": 20990043,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [
+    "snn_released"
+   ],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8693,
+    "tau_min": 0.6334,
+    "g_mean": [
+     0.9998,
+     0.9724
+    ],
+    "dn_mean": [
+     151.0,
+     158.0
+    ],
+    "n_px_mean": 1910.9
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8693,
+     "tau_min": 0.6334,
+     "g_mean": [
+      0.9998,
+      0.9724
+     ],
+     "dn_mean": [
+      151.0,
+      158.0
+     ],
+     "n_px_mean": 1910.9
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.49,
+   "T_wall": 53.58,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5245
+    },
+    "classical:open": {
+     "ticks": 655
+    },
+    "classical:search": {
+     "ticks": 181
+    },
+    "snn:vis+legT2L": {
+     "ticks": 213,
+     "jaw_end": 86
+    }
+   }
+  },
+  {
+   "item": "wedge/mid",
+   "seed": 20971440,
+   "noise_seed": 20990044,
+   "truth": {
+    "grasp": true,
+    "lift": true,
+    "transport": true,
+    "release": true,
+    "placed": true
+   },
+   "success": true,
+   "reasons": [],
+   "attempts": 1,
+   "win_first": {
+    "n": 100,
+    "tau_mean": 0.8526,
+    "tau_min": 0.6207,
+    "g_mean": [
+     0.9991,
+     0.7865
+    ],
+    "dn_mean": [
+     159.0,
+     137.0
+    ],
+    "n_px_mean": 1276.4
+   },
+   "n_windows": 1,
+   "windows": [
+    {
+     "n": 100,
+     "tau_mean": 0.8526,
+     "tau_min": 0.6207,
+     "g_mean": [
+      0.9991,
+      0.7865
+     ],
+     "dn_mean": [
+      159.0,
+      137.0
+     ],
+     "n_px_mean": 1276.4
+    }
+   ],
+   "own_px": 248,
+   "complete": true,
+   "stopped_by": null,
+   "T_sim": 10.17,
+   "T_wall": 48.17,
+   "safety_stats": {
+    "classical:reach": {
+     "ticks": 5085
+    },
+    "classical:open": {
+     "ticks": 604
+    },
+    "classical:search": {
+     "ticks": 169
+    },
+    "snn:vis+legT2L": {
+     "ticks": 244,
+     "jaw_end": 37
+    }
+   }
+  }
+ ]
+}

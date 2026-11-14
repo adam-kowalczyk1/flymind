@@ -1,0 +1,44 @@
+calibration {'ref_mid': 16.215275087175513, 'ref_dn': 105.125, 'mid_gain': 0.725, 'mid_bias': -7.0, 'dn_gain': 0.525}
+{"name": "MAIN_DATA", "wall_s": 25.3, "checks": {"ref_free_identity": [true, 32], "dd_bb_identity": [true, 0], "swap_counts": [true, 0], "swap_subset": [true, 0], "swap_isi": [true, 0]}}
+{"name": "MAIN_B1_8421003", "wall_s": 50.5, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421006", "wall_s": 54.5, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421007", "wall_s": 55.9, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421004", "wall_s": 58.7, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421001", "wall_s": 58.9, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421005", "wall_s": 59.6, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421002", "wall_s": 64.4, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_DATA", "wall_s": 20.2, "checks": {"ref_free_identity": [true, 32], "dd_bb_identity": [true, 0], "swap_counts": [true, 0], "swap_subset": [true, 0], "swap_isi": [true, 0]}}
+{"name": "MAIN_B1_8421008", "wall_s": 58.5, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421009", "wall_s": 52.1, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421011", "wall_s": 50.3, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "MAIN_B1_8421010", "wall_s": 54.5, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421013", "wall_s": 56.6, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421012", "wall_s": 58.4, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421014", "wall_s": 53.5, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421015", "wall_s": 48.6, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+{"name": "REP_B1_8421016", "wall_s": 42.1, "checks": {"ref_free_identity": [true, 0], "dd_bb_identity": [true, 64], "swap_counts": [true, 64], "swap_subset": [true, 64], "swap_isi": [true, 64]}}
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/Users/admin/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/Users/admin/so101_fly_project/flymind/v6m3.py", line 206, in job_run
+    BD, nBD = count_swap(XB, XD, rng)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/admin/so101_fly_project/flymind/v6m3.py", line 103, in count_swap
+    raise RuntimeError("count_swap: no valid position")
+RuntimeError: count_swap: no valid position
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/admin/so101_fly_project/flymind/v6m3.py", line 275, in <module>
+    main()
+  File "/Users/admin/so101_fly_project/flymind/v6m3.py", line 268, in main
+    for r in pool.imap_unordered(job_run, jobs):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/admin/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/multiprocessing/pool.py", line 873, in next
+    raise value
+RuntimeError: count_swap: no valid position

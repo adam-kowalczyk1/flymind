@@ -1,0 +1,71 @@
+(1) RT-D DN-only test, intermediates clamped (M0 = REF trains, MCIRC = circular shift); DN Hz DATA / B1, gap, rel gap
+  A_REF|M0                            85.2 /    66.3  gap  -18.8  rel -0.221
+  A_REF|MCIRC                        105.1 /    95.1  gap   -9.9  rel -0.095
+  B_t0|M0                            162.5 /   148.8  gap  -13.7  rel -0.084
+  B_t0|MCIRC                         147.8 /   131.1  gap  -16.7  rel -0.113
+  C_t0_sub_multi|M0                  193.8 /   182.9  gap  -10.8  rel -0.056
+  C_t0_sub_multi|MCIRC               157.8 /   138.6  gap  -19.2  rel -0.122
+  D_t0_sub_multi_noleak|M0           173.2 /   145.3  gap  -27.9  rel -0.161
+  D_t0_sub_multi_noleak|MCIRC        168.8 /   144.8  gap  -24.0  rel -0.142
+  E_noleak|M0                         83.1 /    63.4  gap  -19.7  rel -0.237
+  E_noleak|MCIRC                     109.8 /    99.4  gap  -10.4  rel -0.095
+  B_t0_bias-10|M0                    141.2 /   131.6  gap   -9.6  rel -0.068
+  B_t0_bias-20|M0                    122.5 /   115.2  gap   -7.3  rel -0.060
+  B_t0_bias-30|M0                    103.7 /    98.9  gap   -4.8  rel -0.046
+  A_REF_bias+10|M0                    96.5 /    76.7  gap  -19.8  rel -0.206
+  A_REF_bias-10|M0                    75.0 /    57.8  gap  -17.2  rel -0.229
+  timing share at DN = 1 - gap(MCIRC)/gap(M0), with rep bootstrap (B1 instances + reps, DATA reps):
+   A_REF                      F_timing +0.47 [+0.25; +0.68]
+   B_t0                       F_timing -0.22 [-1.33; +0.25]
+   C_t0_sub_multi             F_timing -0.77 [-5.73; +0.02]
+   D_t0_sub_multi_noleak      F_timing +0.14 [-0.43; +0.46]
+   E_noleak                   F_timing +0.47 [+0.26; +0.72]
+
+(2) F on the RELATIVE gap (secondary metric), paired hierarchical bootstrap as v6m_analysis.gaps, 10 000 draws, RNG 8 498 399
+  main LCIRC           vs REF      F_rel +0.95 [+0.89; +1.02]   log(B1/DATA) -0.011
+  main E1_DN_t0        vs REF      F_rel +0.61 [+0.52; +0.70]   log(B1/DATA) -0.094
+  main E1_DN_t1        vs REF      F_rel +0.20 [+0.17; +0.24]   log(B1/DATA) -0.203
+  main E1_DN_t2        vs REF      F_rel +0.06 [+0.04; +0.08]   log(B1/DATA) -0.245
+  main E1_DN_t4        vs REF      F_rel -0.03 [-0.06; +0.01]   log(B1/DATA) -0.269
+  main E1_DN_t6        vs REF      F_rel -0.05 [-0.08; -0.01]   log(B1/DATA) -0.276
+  main E1b_MID_t0      vs REF      F_rel -0.26 [-0.29; -0.23]   log(B1/DATA) -0.342
+  main E1b_MID_t4      vs REF      F_rel +0.01 [-0.01; +0.04]   log(B1/DATA) -0.257
+  main E1c_DN_t0       vs REF      F_rel +0.59 [+0.51; +0.67]   log(B1/DATA) -0.100
+  main E1c_DN_t6       vs REF      F_rel -0.05 [-0.09; -0.02]   log(B1/DATA) -0.277
+  main E2a_DN_b00      vs REF      F_rel +0.04 [+0.01; +0.09]   log(B1/DATA) -0.248
+  main E2a_DN_b025     vs REF      F_rel +0.00 [-0.02; +0.03]   log(B1/DATA) -0.261
+  main E2a_DN_b10      vs REF      F_rel +0.04 [+0.02; +0.06]   log(B1/DATA) -0.249
+  main E2b_MID_b00     vs REF      F_rel +0.22 [+0.17; +0.28]   log(B1/DATA) -0.198
+  main E2b_MID_b025    vs REF      F_rel +0.06 [+0.02; +0.10]   log(B1/DATA) -0.242
+  main E2b_MID_b10     vs REF      F_rel -0.07 [-0.13; -0.02]   log(B1/DATA) -0.284
+  main E3_M0           vs REF      F_rel +0.00 [+0.00; +0.00]   log(B1/DATA) -0.261
+  main E3_MCIRC        vs E3_M0    F_rel +0.47 [+0.42; +0.52]   log(B1/DATA) -0.130
+  main E3_MJ2          vs REF      F_rel +0.02 [-0.01; +0.05]   log(B1/DATA) -0.255
+  main E3_MJ5          vs REF      F_rel +0.07 [+0.05; +0.09]   log(B1/DATA) -0.240
+  main E3_MJ20         vs E3_M0    F_rel +0.46 [+0.43; +0.50]   log(B1/DATA) -0.131
+  main E3_MPOIS        vs E3_M0    F_rel +0.58 [+0.46; +0.71]   log(B1/DATA) -0.101
+  main E5a_DN_t0_sub   vs E1_DN_t0 F_rel +0.17 [+0.08; +0.31]   log(B1/DATA) -0.078
+  main E5b_noinh       vs REF      F_rel -0.01 [-0.03; +0.01]   log(B1/DATA) -0.265
+  rep  LCIRC           vs REF      F_rel +0.84 [+0.77; +0.90]   log(B1/DATA) -0.036
+  rep  E1_DN_t0        vs REF      F_rel +0.66 [+0.60; +0.73]   log(B1/DATA) -0.077
+  rep  E1_DN_t6        vs REF      F_rel -0.06 [-0.09; -0.03]   log(B1/DATA) -0.263
+  rep  E1c_DN_t0       vs REF      F_rel +0.65 [+0.59; +0.72]   log(B1/DATA) -0.080
+  rep  E2a_DN_b00      vs REF      F_rel +0.00 [-0.05; +0.06]   log(B1/DATA) -0.245
+  rep  E2b_MID_b00     vs REF      F_rel +0.19 [+0.15; +0.23]   log(B1/DATA) -0.195
+  rep  E3_M0           vs REF      F_rel +0.00 [+0.00; +0.00]   log(B1/DATA) -0.246
+  rep  E3_MCIRC        vs E3_M0    F_rel +0.38 [+0.31; +0.46]   log(B1/DATA) -0.144
+  rep  E5a_DN_t0_sub   vs E1_DN_t0 F_rel +0.17 [+0.06; +0.29]   log(B1/DATA) -0.064
+
+(3a) Exp 4, REF dynamics: 10 Hz vs 40 Hz events at EQUAL participation p
+  p 0.35: DN 10 Hz  87.2  40 Hz  91.9   fano10  11.5 /   4.5
+  p 0.70: DN 10 Hz  72.2  40 Hz  74.5   fano10  27.3 /  14.1
+  p 1.00: DN 10 Hz  64.3  40 Hz  69.2   fano10  42.3 /  24.4
+(3b) synthetic gap (10 Hz family, interpolated at the real DATA and B1 values) under each synchrony axis; real gap -19.9
+  fano2     DATA  3.281 ->  96.5 (real 86.5)  B1 10.785 ->  82.6 (real 66.6)  synth gap -13.9 =   70 %
+  fano5     DATA  6.855 ->  92.4 (real 86.5)  B1 23.658 ->  74.1 (real 66.6)  synth gap -18.3 =   92 %
+  fano10    DATA 11.828 ->  86.9 (real 86.5)  B1 37.654 ->  68.8 (real 66.6)  synth gap -18.1 =   91 %
+  fano20    DATA 18.133 ->  80.2 (real 86.5)  B1 49.507 ->  64.3 (real 66.6)  synth gap -15.8 =   80 %  (outside grid, clipped)
+  chi2_5    DATA  0.053 ->  92.5 (real 86.5)  B1  0.183 ->  74.2 (real 66.6)  synth gap -18.3 =   92 %
+  paircorr5 DATA  0.047 ->  92.4 (real 86.5)  B1  0.181 ->  73.9 (real 66.6)  synth gap -18.5 =   93 %
+  volley2   DATA  0.066 -> 100.9 (real 86.5)  B1  0.285 ->  83.0 (real 66.6)  synth gap -17.9 =   90 %
+  cv5       DATA  0.935 ->  91.1 (real 86.5)  B1  1.741 ->  73.4 (real 66.6)  synth gap -17.8 =   89 %
