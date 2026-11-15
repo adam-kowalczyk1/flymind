@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlyMind — panel</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1c1c1a;--mute:#66645e;--line:#dcd9d0;--accent:#0b63a8;--ok:#1d7a46;--bad:#b3261e;--warn:#9a5b00;--run:#0b63a8;--code:#f0eee8}
+@media (prefers-color-scheme:dark){:root{--bg:#171715;--card:#22221f;--ink:#ecebe6;--mute:#a3a198;--line:#3a3934;--accent:#6cb4f0;--ok:#62c78c;--bad:#f28b82;--warn:#f0b65a;--run:#6cb4f0;--code:#1c1c1a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:20px 24px 0;max-width:1180px;margin:0 auto}
+h1{margin:0;font-size:26px;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:var(--mute)}
+nav{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line)}
+nav button{font:inherit;background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;color:var(--mute);cursor:pointer}
+nav button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:20px 24px 60px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:26px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{margin:0 0 6px;font-size:18px}
+.card p{margin:0 0 10px}
+.ev{font-size:13px;color:var(--mute);border-left:3px solid var(--line);padding-left:8px;margin:8px 0}
+.note{font-size:13px;color:var(--mute)}
+label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;margin:6px 0}
+select,input[type=number]{font:inherit;font-size:14px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:150px}
+select{width:230px;max-width:60%}
+button.go{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;margin-top:8px}
+@media (prefers-color-scheme:dark){button.go{color:#10100f}}
+button.go:disabled{opacity:.5;cursor:default}
+button.stop{font:inherit;background:none;border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:5px 12px;cursor:pointer}
+.run{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.run .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{font-size:13px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid currentColor}
+.s-działa{color:var(--run)}.s-zakończone{color:var(--ok)}.s-błąd{color:var(--bad)}.s-zatrzymane{color:var(--warn)}
+.cmd{font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-all;margin-top:6px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0 0;max-height:300px;overflow:auto;font:12px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap}
+.empty{color:var(--mute);font-style:italic}
+.err{color:var(--bad);font-size:14px;margin-top:6px;min-height:1em}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+td.v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.src{font:12px ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-all}
+tr.ctl td:first-child{border-left:4px solid #e69f00}
+ul.concl{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 14px 14px 34px;margin:0}
+ul.concl li{margin:4px 0}
+video,img.m{width:100%;border-radius:8px;background:#000;display:block}
+img.m{background:#fff}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>FlyMind — panel</h1>
+  <p>Uruchamianie istniejących pokazów i testów. Wszystko w symulacji, tylko na tym komputerze (127.0.0.1).</p>
+  <nav role="tablist">
+    <button role="tab" data-tab="start" aria-selected="true">Uruchom</button>
+    <button role="tab" data-tab="wyniki" aria-selected="false">Filmy i liczby</button>
+    <button role="tab" data-tab="pomoc" aria-selected="false">Jak to działa</button>
+  </nav>
+</header>
+<main>
+<section id="tab-start">
+  <div id="jobs"></div>
+  <h2>Uruchomienia (od najnowszego)</h2>
+  <div id="runs"><p class="empty">Jeszcze nic nie uruchomiono w tej sesji panelu.</p></div>
+</section>
+
+<section id="tab-wyniki" hidden>
+  <h2>Co z tego wynika — uczciwie</h2>
+  <ul class="concl" id="concl"></ul>
+  <h2>Kluczowe liczby (czytane z plików wyników w chwili otwarcia zakładki)</h2>
+  <p class="note">Wiersze z pomarańczowym paskiem to kontrole — bez nich same „dobre” liczby mogłyby wprowadzać w błąd.</p>
+  <div class="tw"><table><thead><tr><th>Co</th><th>Wynik</th><th>Poziom dowodu</th><th>Plik źródłowy</th></tr></thead><tbody id="nums"></tbody></table></div>
+  <h2>Gotowe filmy i wykresy</h2>
+  <div class="grid" id="media"></div>
+</section>
+
+<section id="tab-pomoc" hidden>
+  <div class="card">
+    <h3>Jak to działa</h3>
+    <p><b>Pokazy na żywo</b> otwierają osobne okno MuJoCo na tym Macu (nie w przeglądarce). Pokaz ramienia najpierw ok. minuty buduje sieć — okno pojawia się dopiero potem. Okno zamykasz zwykłym zamknięciem albo przyciskiem „Zatrzymaj” tutaj.</p>
+    <p><b>Testy</b> nie otwierają okna. Zielone „zakończone” znaczy, że wszystkie sprawdzenia przeszły; czerwone „błąd” — że coś nie przeszło (szczegóły w logu).</p>
+    <p><b>Czego panel nie robi:</b> nie uruchamia dużych eksperymentów (135 prób), nie używa ziaren testowych, nie steruje prawdziwym robotem, nie przyjmuje dowolnych komend i nie jest widoczny z sieci.</p>
+    <p><b>Gdzie są zapisy:</b> każdy przebieg ma własny katalog w <code>flymind/panel/runs/</code> (log, parametry, wynik). Panel niczego nie nadpisuje.</p>
+    <p><b>Poziomy dowodu:</b> VERIFIED — sprawdzone uruchomieniem albo przeliczeniem z pliku; REPORTED — z wcześniejszego raportu; NOT VERIFIED — jeszcze nikt nie sprawdził (np. okna pokazów musi obejrzeć człowiek); FAILED — sprawdzone i nie działa.</p>
+    <p><b>Zatrzymanie panelu:</b> w oknie Terminala, w którym działa, naciśnij Ctrl+C. Zatrzyma to też uruchomione pokazy.</p>
+  </div>
+</section>
+</main>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (k === 'class') e.className = v; else if (k in e) e[k] = v; else e.setAttribute(k, v); } kids.flat().forEach(k => e.append(k)); return e; };
+const api = async (path, body) => {
+  const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-FlyMind-Panel': '1' }, body: JSON.stringify(body) } : {});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j;
+};
+let JOBS = [], logs = {}, opened = new Set(), numbersLoaded = false;
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  for (const t of ['start', 'wyniki', 'pomoc']) $('#tab-' + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === 'wyniki' && !numbersLoaded) loadNumbers();
+});
+
+function field(p) {
+  let input;
+  if (p.type === 'choice') { input = el('select'); p.options.forEach(o => input.append(el('option', { value: o, textContent: (p.labels && p.labels[o]) || o, selected: o === p.default }))); }
+  else if (p.type === 'bool') input = el('input', { type: 'checkbox', checked: p.default });
+  else input = el('input', { type: 'number', min: p.min, max: p.max, step: p.step, value: p.default });
+  input.dataset.key = p.key; input.dataset.type = p.type;
+  return el('label', {}, el('span', { textContent: p.label }), input);
+}
+function readParams(card) {
+  const out = {};
+  card.querySelectorAll('[data-key]').forEach(i => { out[i.dataset.key] = i.dataset.type === 'bool' ? i.checked : i.dataset.type === 'number' ? Number(i.value) : i.value; });
+  return out;
+}
+async function loadJobs() {
+  const d = await api('/api/jobs'); JOBS = d.jobs;
+  const groups = [...new Set(JOBS.map(j => j.group))];
+  const root = $('#jobs'); root.textContent = '';
+  for (const g of groups) {
+    root.append(el('h2', { textContent: g }));
+    const grid = el('div', { class: 'grid' });
+    for (const j of JOBS.filter(x => x.group === g)) {
+      const err = el('div', { class: 'err' });
+      const btn = el('button', { class: 'go', textContent: j.window ? 'Otwórz pokaz' : 'Uruchom test' });
+      const card = el('div', { class: 'card' }, el('h3', { textContent: j.title }), el('p', { textContent: j.desc }),
+        el('div', { class: 'ev', textContent: 'Dowód: ' + j.evidence }), j.params.map(field),
+        j.note ? el('div', { class: 'note', textContent: j.note }) : [], btn, err);
+      btn.dataset.job = j.id;
+      btn.onclick = async () => { err.textContent = ''; try { const r = await api('/api/run', { job: j.id, params: readParams(card) }); opened.add(r.run); await poll(); } catch (e) { err.textContent = e.message; } };
+      grid.append(card);
+    }
+    root.append(grid);
+  }
+  $('#concl').append(...d.conclusions.map(c => el('li', { textContent: c })));
+  const m = $('#media');
+  for (const x of d.media) {
+    const body = !x.exists ? el('p', { class: 'empty', textContent: 'brak pliku' })
+      : x.kind === 'video' ? el('video', { controls: true, preload: 'none', src: '/media/' + x.key }) : el('img', { class: 'm', loading: 'lazy', src: '/media/' + x.key, alt: x.title });
+    m.append(el('div', { class: 'card' }, el('h3', { textContent: x.title }), body, el('div', { class: 'cmd', textContent: x.source })));
+  }
+}
+async function loadNumbers() {
+  const tb = $('#nums'); tb.textContent = '';
+  try {
+    const d = await api('/api/numbers'); let sec = '';
+    for (const r of d.rows) {
+      if (r.section !== sec) { sec = r.section; tb.append(el('tr', {}, el('th', { colSpan: 4, textContent: sec }))); }
+      tb.append(el('tr', { class: r.label.startsWith('KONTROLA') ? 'ctl' : '' }, el('td', { textContent: r.label }), el('td', { class: 'v', textContent: r.value }),
+        el('td', { textContent: r.level }), el('td', { class: 'src', textContent: r.source })));
+    }
+    numbersLoaded = true;
+  } catch (e) { tb.append(el('tr', {}, el('td', { colSpan: 4, textContent: 'Nie udało się wczytać liczb: ' + e.message }))); }
+}
+async function poll() {
+  let d; try { d = await api('/api/runs'); } catch (e) { $('#runs').innerHTML = '<p class="err">Panel nie odpowiada — czy serwer nadal działa w Terminalu?</p>'; return; }
+  const root = $('#runs');
+  if (!d.runs.length) return;
+  const running = new Set(d.runs.filter(r => r.state === 'działa').map(r => r.job));
+  const winBusy = d.runs.some(r => r.state === 'działa' && r.window);
+  document.querySelectorAll('button.go').forEach(b => { const j = JOBS.find(x => x.id === b.dataset.job); b.disabled = running.has(j.id) || (j.window && winBusy); });
+  for (const r of d.runs) {
+    let box = document.getElementById('run-' + r.id);
+    if (!box) {
+      box = el('div', { class: 'run', id: 'run-' + r.id }, el('div', { class: 'top' }), el('div', { class: 'cmd' }), el('details', {}, el('summary', { textContent: 'Log' }), el('pre')));
+      box.querySelector('details').open = opened.has(r.id) || r.state === 'działa';
+      root.querySelector('.empty')?.remove(); root.prepend(box); logs[r.id] = { next: 0, done: false };
+    }
+    const top = box.querySelector('.top'); top.textContent = '';
+    top.append(el('b', { textContent: r.title }), el('span', { class: 'pill s-' + r.state, textContent: r.state + (r.exit_code !== null && r.state === 'błąd' ? ' (kod ' + r.exit_code + ')' : '') }),
+      el('span', { class: 'note', textContent: Math.round(r.seconds) + ' s' }));
+    if (r.state === 'działa') top.append(el('button', { class: 'stop', textContent: 'Zatrzymaj', onclick: () => api('/api/stop', { run: r.id }).then(poll) }));
+    if (r.window && r.state === 'działa') top.append(el('span', { class: 'note', textContent: 'okno MuJoCo otwiera się osobno na tym Macu' }));
+    box.querySelector('.cmd').textContent = r.command + '   →  ' + r.out_dir;
+    const L = logs[r.id];
+    if (!L.done) {
+      try {
+        const g = await api('/api/log?run=' + r.id + '&from=' + L.next); const pre = box.querySelector('pre');
+        if (g.text) { const stick = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20; pre.append(g.text); if (stick) pre.scrollTop = pre.scrollHeight; }
+        L.next = g.next; if (r.state !== 'działa' && !g.text) L.done = true;
+      } catch (e) { }
+    }
+  }
+}
+loadJobs().then(poll); setInterval(poll, 1500);
+</script>
+</body>
+</html>
