@@ -311,3 +311,32 @@ VERIFIED (model): w tym modelu łokciem steruje szlak BM→DNg15, nadgarstkiem B
 bez DNg15: łokieć 0, nadgarstek 26 (LZ_1 PASS); bez DNge078: łokieć 26, nadgarstek 0 (LZ_2 PASS); p_Holm 6·10⁻⁸.
 Wynik r2/r3 przetrwał szum neuronów — VERIFIED (model). Ziarna 21 631 / 641 / 642 xxx zużyte.
 | 74 | Integracja (eksploracja, sceny treningowe 21101, limit 10 s): zadanie całego ramienia z kroku 3 z siecią kroku 6 (3221 neuronów) | `run3_ext.py` → `integr_train/ext_lm10_N_g±1.json`; porównanie z `train/it1_lm10_N_g±1.json` | odłożone: Glu +1 29/45 (krok 3: 29), Glu −1 30/45 (krok 3: 30); **0 prób o innym wyniku**; siła na stół 0 N, bezpiecznik 0. Dołożone drogi z głowy nie psują podnoszenia — VERIFIED (trening, nie test) |
+
+## Krok 4 r2: „dwa odruchy”, test 3× większy (16 XI 2026; sesja dawki, numeracja R1–R4)
+
+| # | Co | Plik / komenda | Wynik |
+|---|---|---|---|
+| R1 | Cel, ziarna i hasze PRZED testem; zgoda Adama 16 XI | `LOOP_TARGET_reflex_r2.md`, `analyze_reflex2.py`; SEED_REGISTRY: 21 951–953 xxx, 21 960/970/980 001–005 (dopisane na końcu); `PRE_TEST_HASHES.txt` 15:36:17 | reflex.py 65fc342f, nets.py 058d6c97, analyze_reflex.py 34bb3236: te same co w r1 |
+| R2 | Przegląd kodu (/code-review low) | analyze_reflex2.py, one_reflex_r2.sh | 0 uwag |
+| R3 | **Test** (raz): 32 sieci × 3 ziarna scen × 6 póz | `one_reflex_r2.sh`, `reflex_r2_jobs.txt` (xargs -P 5 -L 1) → `reflex_r2/x*_g*.json` | 96/96 plików, 0 Traceback, w każdym pliku hasze kodu sprzed testu, ziarna tasowań zgodne z rejestrem |
+| R4 | Analiza (raz; hasz analyze_reflex2.py ea566752… = sprzed testu) | `analyze_reflex2.py reflex_r2 reflex_r2/analysis_reflex2.json` | tabela niżej |
+
+### Wynik: pary z OBOMA odruchami udanymi, na 77 ważnych par (13 z 90 odpadło przez nieosiągalny podjazd, tak samo dla każdej sieci)
+
+| Glu | N (dane) | F1–F5 | L1–L5 | G1–G5 |
+|---|---|---|---|---|
+| +1 | **49** (W 70 / C 53) | 0, 0, 1, 0, 0 | 34, 15, 3, 8, 26 | 43, 31, 34, 9, 14 |
+| −1 | **22** (W 22 / C 62) | 0, 0, 0, 0, 0 | 0, 0, 0, 0, 1 | 0, 29, 12, 1, 2 |
+
+| Hipoteza (McNemar + Holm) | Glu +1 | Glu −1 |
+|---|---|---|
+| H-R(F) | **POTWIERDZONA** (48–49 : 0) | **POTWIERDZONA** (22 : 0 ×5) |
+| H-R(L) | **POTWIERDZONA** (najsłabiej L1 26 : 11, p_Holm 0,020) | **POTWIERDZONA** (21–22 : 0) |
+| H-R(G) | nie: 4/5 (G1 20 : 14, p 0,39) | nie: 3/5 (G2 2 : 9 i G3 15 : 5, p 0,083) |
+
+Werdykt wg `LOOP_TARGET_reflex_r2.md`: „schemat połączeń ma znaczenie w zadaniu dla robota” **POTWIERDZONE dla obu znaków Glu** (H-R(F) i H-R(L)).
+- Przy Glu −1 oczekiwałem porażki (zapisane przed testem). Wynik jest lepszy od oczekiwań: sieć z danych robi oba odruchy rzadko (22/77), ale żadne tasowanie F ani L prawie nigdy (0–1).
+- Wynik r1 (24 pary) pozostaje niespełniony. r2 to nowy test zaprojektowany po r1, z nowymi ziarnami.
+- Ponieważ H-R(G) nie przeszło, wystarcza w dużej mierze zachować, która grupa neuronów (noga, warstwa) łączy się z którą; konkretny dobór neuronów nie jest potrzebny.
+- Nie wykluczone: część przewagi może wynikać z większej ogólnej aktywności sieci z danych (por. test dawki). Ten test tego nie rozdziela.
+- Stabilność między ziarnami scen (opisowo): N Glu +1 OBA 15/25, 15/25, 19/27; Glu −1 5/25, 8/25, 9/27.

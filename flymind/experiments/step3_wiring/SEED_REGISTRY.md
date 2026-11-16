@@ -52,3 +52,6 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 641 000 – 21 642 999 | KROK 6 r4 TEST: ziarna szumu (21 641 000 + 100·k dla σ 2, 21 642 000 + 100·k dla σ 6) | 2026-11-16 | zarezerwowane |
 | 21 631 000 – 21 631 149, 21 641 000 – 21 642 999 (zużyte) | KROK 6 r4 TEST: wykonany 16 XI 13:37–13:42, 12 przebiegów — wynik w audit_log_step3_20261115.md (krok 73) | 2026-11-16 | ZUŻYTE |
 | 21 101 000 – 21 101 449 (dopisek) | KROK 6 integracja (eksploracja): zadanie całego ramienia z siecią kroku 6 (`run3_ext.py`), sceny treningowe 21101 | 2026-11-16 | w użyciu (trening) |
+| 21 951 000 – 149 / 21 952 000 – 149 / 21 953 000 – 149 | KROK 4 r2 TEST (dwa odruchy, 3× scen, `reflex.py`, cel `LOOP_TARGET_reflex_r2.md`): sceny `--seed 21951/21952/21953`, 6 póz — RAZ | 2026-11-16 | zarezerwowane |
+| 21 960 001 – 005 / 21 970 001 – 005 / 21 980 001 – 005 | KROK 4 r2 TEST: tasowania F / L / G, oba Glu | 2026-11-16 | zarezerwowane |
+| 21 951 000 – 149, 21 952 000 – 149, 21 953 000 – 149, 21 960/970/980 001 – 005 (zużyte) | KROK 4 r2 TEST: wykonany 16 XI 15:36, 96 przebiegów — wynik w audit_log_step3_20261115.md (R1–R4) | 2026-11-16 | ZUŻYTE |
