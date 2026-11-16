@@ -207,13 +207,42 @@ def numbers():
         return f"{sum(bool(x['success']) for x in r)}/{len(r)}"
     add(S3, "sam łokieć, limit 3 s / 10 s: odłożone", lambda: f"{elbow(3)} / {elbow(10)}", "results/verification_step2_20261114/elbow_diag/",
         "VERIFIED liczba; wynik EKSPLORACYJNY (limit zmieniony po teście, bez tasowań)")
+
+    R = "results/step3_20261115/"
+    S4 = "4. Kroki 3–6 (15–16 XI): większa sieć „pre”, odruchy, nadgarstek, głowa → noga"
+    a3 = lambda g, arm: _j(R + "test_r2/analysis_arm3r2_test.json")[g]["arms"][arm]["placed"]  # noqa: E731
+    add(S4, "całe ramię (135 prób, limit 10 s): sieć / klasyczny, odłożone (A / B)",
+        lambda: f"{a3('glu-1', 'N')} / {a3('glu-1', 'K')} i {a3('glu1', 'N')} / {a3('glu1', 'K')}", R + "test_r2/analysis_arm3r2_test.json")
+    rx = lambda g: _j(R + "reflex_r2/analysis_reflex2.json")[g]  # noqa: E731
+    fam_max = lambda g, f: max(v["both"] for k, v in rx(g)["nets"].items() if k[0] == f)  # noqa: E731
+    add(S4, "dwa odruchy (77 par): sieć z danych, oba udane (A / B)", lambda: f"{rx('glu-1')['nets']['N']['both']} i {rx('glu1')['nets']['N']['both']}",
+        R + "reflex_r2/analysis_reflex2.json")
+    add(S4, "KONTROLA dwa odruchy: najlepsze z 5 tasowań swobodnych / z warstwami (A / B)",
+        lambda: f"{fam_max('glu-1', 'F')} / {fam_max('glu-1', 'L')} i {fam_max('glu1', 'F')} / {fam_max('glu1', 'L')}", R + "reflex_r2/analysis_reflex2.json")
+    add(S4, "dwa odruchy: schemat połączeń lepszy od tasowań F i L (A / B)",
+        lambda: f"{'tak' if rx('glu-1')['claim'] else 'nie'} / {'tak' if rx('glu1')['claim'] else 'nie'} (z warstwami i nogami: nie)", R + "reflex_r2/analysis_reflex2.json")
+    w2 = lambda g: _j(R + "wrist_f3_test/analysis_wrist_r2.json")[f"N_{g}"]  # noqa: E731
+    add(S4, "nadgarstek po dotyku dłoni (próg 3 N): ruszył (A / B)", lambda: f"{w2('g-1')['wrist_moved']}/{w2('g-1')['W_valid']} i {w2('g1')['wrist_moved']}/{w2('g1')['W_valid']}",
+        R + "wrist_f3_test/analysis_wrist_r2.json", "VERIFIED; uwaga: dłoń dociskana mocno (mediana ok. 9 N)")
+    bl = lambda g: _j(R + "analysis_brainleg_r2.json")[g]  # noqa: E731
+    add(S4, "głowa → noga, dwa szlaki (sonda dłoni): łokieć i nadgarstek razem (A / B)",
+        lambda: f"{bl('glu-1')['N']['both']}/{bl('glu-1')['n_pairs']} i {bl('glu1')['N']['both']}/{bl('glu1')['n_pairs']}", R + "analysis_brainleg_r2.json")
+    ds = lambda g: _j(R + "dose/analysis_dose.json")[g]  # noqa: E731
+    add(S4, "siła zacisku przy pełnym dotyku: dane / najlepsze z 40 tasowań F+L [N·m] (A / B)",
+        lambda: " i ".join(f"{ds(g)['N']['tau40']:.2f} / {max(ds(g)['F']['tau40_max'], ds(g)['L']['tau40_max']):.2f}" for g in ("glu-1", "glu+1")),
+        R + "dose/analysis_dose.json")
+    add(S4, "test dawki (siła ORAZ czystość zacisku lepsze od tasowań)", lambda: "tak" if _j(R + "dose/analysis_dose.json")["verdict_FL_both_glu"] else "nie — WYNIK NEGATYWNY",
+        R + "dose/analysis_dose.json")
     return rows
 
 
 CONCLUSIONS = [
     "Wszystko działa w symulacji MuJoCo. Prawdziwe ramię SO-101 nie było sterowane siecią.",
-    "Sieć z konektomu potrafi obrócić ramię w stronę celu i dobrać siłę chwytu; całym ramieniem nie steruje skutecznie.",
-    "W żadnym z trzech zadań dokładny schemat połączeń muszki nie okazał się lepszy od przetasowanego ani od klasycznego sterownika.",
+    "Sieć z konektomu potrafi obrócić ramię w stronę celu i dobrać siłę chwytu. Mniejsza sieć nogi nie sterowała całym ramieniem (krok 2);"
+    " większa sieć „pre” (3148 neuronów) steruje nim tak skutecznie jak klasyczny sterownik (krok 3, limit 10 s).",
+    "Schemat połączeń wygrywa tam, gdzie liczy się, KTÓRE czucie uruchamia KTÓRY ruch: w teście „dwa odruchy” (16 XI) sieć z danych"
+    " była lepsza od każdego tasowania swobodnego i warstwowego, przy obu znakach glutaminianu. Nie wygrywa z tasowaniami, które"
+    " zachowują też podział na nogi, i nie wygrywa w liczbach (siła zacisku, liczba odłożonych przedmiotów).",
     "„Oko” w pokazie 1 to wykrywacz zielonego koloru podający ten sam prąd wszystkim neuronom jednej strony — sztuczne pobudzanie, nie oko muszki.",
     "W działających etapach sieć wydaje ok. 3 % komend; dojazd ramienia i kolejność faz są klasyczne.",
 ]
