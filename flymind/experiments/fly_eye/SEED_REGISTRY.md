@@ -13,3 +13,4 @@ Przejrzane rejestry (11 plików `SEED_REGISTRY.md` w flymind/): używane prefiks
 | 23 502 001 – 23 502 010, 23 503 001 – 23 503 040 (zużyte) | G2-ALIF wykonany RAZ 16 XI 19:16–20:45 — wynik FAILED, `reports/fly_eye_g2_alif_20261116.md` | ZUŻYTE |
 | 23 504 001 | W0: ziarno świata `object_handling.World` w `w0_render.py` (przedmiot stawiany ręcznie, generator nieużywany) | w użyciu (deterministyczne, wielokrotne) |
 | 23 505 001 – 23 505 023 | W2 (17 XI): 23 losowe permutacje etykiet typów w odczycie LC4 (`w2_run.perms`); kolizji brak (wyrażenie `23[ _]?505` → 0 trafień przed wpisem) | w użyciu (deterministyczne, wielokrotne; użyte też w próbie dymnej na modelu 040) |
+| 23 506 001 – 23 506 003 | D (17 XI wieczór): 3 losowe tekstury „własnego ruchu” (`d_ideal.texture`); kolizji brak (`23[ _]?506` → 0 trafień przed wpisem) | w użyciu (deterministyczne, wielokrotne) |
