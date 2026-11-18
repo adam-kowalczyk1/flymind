@@ -74,3 +74,4 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 941 000 – 149 / 21 942 000 – 149 / 21 943 000 – 149 | ETAP 3a TEST (nerwy: model FSR + serw, `nerves_run.py`, cel `LOOP_TARGET_nerves_r1.md`): sceny, 6 póz; ziarna nerwów = ziarno sceny — RAZ | 2026-11-18 | zarezerwowane |
 | 21 941 000 – 21 943 149 (zużyte) | ETAP 3a TEST (nerwy): wykonany 18 XI, 30 przebiegów — wynik w NERVES_R1_REPORT_20261118.md | 2026-11-18 | ZUŻYTE |
 | 21 944 000 – 21 944 999 | ŻYCIE (eksploracja, `alive.py`): ziarna szumu neuronów, bez robota, bez zadania; tasowania treningowe 21 100 001 (F), 21 100 006 (L) | 2026-11-18 | w użyciu (eksploracja) |
+| 21 944 201 – 21 944 213 | ŻYCIE 2 (eksploracja): `alive.py --feco/--head` (głowa `head.py`), wyniki `results/step3_20261115/alive_head_explore/` | 2026-11-18 | ZUŻYTE (eksploracja) |
