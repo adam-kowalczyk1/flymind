@@ -1,0 +1,153 @@
+{
+ "sides": {
+  "source": "somaSide (MaleCNS v1.0)",
+  "counts": {
+   "R": 230,
+   "L": 194
+  },
+  "raw_values": {
+   "R": 230,
+   "L": 194
+  }
+ },
+ "DATA": {
+  "functional": {
+   "g1.0": {
+    "ipsi_hz": 227.2,
+    "contra_hz": 0.0,
+    "F_hz": 227.2
+   },
+   "g0.5": {
+    "ipsi_hz": 33.3,
+    "contra_hz": 0.0,
+    "F_hz": 33.3
+   }
+  },
+  "li_rel": 1.0
+ },
+ "SHUF_WITHIN_SIDE": [
+  {
+   "seed": 1401,
+   "li_rel": 0.901,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 222.8,
+     "contra_hz": 0.0,
+     "F_hz": 222.8
+    },
+    "g0.5": {
+     "ipsi_hz": 3.9,
+     "contra_hz": 0.0,
+     "F_hz": 3.9
+    }
+   },
+   "side_block": true,
+   "pre_side": true,
+   "changed_frac": 0.7164
+  },
+  {
+   "seed": 1402,
+   "li_rel": 0.871,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 220.6,
+     "contra_hz": 0.0,
+     "F_hz": 220.6
+    },
+    "g0.5": {
+     "ipsi_hz": 0.0,
+     "contra_hz": 0.0,
+     "F_hz": 0.0
+    }
+   },
+   "side_block": true,
+   "pre_side": true,
+   "changed_frac": 0.7205
+  },
+  {
+   "seed": 1403,
+   "li_rel": 0.855,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 222.8,
+     "contra_hz": 0.0,
+     "F_hz": 222.8
+    },
+    "g0.5": {
+     "ipsi_hz": 1.1,
+     "contra_hz": 0.0,
+     "F_hz": 1.1
+    }
+   },
+   "side_block": true,
+   "pre_side": true,
+   "changed_frac": 0.7257
+  }
+ ],
+ "SHUF_STR": [
+  {
+   "seed": 1411,
+   "li_rel": 0.162,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 138.9,
+     "contra_hz": 111.1,
+     "F_hz": 27.8
+    },
+    "g0.5": {
+     "ipsi_hz": 0.0,
+     "contra_hz": 0.0,
+     "F_hz": 0.0
+    }
+   },
+   "side_block": false,
+   "pre_side": false,
+   "changed_frac": 0.8509
+  },
+  {
+   "seed": 1412,
+   "li_rel": 0.261,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 148.9,
+     "contra_hz": 95.6,
+     "F_hz": 53.3
+    },
+    "g0.5": {
+     "ipsi_hz": 0.0,
+     "contra_hz": 0.0,
+     "F_hz": 0.0
+    }
+   },
+   "side_block": false,
+   "pre_side": false,
+   "changed_frac": 0.8477
+  },
+  {
+   "seed": 1413,
+   "li_rel": 0.166,
+   "functional": {
+    "g1.0": {
+     "ipsi_hz": 122.8,
+     "contra_hz": 96.7,
+     "F_hz": 26.1
+    },
+    "g0.5": {
+     "ipsi_hz": 0.0,
+     "contra_hz": 0.0,
+     "F_hz": 0.0
+    }
+   },
+   "side_block": false,
+   "pre_side": false,
+   "changed_frac": 0.8525
+  }
+ ],
+ "protocol": "flymind/v5v3_control_check.py — techniczna walidacja kontroli SHUF_WITHIN_SIDE przed protokołem V5 v3 (bez pętli, bez\nMuJoCo). Cel ustalony przed uruchomieniem: czy kontrola zachowuje lateralizację FUNKCJONALNĄ (strona odpowiedzi DNa02),\nnie strojenie czegokolwiek. Parametry V5 v3 (J0, próg synaps, enkoder, sceny) są ustalone niezależnie od tego wyniku.\nNapęd jak V4 część A: 12 mV·g do LC10a strony, 300 ms; g ∈ {(1,0), (0,1), (0,5,0), (0,0,5)}; ziarna ALIF 1001–1003 (dev).\nSieci: DATA; SHUF_WITHIN_SIDE ziarna 1401–1403; SHUF_STR (visual_path.shuffle equal_weight) ziarna 1411–1413.\nMiara: lateralizacja funkcjonalna F(g) = średnia po stronach [r(DNa02 ipsi) − r(DNa02 kontra)] [Hz]; też r ipsi i kontra.\nUruchom: .venv/bin/python -I -B flymind/v5v3_control_check.py --out flymind/results/v5v3_prep\n",
+ "wall_s": 41.0,
+ "stage1_post": {
+  "n": 28,
+  "mismatched": [],
+  "manifest_sha256": "2f061a60b1d3481578443b16640f7bd92d90d578a47ef72d4d37b2ffc0b2c94f"
+ }
+}

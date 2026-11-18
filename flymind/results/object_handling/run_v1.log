@@ -1,0 +1,43 @@
+# Zamrożenie kodu przed pomiarami (v1)
+data: 2026-11-10 06:59:40 +0100
+commit odniesienia (HEAD): a7344e377709eb0c1cfa427f269c914672db3f0b (flymind/fly-first-control)
+sha256:
+  4066cb0e5e97c5906804dd3d1ac94319854031c92821c32929b50052ff4548a7  flymind/object_handling.py
+  99f05ee0c50511396315934d1ef74f736d403867a40fdd3a9240b27520100343  flymind/test_object_handling.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  d75253eb568e8a7214db9c631ab7bed4217f608a26f7276ebe9a7636cac82580  assets/so101_upstream.xml
+python 3.12.13, mujoco 3.17.0, numpy 2.5.4
+katalog roboczy: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.8dIkS17DNu
+MUJOCO_LOG.TXT repo przed: 27b1dd7409b327cac69fe4febdc158aea080a0c8c57951dded806ade44701e66
+
+$ .venv/bin/python -I -B flymind/test_object_handling.py
+kod wyjścia testów: 0 (14 testów OK)
+$ .venv/bin/python -I -B flymind/object_handling.py single --set base --poses 3 --seed 100  --tag B_base_v1   [start 06:59:46]
+kod wyjścia B_base_v1: 0
+$ .venv/bin/python -I -B flymind/object_handling.py series --set base --perm 1 2 --n 9  --tag C_mixed_v1   [start 07:00:26]
+kod wyjścia C_mixed_v1: 1
+$ .venv/bin/python -I -B flymind/object_handling.py single --set hard --poses 3 --seed 200  --tag D_hard_v1   [start 07:00:31]
+kod wyjścia D_hard_v1: 0
+$ .venv/bin/python -I -B flymind/object_handling.py series --set hard --perm 1 --n 8  --tag D_hard_series_v1   [start 07:00:43]
+kod wyjścia D_hard_series_v1: 1
+$ .venv/bin/python -I -B flymind/object_handling.py series --set base --perm 1 --n 9 --record /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.8dIkS17DNu/frames --tag C_perm1_recorded_v1   [start 07:00:51]
+kod wyjścia C_perm1_recorded_v1: 1
+klatek nagranych: 1767 (co 40 ms symulacji → film 25 kl./s = czas symulacji 1:1)
+data końca: 2026-11-10 07:01:24 +0100; serie z kodem ≠ 0 (niekompletne): 3
+MUJOCO_LOG.TXT w katalogu roboczym: 0 ostrzeżeń
+MUJOCO_LOG.TXT repo po:    27b1dd7409b327cac69fe4febdc158aea080a0c8c57951dded806ade44701e66
+
+## kod po przebiegu względem zamrożenia:
+  IDENTYCZNY
+## Etap 1 po przebiegu: manifest historyczny (17 plików) i wszystkie śledzone pliki results/pick_place:
+  ostatni: flymind/results/pick_place/variants.png: OK
+  OK: 17
+  pliki Etapu 1 zmienione: 0
+## sha256 nowych wyników:
+  3cdb5bcab127cd8bfbd5c506f384e1d61081ac57b2348a42b95ab4852b7d50c6  flymind/results/object_handling/B_base_v1.json
+  e408dc1bb7c80fa3e7b47125bf52ca244204763ba97b4dcf77931ee6859a3e7b  flymind/results/object_handling/D_hard_v1.json
+  a7a5ab693ff669b42e72a9ada4e52dbc7651c8e05f1c68c9441436bf18b94e0b  flymind/results/object_handling/media/C_perm1_series0_v1.mp4

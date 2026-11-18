@@ -1,0 +1,64 @@
+# Etap 1 — log testów: mutation (NIE benchmark wydajności)
+data: 2026-11-09 21:08:17 +0100
+commit bazowy (HEAD): f0b6927f2bc6285f1364c312380807be6704550a (flymind/fly-first-control)
+zmiany względem HEAD w plikach Etapu 1:
+   M flymind/pick_place.py
+   M flymind/so101.py
+   M flymind/test_pick_place.py
+  ?? flymind/results/pick_place/validation/
+  ?? flymind/test_pick_place_faults.py
+sha256 kodu i testów:
+  1246c409b51ec3ff50cb8dc47bf654344654df5eda495d1d43b99c2230a289f6  flymind/so101.py
+  91ad5b512a5ef2dbe1905a1c3e3105d13aaa87edf7c5b753ebf4df2241ec576d  flymind/pick_place.py
+  654a2033639be8d825d3b03e5562636b68b228e2145b93a5922707fa9c2a4a10  flymind/reach.py
+  0ee1d4036ddaa0ba6dfa61237ca1f4e0b282614194cf806d68bcb797c228941a  flymind/grip.py
+  703afe922003328d7d147f3c28331b54939afcbbad55a5d5a5ea8aa0a0426c16  flymind/safety.py
+  05fba6aa1034ce31543504b9f2427c5586baba7d6b99a76ba57fa18085dfac41  flymind/test_pick_place.py
+  ebb341e76dec3a48a83936d7144ae88269cc2b7ecd9cd0ba1c2a3d3ee6b5de1d  flymind/test_pick_place_faults.py
+  9c5941b8794ac2aa7fbd6f7340e66be2ea2bdf0c9574663f283b70ef119829c7  flymind/test_reach.py
+  bf55bea99c73d9965159fa1e102261847d615919cf3d629f54664442a2091c28  flymind/test_safety.py
+  ee705cf694faff57081775252ec3e50aaa3816447de96211e76fa314e5c07aa7  flymind/test_so101.py
+  8f653282662cf3ef907a75e2a0a0c7778e04d34f8cc80683c00985d5bf886534  flymind/test_cl_runner.py
+  0f7cf576d62e78fac7228ab89c41b5f024eccf23d94ad3bc51c0d5e8c35059e2  flymind/demo/test_demo.py
+  05bc8cdf09b848c9d822c011c54e638781ff11a2aa7b91073d620c4eb5a376c8  flymind/loop.py
+  3ad95d3822ad060e5540311670c492aad8ac34ed9b2e9508c778350e25f333b0  flymind/validation/v5v4_frozen_code/so101.py
+  3e5e6e03af23fee5ce78f927c0be23d96f5c0da34190da8ebcf9e569ea3b8bea  flymind/results/pick_place/validation/mutate.py
+  a4fc09968a95a6cc6bb0fe8d95970411217445dca303d421c3daac3499ea87d6  flymind/results/pick_place/validation/with_so101.py
+  f531031d628afbf7349e314bda2e1ce365fec11af001cd474761debe1cb2c38c  flymind/results/pick_place/validation/run_validation.sh
+python: 3.12.13
+mujoco: 3.17.0
+numpy:  2.5.4
+katalog roboczy testów: /var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/tmp.9Buog0I3lG
+
+## $ .venv/bin/python -I -B flymind/results/pick_place/validation/mutate.py
+M1 reset() nie dolicza czasu sprzed resetu: WYKRYTY | AssertionError: (0.0, 0.0, 0.20000000000000015)
+M2 auto-reset bez doliczenia czasu: WYKRYTY | AssertionError: 0.21000000000000016
+M3 auto-reset i BADQPOS/BADQVEL nie są błędem: WYKRYTY | AssertionError: BADQVEL / samoczynny reset MuJoCo nie wykryty
+M4 start cyklu z d.time: WYKRYTY | AssertionError: (98.69999999998274, 49.34999999999137)
+M4b koniec cyklu z d.time: WYKRYTY | AssertionError: czas cyklu < 0 (lub 0 w udanym): [0.0, -16.44999999999712, -32.89999999999424]
+M6 podwójne liczenie przy resecie: WYKRYTY | AssertionError: (0.0, 0.4000000000000003, 0.20000000000000015)
+M9 auto-reset wykrywany tylko przez cofnięcie czasu: WYKRYTY | AssertionError: (1, {'steps': 8, 'frames': 1, 'render_fail': 0, 'rejected': 0, 'ignored_stopped': 0, 'resets': 3, 'auto_resets': 0})
+M7 zwolnienie bez kontroli dotyku: WYKRYTY | AssertionError: release_failed: oczekiwano release_failed, jest None: None
+M8 brak kontroli strefy odłożenia: WYKRYTY | AssertionError
+M10 recover() zwraca True bez sprawdzenia stanu: WYKRYTY | AssertionError
+M11 not_ready() nie sprawdza szczęki: WYKRYTY | AssertionError: cube_lost: [0.289, -0.0031, 0.0149]
+M12 not_ready() nie sprawdza kostki: WYKRYTY | AssertionError
+M13 recover() rusza ramię po kolizji / złej komendzie: WYKRYTY | AssertionError
+M14 recover() sam kasuje zatrzaśnięty błąd: WYKRYTY | AssertionError: [{'ok': False, 'reason': 'safety_fault', 'detail': "('fault',)", 't_to_fail_sim': 0.3000000000000002, 'recover': True, 'outc
+M15 seria nie staje po zatrzaśniętym błędzie: WYKRYTY | AssertionError: [{'ok': False, 'reason': 'safety_fault', 'detail': "('fault',)", 't_to_fail_sim': 0.3000000000000002, 'recover': 'safety_lat
+M16 reset sceny kasuje zatrzask (nowa SafetyLayer): WYKRYTY | AssertionError
+M17 zła komenda raportowana jako sim_error: WYKRYTY | AssertionError: bad_command: oczekiwano bad_command, jest sim_error: komenda odrzucona: cel poza ctrlrange [99.0, -0.3999, 0.9999, 0.0002, 1
+M18 _qd_prev nie odświeżany po resecie: WYKRYTY | AssertionError: po resecie _qd_prev ma być prędkością po teleportacji (0), nie sprzed resetu
+M19 wyjątek nie oznacza serii jako przerwanej: WYKRYTY | AssertionError
+M20 main() nie sprawdza, czy wynik już istnieje: WYKRYTY | FileExistsError: [Errno 17] File exists: '/private/var/folders/k8/mszm1g0s04g4194rzfsr9x740000gn/T/pp_faults_c96waqd_/w2.json'
+mutacje: 20, wykryte 20, niewykryte 0 []
+## kod wyjścia: 0
+
+## PODSUMOWANIE (mutation): polecenia uruchomione 1, zaliczone 1, niezaliczone 0, pominięte 0
+## zmiany śledzonych plików po testach (ma być to samo co na górze logu):
+##    M flymind/PICK_PLACE_STAGE1.md
+##    M flymind/REPRODUCE.md
+##    M flymind/VALIDATION_PLAN.md
+##    M flymind/pick_place.py
+##    M flymind/so101.py
+##    M flymind/test_pick_place.py

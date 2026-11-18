@@ -78,6 +78,11 @@ class SceneCfg:
     ball_park: tuple = (0.0, 0.9, 0.025)   # domyślnie poza przestrzenią roboczą: brak ukrytego zadania
     backdrop: bool = True
     distractor_r: float = 0.0          # > 0: druga zielona kula „distractor” (V5 v2), parkowana jak piłeczka; 0 = XML bez zmian
+    # Etap 1 pick-and-place (flymind/pick_place.py); domyślne 0/() = XML bez zmian dla pozostałych eksperymentów
+    cube_size: float = 0.0             # m, krawędź; > 0: kostka „cube” na freejoint, parkowana za podstawą
+    cube_mass: float = 0.030           # kg
+    cube_friction: tuple = (0.8, 0.005, 1e-4)
+    marks: tuple = ()                  # ((x, y), ...) m: znaczniki miejsc (tylko wizualne, bez kontaktu)
 
 
 def _sub(parent, tag, **attrs):
@@ -124,6 +129,14 @@ def build_mjcf(cfg=SceneCfg()):
         _sub(dis, "freejoint", name="distractor")
         _sub(dis, "geom", name="distractor", type="sphere", size=cfg.distractor_r, mass=cfg.ball_mass, rgba=".1 .7 .2 1",
              condim=6, solref="0.01 1", friction=cfg.ball_friction)
+    if cfg.cube_size > 0:
+        cube = _sub(world, "body", name="cube", pos=(-0.9, 0.0, cfg.cube_size / 2))
+        _sub(cube, "freejoint", name="cube")
+        _sub(cube, "geom", name="cube", type="box", size=(cfg.cube_size / 2,) * 3, mass=cfg.cube_mass,
+             rgba=".2 .3 .9 1", condim=4, friction=cfg.cube_friction)
+    for i, (x, y) in enumerate(cfg.marks):
+        _sub(world, "geom", name=f"mark{i}", type="cylinder", size="0.022 0.0003", pos=(x, y, 0.0003),
+             rgba=".95 .75 .1 1", contype=0, conaffinity=0)
 
     # chwytak (bio2 so101_base.py): siatki szczęk tylko wizualne, kontakt przez pudełka-pady z czujnikami touch
     for g in root.iter("geom"):
@@ -186,19 +199,26 @@ class SO101Sim:
                 self.renderer.scene.flags[f] = False                # bez cieni/odbić/nieba (jak bio2: ruchomy cień myli siatkówkę)
             self.opt = mujoco.MjvOption()
             self.opt.sitegroup[:] = 0                               # siatkówka nie widzi znaczników pomocniczych
-        self.stats = dict(steps=0, frames=0, render_fail=0, rejected=0, ignored_stopped=0)
+        self.stats = dict(steps=0, frames=0, render_fail=0, rejected=0, ignored_stopped=0, resets=0, auto_resets=0)
+        # d.time zeruje każdy mj_resetData (reset() i samoczynny reset MuJoCo przy niestabilności). t_offset zbiera
+        # czas utracony przy resetach, więc sim_time = t_offset + d.time rośnie monotonicznie (= liczba wykonanych
+        # kroków fizyki × timestep). Bez resetów t_offset = 0.0, czyli sim_time == d.time bit w bit.
+        self.t_offset = 0.0
         self.last_error = None
         self.stopped = None
         self.seq = 0
 
     # ---------------- stan ----------------
-    def reset(self, q0, ball_pos=None, distractor_pos=None):
-        """Ustaw pozycje stawów q0[6] (w zakresach) i piłeczkę (x, y, z) albo parking; prędkości 0; cele = q0."""
+    def reset(self, q0, ball_pos=None, distractor_pos=None, cube_pose=None):
+        """Ustaw pozycje stawów q0[6] (w zakresach) i piłeczkę (x, y, z) albo parking; prędkości 0; cele = q0.
+        cube_pose = (x, y, yaw [rad]) stawia kostkę płasko na stole (wymaga cube_size > 0)."""
         q0 = np.asarray(q0, float)
         if q0.shape != (6,) or not np.isfinite(q0).all() or \
                 ((q0 < self.jrange[:, 0]) | (q0 > self.jrange[:, 1])).any():
             raise SimError(f"q0 poza zakresem lub zły kształt: {q0}")
         mj, m, d = self.mj, self.m, self.d
+        self.t_offset += d.time          # reset nie cofa sim_time (czas samego resetu = 0: nic nie symulowano)
+        self.stats["resets"] += 1
         mj.mj_resetData(m, d)
         d.qpos[self.qadr] = q0
         b = m.joint("ball").qposadr[0]
@@ -208,6 +228,12 @@ class SO101Sim:
                 raise SimError("distractor_pos bez distractor_r > 0 w SceneCfg")
             b = m.joint("distractor").qposadr[0]
             d.qpos[b:b + 7] = [*distractor_pos, 1, 0, 0, 0]
+        if cube_pose is not None:
+            if self.cfg.cube_size <= 0:
+                raise SimError("cube_pose bez cube_size > 0 w SceneCfg")
+            x, y, yaw = cube_pose
+            b = m.joint("cube").qposadr[0]
+            d.qpos[b:b + 7] = [x, y, self.cfg.cube_size / 2, math.cos(yaw / 2), 0, 0, math.sin(yaw / 2)]
         d.ctrl[self.aid[:5]] = np.clip(q0[:5], self.crange[:5, 0], self.crange[:5, 1])
         d.ctrl[self.aid[5]] = 0.0
         mj.mj_forward(m, d)
@@ -274,15 +300,33 @@ class SO101Sim:
         self.stats.setdefault("released", []).append((self.stopped, reason))
         self.stopped = None
 
+    @property
+    def sim_time(self):
+        """Czas symulacji [s] narastający przez resety (do pomiarów); d.time / Obs.t po resecie startują od 0."""
+        return self.t_offset + self.d.time
+
     def step(self):
-        """Jeden takt sterowania = n_sub kroków fizyki. Niestabilność (NaN, ostrzeżenie BADQACC) → stop + SimError."""
+        """Jeden takt sterowania = n_sub kroków fizyki. Niestabilność (NaN; ostrzeżenie BADQPOS/BADQVEL/BADQACC, po
+        którym MuJoCo samo robi mj_resetData — stan teleportowany do qpos0, d.time ≈ 0) → stop + SimError."""
         mj, m, d = self.mj, self.m, self.d
+        W = mj.mjtWarning
+        warn = lambda: {n: d.warning[w].number for n, w in (("BADQPOS", W.mjWARN_BADQPOS), ("BADQVEL", W.mjWARN_BADQVEL),  # noqa: E731
+                                                            ("BADQACC", W.mjWARN_BADQACC)) if d.warning[w].number}
+        auto = 0
         for _ in range(self.cfg.n_sub):
+            t = d.time
             mj.mj_step(m, d)
+            # Samoczynny reset w tym kroku (mj_resetData, potem zwykły krok: d.time = timestep). Zwykły krok zawsze
+            # zwiększa d.time, więc d.time <= t = reset (także gdy t == timestep, czyli 2. krok po resecie). Przy t == 0
+            # (1. krok po reset(), liczniki ostrzeżeń wyzerowane) czas się zgadza, a reset zdradza tylko ostrzeżenie.
+            if d.time <= t or (t == 0.0 and warn()):
+                self.t_offset += t       # wykonany krok liczy się raz, utracone t nie
+                auto += 1
         self.stats["steps"] += 1
-        bad = d.warning[mj.mjtWarning.mjWARN_BADQACC].number
-        if bad or not (np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all()):
-            self.last_error = f"fizyka niestabilna (BADQACC={bad}) w t={d.time:.3f}"
+        self.stats["auto_resets"] += auto
+        bad = warn()
+        if bad or auto or not (np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all()):
+            self.last_error = f"fizyka niestabilna ({bad}, auto-reset {auto}) w t={d.time:.3f}"
             self.stop(self.last_error)
             raise SimError(self.last_error)
 
