@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test czujników</title>
+<!-- Test czujników FlyMind: kamerka + 2× FSR402 przez Arduino (fsr_test/fsr_test.ino). TYLKO ODCZYT, bez ramienia.
+     Otwórz w Chrome (Web Serial działa tylko w Chrome/Edge). -->
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2230;--mute:#5d6678;--line:#dde1e8;--ok:#1d7a46;--bad:#b3261e;--warn:#9a6200;--acc:#2f5bd3}
+@media (prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1d2129;--ink:#e7eaf0;--mute:#9aa3b5;--line:#30363f;--ok:#4cc483;--bad:#ff8a80;--warn:#f0b54a;--acc:#7da2ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:920px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.6rem;margin:0 0 4px}
+h2{font-size:1.2rem;margin:0 0 8px}
+p{margin:6px 0}
+.mute{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0}
+button,select{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.main{background:var(--acc);border-color:var(--acc);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+video{width:100%;max-width:480px;background:#000;border-radius:8px;display:block}
+.stats{font-variant-numeric:tabular-nums}
+.bar{height:22px;background:var(--line);border-radius:6px;overflow:hidden;position:relative;margin:4px 0 10px}
+.bar>i{display:block;height:100%;background:var(--acc);width:0;transition:width .05s}
+.bar>span{position:absolute;inset:0;padding-left:8px;font-size:.85rem;line-height:22px;font-variant-numeric:tabular-nums}
+.step{font-size:1.25rem;font-weight:700;min-height:1.6em;color:var(--warn)}
+.verdict{padding:8px 12px;border-radius:8px;margin:6px 0;border:1px solid var(--line)}
+.verdict.ok{border-color:var(--ok);color:var(--ok)}
+.verdict.bad{border-color:var(--bad);color:var(--bad)}
+.verdict.warn{border-color:var(--warn);color:var(--warn)}
+code{font-size:.9em}
+pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Test czujników</h1>
+<p class="mute">Sprawdza tylko, czy kamerka i dwa czujniki nacisku w ogóle działają. Nic nie jest wysyłane do ramienia.</p>
+<p id="selftest" class="mute"></p>
+
+<section class="card" aria-labelledby="h-cam">
+  <h2 id="h-cam">1. Kamerka</h2>
+  <div class="row">
+    <button class="main" id="camStart">Włącz kamerkę</button>
+    <select id="camSel" aria-label="Wybór kamery" hidden></select>
+    <button id="camCover" disabled>Test zasłonięcia</button>
+  </div>
+  <video id="vid" autoplay playsinline muted></video>
+  <p class="stats" id="camStats"></p>
+  <p class="step" id="camStep"></p>
+  <div id="camVerdict"></div>
+</section>
+
+<section class="card" aria-labelledby="h-fsr">
+  <h2 id="h-fsr">2. Czujniki nacisku (FSR402 przez Arduino)</h2>
+  <p class="mute">Najpierw wgraj do Arduino program <code>fsr_test/fsr_test.ino</code> (Arduino IDE → Wgraj).
+    Podłączenie: 5V → FSR → pin A0 (czujnik 1) / A1 (czujnik 2), i z tego samego pinu opornik 10 kΩ do GND.</p>
+  <p id="noSerial" class="verdict bad" hidden>Ta przeglądarka nie umie łączyć się z Arduino. Otwórz tę stronę w Google Chrome.</p>
+  <div class="row">
+    <button class="main" id="fsrConnect">Połącz z Arduino</button>
+    <button id="fsrTest" disabled>Test krok po kroku</button>
+  </div>
+  <div>Czujnik 1 (A0)</div><div class="bar"><i id="b0"></i><span id="t0">—</span></div>
+  <div>Czujnik 2 (A1)</div><div class="bar"><i id="b1"></i><span id="t1">—</span></div>
+  <p class="step" id="fsrStep"></p>
+  <div id="fsrVerdict"></div>
+</section>
+
+<section class="card" aria-labelledby="h-sum">
+  <h2 id="h-sum">Wynik</h2>
+  <div id="summary" class="mute">Jeszcze nic nie sprawdzone.</div>
+  <div class="row"><button id="save" disabled>Zapisz wynik (plik)</button></div>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const results = {};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ---------- ocena (te same progi co model nerwów: FSR402, dzielnik 10 kΩ, ADC 10 bit)
+const IDLE_MAX = 60, PRESS_MIN = 300, CROSS_MAX = 0.3, SAT = 1015;
+const F_TAB = [0.2, 1, 10, 100].map(Math.log), R_TAB = [30e3, 6e3, 1e3, 250].map(Math.log);
+function toNewton(c) {                       // zliczenia → N, krzywa katalogowa Adafruit (log-log)
+  if (c <= 0) return 0;
+  const R = Math.log(10e3 * (1023 / Math.min(c, 1022.9) - 1));
+  if (R >= R_TAB[0]) return 0;
+  for (let i = 0; i < 3; i++) if (R >= R_TAB[i + 1]) {
+    const t = (R - R_TAB[i]) / (R_TAB[i + 1] - R_TAB[i]); return Math.exp(F_TAB[i] + t * (F_TAB[i + 1] - F_TAB[i]));
+  }
+  return 100;
+}
+const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(p * (s.length - 1)))] : NaN; };
+function judgeFsr(idle, own, otherWhenOwn) {
+  const i = q(idle, .5), p = q(own, .9), x = q(otherWhenOwn, .9);
+  if (!idle.length || !own.length) return ["NIE DZIAŁA", "brak danych z Arduino"];
+  if (i > SAT) return ["NIE DZIAŁA", `w spoczynku pełna skala (${i}/1023) — zwarcie albo brak opornika 10 kΩ do GND`];
+  if (i > IDLE_MAX) return ["NIE DZIAŁA", `w spoczynku za wysoko (${i}) — coś naciska czujnik albo zły opornik`];
+  if (p < PRESS_MIN) return ["NIE DZIAŁA", `przy nacisku za mało (${p}, potrzeba ≥ ${PRESS_MIN}) — przerwa w kablu, zły pin albo za słaby nacisk`];
+  if (x > Math.max(PRESS_MIN, CROSS_MAX * p)) return ["NIE DZIAŁA", `reaguje też na drugi czujnik (${x}) — kable zamienione albo zwarte`];
+  return ["DZIAŁA", `spoczynek ${i}, nacisk ${p} zliczeń (≈ ${toNewton(p).toFixed(1)} N wg krzywej katalogowej)`];
+}
+function judgeCamera(fps, stdOpen, meanOpen, meanCovered) {
+  if (fps < 5) return ["NIE DZIAŁA", `za mało klatek (${fps.toFixed(1)}/s)`];
+  if (stdOpen < 2) return ["NIE DZIAŁA", "obraz jednolity (czarny/szary) — zasłonięty obiektyw albo zła kamera"];
+  if (meanCovered > 0.6 * meanOpen) return ["NIE DZIAŁA?", `po zasłonięciu jasność prawie ta sama (${meanCovered.toFixed(0)} vs ${meanOpen.toFixed(0)}) — zasłonięto chyba inną kamerę`];
+  return ["DZIAŁA", `${fps.toFixed(0)} klatek/s, jasność ${meanOpen.toFixed(0)} → po zasłonięciu ${meanCovered.toFixed(0)}`];
+}
+(function selftest() {                       // sprawdzenie samej logiki oceny na zmyślonych danych
+  const rnd = (lo, hi, n) => Array.from({ length: n }, (_, k) => lo + ((k * 7919) % (hi - lo)));
+  const idle = rnd(0, 15, 400), press = rnd(350, 900, 500), quiet = rnd(0, 20, 500);
+  const ok = judgeFsr(idle, press, quiet)[0] === "DZIAŁA"
+    && judgeFsr(Array(400).fill(1023), press, quiet)[1].includes("pełna skala")
+    && judgeFsr(idle, rnd(0, 40, 500), quiet)[1].includes("za mało")
+    && judgeFsr(idle, press, press)[1].includes("drugi czujnik")
+    && judgeCamera(30, 40, 120, 10)[0] === "DZIAŁA" && judgeCamera(30, .5, 3, 3)[0] === "NIE DZIAŁA"
+    && judgeCamera(30, 40, 120, 115)[0] === "NIE DZIAŁA?"
+    && Math.abs(toNewton(1023 * 10e3 / (10e3 + 6e3)) - 1) < 0.01;
+  $("#selftest").textContent = ok ? "Sprawdzenie strony: OK" : "Sprawdzenie strony: BŁĄD logiki oceny — nie ufaj wynikom";
+  window.SELFTEST_OK = ok;
+})();
+
+function show(el, key, [v, why]) {
+  results[key] = { werdykt: v, powod: why, czas: new Date().toISOString() };
+  const cls = v === "DZIAŁA" ? "ok" : v.endsWith("?") ? "warn" : "bad";
+  const d = document.createElement("div");
+  d.className = "verdict " + cls;
+  d.textContent = `${v === "DZIAŁA" ? "✅" : "❌"} ${key}: ${v} — ${why}`;
+  el.appendChild(d);
+  $("#summary").innerHTML = "";
+  for (const [k, r] of Object.entries(results)) {
+    const p = document.createElement("div");
+    p.textContent = `${r.werdykt === "DZIAŁA" ? "✅" : "❌"} ${k}: ${r.werdykt}`;
+    $("#summary").appendChild(p);
+  }
+  $("#save").disabled = false;
+}
+
+// ---------- kamerka
+let stream, fps = 0, frames = 0, tFps = performance.now();
+const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+function brightness() {
+  const v = $("#vid"); if (!v.videoWidth) return null;
+  cv.width = 160; cv.height = Math.round(160 * v.videoHeight / v.videoWidth);
+  cx.drawImage(v, 0, 0, cv.width, cv.height);
+  const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+  let s = 0, s2 = 0, n = d.length / 4, chroma = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const y = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2];
+    s += y; s2 += y * y; chroma += Math.abs(d[i] - d[i + 2]);
+  }
+  const m = s / n; return { mean: m, std: Math.sqrt(Math.max(0, s2 / n - m * m)), mono: chroma / n < 2 };
+}
+function countFrames() {
+  const v = $("#vid");
+  const tick = () => { frames++; const t = performance.now(); if (t - tFps > 1000) { fps = frames * 1000 / (t - tFps); frames = 0; tFps = t; } };
+  if (v.requestVideoFrameCallback) { const cb = () => { tick(); v.requestVideoFrameCallback(cb); }; v.requestVideoFrameCallback(cb); }
+  else { const cb = () => { tick(); requestAnimationFrame(cb); }; requestAnimationFrame(cb); }
+}
+async function openCam(deviceId) {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId } } : true, audio: false });
+  $("#vid").srcObject = stream;
+}
+$("#camStart").onclick = async () => {
+  try {
+    await openCam();
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
+    const sel = $("#camSel"); sel.innerHTML = "";
+    devs.forEach((d, i) => sel.add(new Option(d.label || `kamera ${i}`, d.deviceId)));
+    const cur = stream.getVideoTracks()[0].getSettings().deviceId; sel.value = cur; sel.hidden = devs.length < 2;
+    sel.onchange = () => openCam(sel.value);
+    countFrames();
+    $("#camCover").disabled = false; $("#camStart").disabled = true;
+    setInterval(() => {
+      const b = brightness(), s = stream && stream.getVideoTracks()[0].getSettings();
+      if (b && s) $("#camStats").textContent = `${$("#camSel").selectedOptions[0]?.text || "kamera"}: ${s.width}×${s.height}, ${fps.toFixed(0)} klatek/s, jasność ${b.mean.toFixed(0)}${b.mono ? ", obraz czarno-biały" : ""}`;
+    }, 500);
+  } catch (e) {
+    show($("#camVerdict"), "kamerka", ["NIE DZIAŁA", `nie udało się włączyć (${e.name}) — zezwól stronie na kamerę albo sprawdź kabel USB`]);
+  }
+};
+$("#camCover").onclick = async () => {
+  $("#camCover").disabled = true;
+  await sleep(1500);
+  const open = brightness(), f = fps;
+  for (let k = 3; k > 0; k--) { $("#camStep").textContent = `ZASŁOŃ obiektyw dłonią… ${k}`; await sleep(1000); }
+  await sleep(500);
+  const cov = brightness();
+  $("#camStep").textContent = "Możesz odsłonić obiektyw.";
+  const name = $("#camSel").selectedOptions[0]?.text || "kamerka";
+  show($("#camVerdict"), name, judgeCamera(f, open.std, open.mean, cov.mean));
+  $("#camCover").disabled = false;
+};
+
+// ---------- czujniki nacisku (Web Serial)
+let latest = [0, 0], log = null;
+if (!("serial" in navigator)) { $("#noSerial").hidden = false; $("#fsrConnect").disabled = true; }
+$("#fsrConnect").onclick = async () => {
+  let port;
+  try { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); }
+  catch (e) { show($("#fsrVerdict"), "Arduino", ["NIE DZIAŁA", `nie udało się połączyć (${e.name}) — wybierz port Arduino; czy jest podłączone kablem USB?`]); return; }
+  $("#fsrConnect").disabled = true; $("#fsrTest").disabled = false;
+  const reader = port.readable.pipeThrough(new TextDecoderStream()).getReader();
+  let buf = "", got = 0;
+  setTimeout(() => { if (!got) $("#fsrStep").textContent = "Brak danych — czy wgrany jest fsr_test.ino (prędkość 115200)?"; }, 4000);
+  for (;;) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += value; const lines = buf.split("\n"); buf = lines.pop();
+    for (const ln of lines) {
+      const p = ln.trim().split(",");
+      if (p.length !== 3 || !p.every(s => /^\d+$/.test(s))) continue;
+      got++; latest = [+p[1], +p[2]];
+      if (log) log.push(latest);
+    }
+    [0, 1].forEach(i => {
+      $("#b" + i).style.width = (latest[i] / 1023 * 100) + "%";
+      $("#t" + i).textContent = `${latest[i]} / 1023  (≈ ${toNewton(latest[i]).toFixed(1)} N)`;
+    });
+  }
+};
+async function phase(label, secs) {
+  for (let k = 3; k > 0; k--) { $("#fsrStep").textContent = `${label} — start za ${k}`; await sleep(1000); }
+  log = []; $("#fsrStep").textContent = `${label} (${secs} s)`;
+  await sleep(secs * 1000);
+  const out = log; log = null; return out;
+}
+$("#fsrTest").onclick = async () => {
+  $("#fsrTest").disabled = true;
+  const idle = await phase("NIE DOTYKAJ czujników", 4);
+  const s1 = await phase("NACISKAJ czujnik 1 (A0) palcem, kilka razy", 5);
+  const s2 = await phase("NACISKAJ czujnik 2 (A1) palcem, kilka razy", 5);
+  $("#fsrStep").textContent = "Koniec testu.";
+  const col = (a, i) => a.map(r => r[i]);
+  show($("#fsrVerdict"), "czujnik 1 (A0)", judgeFsr(col(idle, 0), col(s1, 0), col(s2, 0)));
+  show($("#fsrVerdict"), "czujnik 2 (A1)", judgeFsr(col(idle, 1), col(s2, 1), col(s1, 1)));
+  $("#fsrTest").disabled = false;
+};
+
+$("#save").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(results, null, 1)], { type: "application/json" }));
+  a.download = "test_czujnikow_" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".json";
+  a.click();
+};
+</script>
+</body>
+</html>
