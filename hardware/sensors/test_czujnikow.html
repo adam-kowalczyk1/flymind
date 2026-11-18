@@ -57,7 +57,9 @@ pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
 <section class="card" aria-labelledby="h-fsr">
   <h2 id="h-fsr">2. Czujniki nacisku (FSR402 przez Arduino)</h2>
   <p class="mute">Najpierw wgraj do Arduino program <code>fsr_test/fsr_test.ino</code> (Arduino IDE → Wgraj).
-    Podłączenie: 5V → FSR → pin A0 (czujnik 1) / A1 (czujnik 2), i z tego samego pinu opornik 10 kΩ do GND.</p>
+    Podłączenie: 5V → FSR → pin A0 (czujnik 1) / A1 (czujnik 2), i z tego samego pinu opornik do GND.</p>
+  <label>Opornik przy każdym czujniku:
+    <select id="rfix"><option value="10000">10 kΩ</option><option value="5100">5,1 kΩ</option><option value="4700">4,7 kΩ</option></select></label>
   <p id="noSerial" class="verdict bad" hidden>Ta przeglądarka nie umie łączyć się z Arduino. Otwórz tę stronę w Google Chrome.</p>
   <div class="row">
     <button class="main" id="fsrConnect">Połącz z Arduino</button>
@@ -85,9 +87,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // ---------- ocena (te same progi co model nerwów: FSR402, dzielnik 10 kΩ, ADC 10 bit)
 const IDLE_MAX = 60, PRESS_MIN = 300, CROSS_MAX = 0.3, SAT = 1015;
 const F_TAB = [0.2, 1, 10, 100].map(Math.log), R_TAB = [30e3, 6e3, 1e3, 250].map(Math.log);
-function toNewton(c) {                       // zliczenia → N, krzywa katalogowa Adafruit (log-log)
+const rFix = () => +($("#rfix")?.value || 10e3);   // opornik dzielnika [Ω]
+function toNewton(c, r = rFix()) {           // zliczenia → N, krzywa katalogowa Adafruit (log-log)
   if (c <= 0) return 0;
-  const R = Math.log(10e3 * (1023 / Math.min(c, 1022.9) - 1));
+  const R = Math.log(r * (1023 / Math.min(c, 1022.9) - 1));
   if (R >= R_TAB[0]) return 0;
   for (let i = 0; i < 3; i++) if (R >= R_TAB[i + 1]) {
     const t = (R - R_TAB[i]) / (R_TAB[i + 1] - R_TAB[i]); return Math.exp(F_TAB[i] + t * (F_TAB[i + 1] - F_TAB[i]));
@@ -98,11 +101,11 @@ const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return s.length ? 
 function judgeFsr(idle, own, otherWhenOwn) {
   const i = q(idle, .5), p = q(own, .9), x = q(otherWhenOwn, .9);
   if (!idle.length || !own.length) return ["NIE DZIAŁA", "brak danych z Arduino"];
-  if (i > SAT) return ["NIE DZIAŁA", `w spoczynku pełna skala (${i}/1023) — zwarcie albo brak opornika 10 kΩ do GND`];
+  if (i > SAT) return ["NIE DZIAŁA", `w spoczynku pełna skala (${i}/1023) — zwarcie albo brak opornika do GND`];
   if (i > IDLE_MAX) return ["NIE DZIAŁA", `w spoczynku za wysoko (${i}) — coś naciska czujnik albo zły opornik`];
   if (p < PRESS_MIN) return ["NIE DZIAŁA", `przy nacisku za mało (${p}, potrzeba ≥ ${PRESS_MIN}) — przerwa w kablu, zły pin albo za słaby nacisk`];
   if (x > Math.max(PRESS_MIN, CROSS_MAX * p)) return ["NIE DZIAŁA", `reaguje też na drugi czujnik (${x}) — kable zamienione albo zwarte`];
-  return ["DZIAŁA", `spoczynek ${i}, nacisk ${p} zliczeń (≈ ${toNewton(p).toFixed(1)} N wg krzywej katalogowej)`];
+  return ["DZIAŁA", `spoczynek ${i}, nacisk ${p} zliczeń (≈ ${toNewton(p).toFixed(1)} N wg krzywej katalogowej, opornik ${rFix() / 1000} kΩ)`];
 }
 function judgeCamera(fps, stdOpen, meanOpen, meanCovered) {
   if (fps < 5) return ["NIE DZIAŁA", `za mało klatek (${fps.toFixed(1)}/s)`];
@@ -119,7 +122,8 @@ function judgeCamera(fps, stdOpen, meanOpen, meanCovered) {
     && judgeFsr(idle, press, press)[1].includes("drugi czujnik")
     && judgeCamera(30, 40, 120, 10)[0] === "DZIAŁA" && judgeCamera(30, .5, 3, 3)[0] === "NIE DZIAŁA"
     && judgeCamera(30, 40, 120, 115)[0] === "NIE DZIAŁA?"
-    && Math.abs(toNewton(1023 * 10e3 / (10e3 + 6e3)) - 1) < 0.01;
+    && Math.abs(toNewton(1023 * 10e3 / (10e3 + 6e3), 10e3) - 1) < 0.01
+    && Math.abs(toNewton(1023 * 5.1e3 / (5.1e3 + 6e3), 5.1e3) - 1) < 0.01;
   $("#selftest").textContent = ok ? "Sprawdzenie strony: OK" : "Sprawdzenie strony: BŁĄD logiki oceny — nie ufaj wynikom";
   window.SELFTEST_OK = ok;
 })();
