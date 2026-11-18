@@ -56,17 +56,33 @@ def calibrate(glu, kind, seed, target, tol=0.02):
     while act(hi) < target and hi < 64:
         lo, hi = hi, hi * 2
     g, a = hi, act(hi)
+    best = (abs(a - target), g, a)
     for _ in range(30):
         if abs(a - target) <= tol * target:
             break
         g = (lo + hi) / 2
         a = act(g)
+        best = min(best, (abs(a - target), g, a))
         lo, hi = (g, hi) if a < target else (lo, g)
+    _, g, a = best                                     # aktywność może skakać z g (próg) — zostaje najbliższe trafienie
     return dict(gain=round(g, 6), activity=a, target=target, ok=bool(abs(a - target) <= tol * target), act_g1=None)
+
+
+def reflex_main():
+    """reflex.py bez zmian, tylko sieć = GainNet z g z pliku kalibracji: loud.py reflex CALIB.json <argumenty reflex.py>."""
+    calib = json.load(open(sys.argv[2]))
+    del sys.argv[1:3]
+    s = int(sys.argv[sys.argv.index("--shuffle-seed") + 1])
+    g = calib["nets"][str(s)]
+    assert calib["glu"] == float(sys.argv[sys.argv.index("--glu") + 1]) and calib["kind"] == sys.argv[sys.argv.index("--net") + 1]
+    R.TwoNet = lambda glu, kind, seed, rule="pre": GainNet(glu, kind, seed, rule, gain=g["gain"])
+    R.main()
 
 
 def main():
     mode, args = sys.argv[1], sys.argv[2:]
+    if mode == "reflex":
+        return reflex_main()
     if mode == "measure":
         glu, kind, seeds = float(args[0]), args[1], [int(s) for s in args[2:]] or [None]
         for s in seeds:

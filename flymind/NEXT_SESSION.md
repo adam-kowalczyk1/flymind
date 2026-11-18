@@ -1,4 +1,10 @@
-# FlyMind — wznowienie (stan 2026-10-29)
+# FlyMind — wznowienie (AKTUALIZACJA 2026-11-18)
+
+**Najpierw przeczytaj `flymind/FLYMIND_MASTER_CONTEXT.md` §0 (stan 18 XI).** Najnowsze wyniki: `results/step3_20261115/`
+(STEP3/STEP6/REFLEX_R2/TOUCH_R1/LOUD_R1 raporty, `audit_log_step3_20261115.md`); ziarna: `experiments/step3_wiring/SEED_REGISTRY.md`
+(21 xxx xxx — sprawdzić przed użyciem). Python: `.venv/bin/python -I -B`. Nic nie uruchamiać na prawdziwym ramieniu bez polecenia Adama.
+Punkty poniżej opisują stan z 29–30 X (historyczne).
+
 
 1. Przeczytaj `flymind/AUTONOMOUS_RESEARCH_LOG.md` (statusy zadań) i `flymind/VALIDATION_PLAN.md`.
 2. Integralność: `.venv/bin/python -I -B <skrypt integralności>` — logika w logu (hashe z frozen_manifest_v4.json Stage 1).

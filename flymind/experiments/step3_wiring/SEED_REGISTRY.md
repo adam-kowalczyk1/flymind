@@ -66,3 +66,7 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 871 000 – 21 871 149 | ETAP 1 TEST (zwykły dotyk, `touch_natural.py`, cel `LOOP_TARGET_touch_r1.md`): sceny `--seed 21871`, 6 póz — RAZ | 2026-11-18 | zarezerwowane |
 | 21 872 001 – 005 / 21 873 001 – 005 | ETAP 1 TEST: tasowania F / L, oba Glu | 2026-11-18 | zarezerwowane |
 | 21 871 000 – 149, 21 872 001 – 005, 21 873 001 – 005 (zużyte) | ETAP 1 TEST: wykonany 18 XI, 24 przebiegi — wynik w TOUCH_R1_REPORT_20261118.md | 2026-11-18 | ZUŻYTE |
+| 21 401 000 – 21 401 449 (dopisek) | ETAP 2 TRENING (wyrównana aktywność, `loud.py`): sceny treningowe kroku 4; tasowania 21 100 001/002 (F), 21 100 006/007 (L) | 2026-11-18 | w użyciu (trening) |
+| 21 874 000 – 149 / 21 875 000 – 149 / 21 876 000 – 149 | ETAP 2 TEST (dwa odruchy, tasowania o tej samej aktywności, `reflex.py` + `loud.py`, cel `LOOP_TARGET_loud_r1.md`): sceny, 6 póz — RAZ | 2026-11-18 | zarezerwowane |
+| 21 877 001 – 005 / 21 878 001 – 005 | ETAP 2 TEST: tasowania F / L (wzmocnienie g z kalibracji bez robota), oba Glu | 2026-11-18 | zarezerwowane |
+| 21 874 000 – 21 876 149, 21 877 001 – 005, 21 878 001 – 005 (zużyte) | ETAP 2 TEST: wykonany 18 XI, 66 przebiegów — wynik w LOUD_R1_REPORT_20261118.md | 2026-11-18 | ZUŻYTE |

@@ -1,4 +1,34 @@
-# FLYMIND — kontekst główny (stan na 2026-11-07)
+# FLYMIND — kontekst główny (stan na 2026-11-07; AKTUALIZACJA 2026-11-18 poniżej)
+
+## 0. AKTUALIZACJA 2026-11-18 — przeczytaj najpierw (sekcje 1–15 opisują stan z 7 XI i miejscami są nieaktualne)
+
+Wszystko nadal w symulacji MuJoCo; prawdziwe ramię niepodłączone. Źródłem są raporty wskazane w nawiasach; jeśli coś tu
+przeczy raportowi, rozstrzyga raport.
+
+- **Kroki 3–6 (15–16 XI): sieć z danych muchy steruje całym ramieniem** (bark, łokieć, nadgarstek, szczęka). Sieć nogi „pre”
+  (reguła: wszystkie interneurony VNC z ≥ 5 synapsami do neuronów ruchowych nogi przedniej L). Zdanie „całe ramię 0/135”
+  z kroku 2 jest nieaktualne. (`results/step3_20261115/STEP3_REPORT_20261115.md`, `STEP6_REPORT_20261116.md`)
+- **„Dwa odruchy” (krok 4 r2, 16 XI):** dotyk dłoni → cofnij, dotyk palców → zaciśnij; sieć z danych lepsza od tasowań F i L
+  przy obu Glu. (`REFLEX_R2_REPORT_20261116.md`)
+- **Etap 2 (18 XI): tasowania o TEJ SAMEJ aktywności.** Glu +1: sieć z danych 54/80 par, lepsza od każdego z 10 wyrównanych
+  tasowań (0–40) — przewaga nie wynika z samej „głośności” [VERIFIED, model]. Glu −1: 27/80, NIE lepsza (jedno tasowanie 45).
+  (`LOUD_R1_REPORT_20261118.md`)
+- **Krok 6 (16 XI): dotyk „głowy” → dwa szlaki z danych:** BM → DNg15 → łokieć, BM → DNge078 → nadgarstek. Z sondą 26/26;
+  wycięcie DNg15 zatrzymuje tylko łokieć, DNge078 tylko nadgarstek (0/27). Zwykły dotyk (r1) FAILED. (`STEP6_REPORT_20261116.md`)
+- **Etap 1 (18 XI): zwykły dotyk, odruch wycofania.** Glu +1: sieć sama kończy dotyk 26/26, po wycięciu 4 neuronów 0/26 — PASS.
+  Glu −1: 18/26 = 69 % — FAILED (lekki/średni walec jedzie z dłonią). (`TOUCH_R1_REPORT_20261118.md`)
+- **Dawka dotyku → siła zacisku: FAILED** (przewaga danych tłumaczona aktywnością). (`DOSE_REPORT_20261116.md`)
+- **Oko muchy (flyvis → MaleCNS, 16–17 XI): ZAMROŻONE do po Explory.** Sześć+ testów z celem zapisanym z góry FAILED; test D
+  z idealnymi bodźcami pokazał, że winny jest most model oka → mapa połączeń, nie kamera robota.
+  (`reports/fly_eye_w2_lc4_20261117.md` §0, §4I)
+- **Glu:** znak glutaminianu nieznany z danych — każdy wynik podawany osobno dla Glu +1 i Glu −1; Glu +1 wypada lepiej
+  w etapach 1–2, ale nie wybieramy znaku po fakcie.
+- **Sprzęt (18 XI, słowa Adama):** ramię złożone i skonfigurowane w lerobot, zasilacz i kabel są; 18 XI przychodzą kamera
+  (Amazon) i 2× FSR402; Arduino jest. Testy na prawdziwym ramieniu dopiero na polecenie Adama (nic nie uruchomiono).
+- **Plan do 1 XII (ustalony 18 XI):** do 27 XI badania (prawdziwe ramię: odruch wycofania sieci muchy), 28–30 XI materiały
+  na prezentację. Explory 1 XII.
+- **Git:** gałąź `flymind/fly-first-control`, wypychana na origin zwykłym push; pliki `*.npz` i `raw/` celowo poza repo.
+
 
 **Do czego służy ten plik:** jedno miejsce, od którego zaczyna każda nowa sesja (Claude, inny chatbot, weryfikator). Streszcza cel, zasady, wyniki, otwarte decyzje i plan. Szczegóły są w plikach, na które wskazuje.
 
