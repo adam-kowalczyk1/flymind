@@ -233,6 +233,58 @@ def numbers():
         R + "dose/analysis_dose.json")
     add(S4, "test dawki (siła ORAZ czystość zacisku lepsze od tasowań)", lambda: "tak" if _j(R + "dose/analysis_dose.json")["verdict_FL_both_glu"] else "nie — WYNIK NEGATYWNY",
         R + "dose/analysis_dose.json")
+
+    S5 = "5. 18 XI: zwykły dotyk, „głośność”, nerwy + eksploracje (A = Glu −1, B = Glu +1)"
+    ok = lambda b: "ZALICZONE" if b else "NIEZALICZONE"  # noqa: E731
+    tt = lambda g: _j(R + "analysis_touch_r1.json")[g]  # noqa: E731
+    add(S5, "zwykły dotyk dłoni: sieć sama kończy dotyk (A / B)",
+        lambda: " i ".join(f"{tt(g)['N']['withdraw']}/{tt(g)['N']['n_pairs']} ({ok(tt(g)['T1_A_withdraw_80'])})" for g in ("glu-1", "glu1")), R + "analysis_touch_r1.json")
+    add(S5, "KONTROLA: to samo bez 2 neuronów z głowy (DNg15+DNge078) (A / B)",
+        lambda: " i ".join(f"{tt(g)['lesion_both']['withdraw']}/{tt(g)['lesion_both']['n_pairs']}" for g in ("glu-1", "glu1")), R + "analysis_touch_r1.json")
+    add(S5, "przy chwycie łokieć i nadgarstek stoją (A / B)",
+        lambda: " i ".join(f"{tt(g)['N']['C_still']}/{tt(g)['N']['n_pairs']}" for g in ("glu-1", "glu1")), R + "analysis_touch_r1.json")
+    add(S5, "KONTROLA: dane lepsze od tasowań F / L (A / B)",
+        lambda: " i ".join(f"{'tak' if tt(g)['H_F']['pass_'] else 'nie'} / {'tak' if tt(g)['H_L']['pass_'] else 'nie'}" for g in ("glu-1", "glu1")), R + "analysis_touch_r1.json")
+    ld = lambda g: _j(R + "analysis_loud_r1.json")[g]  # noqa: E731
+    add(S5, "„głośność”: dwa odruchy udane — dane / najlepsze z 10 tasowań o tej samej aktywności (A / B)",
+        lambda: " i ".join(f"{ld(g)['nets']['N']['both']} / {max(v['both'] for k, v in ld(g)['nets'].items() if k != 'N')} z {ld(g)['n_pairs']}"
+                           for g in ("glu-1", "glu1")), R + "analysis_loud_r1.json")
+    add(S5, "„głośność”: przewaga danych nie z samej aktywności (A / B)",
+        lambda: " / ".join("tak" if ld(g)["claim"] else "nie" for g in ("glu-1", "glu1")), R + "analysis_loud_r1.json")
+    nv = lambda g: _j(R + "analysis_nerves_r1.json")[g]  # noqa: E731
+    add(S5, "nerwy (2 czujniki FSR + serwa, typowe): sieć kończy dotyk (A / B)",
+        lambda: " i ".join(f"{nv(g)['typ']['N']['withdraw']}/{nv(g)['typ']['N']['n_pairs']}" for g in ("glu-1", "glu1")), R + "analysis_nerves_r1.json")
+    add(S5, "KONTROLA nerwy: bez DNg15+DNge078 (A / B)",
+        lambda: " i ".join(f"{nv(g)['typ']['lesion_both']['withdraw']}/{nv(g)['typ']['lesion_both']['n_pairs']}" for g in ("glu-1", "glu1")), R + "analysis_nerves_r1.json")
+    add(S5, "nerwy: chwyt udany — z nerwami / bez nerwów (A / B)",
+        lambda: " i ".join(f"{nv(g)['typ']['N']['grip'][0]} / {nv(g)['ideal']['grip'][0]} z {nv(g)['ideal']['grip'][1]}" for g in ("glu-1", "glu1")), R + "analysis_nerves_r1.json",
+        "VERIFIED; uwaga: lepiej z nerwami, bo 1 czujnik szczęki pobudza obie połówki receptorów")
+    add(S5, "nerwy: wszystkie 4 kryteria (A / B)", lambda: " / ".join(ok(nv(g)["typ"]["ALL"]) for g in ("glu-1", "glu1")), R + "analysis_nerves_r1.json")
+    add(S5, "nerwy wolne (pesymistyczne): ponowne dotknięcia — „odbijanie” (A / B)",
+        lambda: " i ".join(f"{nv(g)['pess']['N']['recontact_trials']} prób" for g in ("glu-1", "glu1")), R + "analysis_nerves_r1.json")
+    EX = "EKSPLORACJA (1 przebieg, bez testu i bez tasowań)"
+    H = R + "alive_head_explore/try/"
+    add(S5, "„życie” z głową (A, szum 12 / 16 mV): aktywność głowy",
+        lambda: " / ".join(f"{_j(H + f'H3_g-1_s{s}.json')['head_mean_hz']:.1f} Hz" for s in (12, 16)) + " (cicha, jak u muchy), ale ramię odpływa do krańców",
+        H + "H3_g-1_s1*.json; NOTE: alive_head_explore/NOTE_20261118.md", EX)
+    add(S5, "„życie” z głową (B, 9 mV): głowa „zapala się” cała naraz",
+        lambda: f"{_j(H + 'H3_g1_s9.json')['head_mean_hz']:.0f} Hz, {100 * _j(H + 'H3_g1_s9.json')['head_active_frac']:.0f} % neuronów — napad, nie życie",
+        H + "H3_g1_s9.json", EX)
+    E = R + "escape_explore/"
+    add(S5, "ucieczka przed ręką (A): neurony ucieczki muchy / ruch nogi",
+        lambda: f"szczyt {_j(E + 'N4_g-1_s2_left.json')['hz_peak'][3]:.0f} Hz / {_j(E + 'N4_g-1_s2_left.json')['move_cm']:.1f} cm (mucha ucieka skokiem nóg środkowych)",
+        E + "N4_g-1_s2_left.json", EX)
+    add(S5, "KONTROLA ucieczka (B): ruch sieci z danych / przetasowanej",
+        lambda: f"{_j(E + 'N2_g1_left.json')['move_cm']:.0f} cm / {_j(E + 'F1_g1_left.json')['move_cm']:.0f} cm — oba to napad głowy",
+        E + "N2_g1_left.json, F1_g1_left.json", EX)
+    V = R + "avoid_explore/r2/"
+    ts = lambda n: _j(V + n + ".json")["touched_s"]  # noqa: E731
+    for c, lab in (("frozen", "ramię nieruchome"), ("full", "wszystkie zmysły"), ("blind", "bez wzroku"), ("numb", "bez czucia dotyku"),
+                   ("lesion", "bez DNg15+DNge078")):
+        add(S5, ("KONTROLA " if c == "lesion" else "") + f"„nie dać się dotknąć” (A), czas dotykania z lewej / prawej / przodu: {lab}",
+            lambda c=c: " / ".join(f"{ts(f'N_g-1_{d}_{c}'):.2f} s" for d in ("left", "right", "front")), V + f"N_g-1_*_{c}.json", EX)
+    add(S5, "KONTROLA „nie dać się dotknąć” (A): sieć przetasowana, wszystkie zmysły",
+        lambda: " / ".join(f"{ts(f'F1_g-1_{d}_full'):.2f} s" for d in ("left", "right", "front")), V + "F1_g-1_*_full.json", EX)
     return rows
 
 
@@ -245,6 +297,9 @@ CONCLUSIONS = [
     " zachowują też podział na nogi, i nie wygrywa w liczbach (siła zacisku, liczba odłożonych przedmiotów).",
     "„Oko” w pokazie 1 to wykrywacz zielonego koloru podający ten sam prąd wszystkim neuronom jednej strony — sztuczne pobudzanie, nie oko muszki.",
     "W działających etapach sieć wydaje ok. 3 % komend; dojazd ramienia i kolejność faz są klasyczne.",
+    "18 XI: mózg muchy działa także przez model prawdziwych czujników i serw (nerwy: zaliczone przy obu znakach glutaminianu)."
+    " Sam szum ani dołożona „głowa” nie dają ramieniu „życia jak mucha” (cisza, napad albo odpływ do krańców)."
+    " W trybie „nie dać się dotknąć” ramię zawsze najpierw zostaje dotknięte, a dopiero potem się cofa — to eksploracje, nie testy.",
 ]
 
 # ------------------------------------------------------------------ uruchomienia
