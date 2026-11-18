@@ -340,3 +340,75 @@ Werdykt wg `LOOP_TARGET_reflex_r2.md`: „schemat połączeń ma znaczenie w zad
 - Ponieważ H-R(G) nie przeszło, wystarcza w dużej mierze zachować, która grupa neuronów (noga, warstwa) łączy się z którą; konkretny dobór neuronów nie jest potrzebny.
 - Nie wykluczone: część przewagi może wynikać z większej ogólnej aktywności sieci z danych (por. test dawki). Ten test tego nie rozdziela.
 - Stabilność między ziarnami scen (opisowo): N Glu +1 OBA 15/25, 15/25, 19/27; Glu −1 5/25, 8/25, 9/27.
+
+## Benchmark „kolor × położenie × czas pętli” (16 XI 2026; prośba Adama; numeracja C1–C5)
+
+| # | Co | Plik / komenda | Wynik |
+|---|---|---|---|
+| C1 | Stan wyjściowy | `vision_manipulation.py`, `encoder.py` (tylko odczyt) | Enkoder sieci i klasyczna sylwetka wykrywają WYŁĄCZNIE zieleń (przedmioty malowane na zielono) — VERIFIED (kod) |
+| C2 | Nowa percepcja „chroma” + próby dymne (sceny rozwojowe 21 990 xxx) | `colour_bench.py` (podmiany w pamięci, moduły wspólne bez zmian) | czerwony: A 2/2, E 2/2; E z percepcją „green” na czerwonym 0/1; p99 pętli 26–28 ms |
+| C3 | Cel, ziarna, hasze PRZED testem; przegląd kodu (0 uwag) | `LOOP_TARGET_colour_r1.md`, `analyze_colour.py`; SEED_REGISTRY 21 991 xxx; `PRE_TEST_HASHES.txt` 19:15:38 | — |
+| C4 | **Test** (raz): 18 przebiegów, xargs -P 5 | `one_colour.sh`, `colour_jobs.txt` → `colour/*.json` | 18/18 plików, 0 Traceback; hasze kodu = sprzed testu |
+| C5 | Analiza (raz) | `analyze_colour.py colour colour/analysis_colour.json` | tabela niżej |
+
+### Wynik (przedmioty odłożone do pudełka, na 45; percepcja „chroma”)
+| Ramię | zielony | czerwony | niebieski | żółty | biały | p99 pętli (ms) |
+|---|---|---|---|---|---|---|
+| A klasyczny | 33 | 34 | 34 | 34 | 0 | 71–78 (biały 31) |
+| E sieć muchy | 29 | 28 | 28 | 30 | 0 | 82–95 |
+Percepcja „green” (dotychczasowa): zielony A 34/45, E 32/45; czerwony / niebieski / żółty 0/9 w obu ramionach.
+
+| Kryterium | Wynik |
+|---|---|
+| K0 test czuły (stara percepcja ślepa na inne kolory) | **spełnione** (0/9 ×6) |
+| K1 odporność na kolor, A | **spełnione** (różnice +2,2 pp) |
+| K1 odporność na kolor, E (sieć) | **spełnione** (−2,2 / −2,2 / +2,2 pp) |
+| K2 sieć nie gorsza od klasycznego (180 par) | **NIE**: E 115 vs A 135, −11,1 pp [−17,2; −5,6], McNemar 25 : 5, p = 0,0003 — sieć istotnie gorsza |
+| K3 pętla < 60 ms (p99 taktu < 50 ms) | **NIE**: p99 71–95 ms, maks. 742 ms |
+| WERDYKT | **FAILED** (K2 i K3) |
+
+Opisowo:
+- Położenie (strefa x 165–214 mm, y −29…69 mm) nie wpływa na sukces: A 44 / 43 / 48 na 60 i E 36 / 38 / 41 na 60 w tercylach odległości od środka strefy.
+- Błąd położenia z kamery: mediana 0,1–0,3 mm.
+- Biały: 0/45 w obu ramionach (przewidziane: szary stół).
+
+Przyczyna K3 (INFERRED): obciążenie komputera. Jednocześnie liczyło 5 przebiegów tej sesji i test G2 sesji „Oko muchy”. Przebiegi, które kończyły się, gdy reszta już stała, miały p99 24 ms (A green zielony) i 31 ms (A chroma biały); próby dymne przy 4 procesach 26–28 ms. Czystego pomiaru czasu (bez innych procesów) NIE zrobiono — to osobny test z nowym celem.
+
+## Czysty pomiar czasu pętli (16 XI 2026; zgoda Adama „Tak, zmierz”; numeracja T1–T4)
+
+| # | Co | Plik / komenda | Wynik |
+|---|---|---|---|
+| T1 | Cel, ziarna, hasze PRZED pomiarem; przegląd kodu (0 uwag) | `LOOP_TARGET_latency_r1.md`, `analyze_latency.py`; SEED_REGISTRY 21 992 xxx; `PRE_TEST_HASHES.txt` 21:23:27 | — |
+| T2 | Pierwsze uruchomienie 21:23 — BŁĄD STARTU (mój skrypt w zsh nie rozdzielił argumentów, `--arm 'E_vis_touch zielony'`) | logi w `latency_launch_error_2123/` | argparse odrzucił polecenie przed zbudowaniem sceny: **żadna scena nie została uruchomiona, ziarna 21 992 xxx nieużyte**. Analiza uruchomiona na pustym katalogu → `analysis_latency_PUSTA_NIEWAZNA.json` (bez danych, nie jest wynikiem) |
+| T3 | **Pomiar** (ponownie, poprawiony skrypt bash, 21:24–21:30; jeden przebieg naraz; w tle 1 proces innej sesji `bridge_loom.py` ~1–1,5 rdzenia, load avg 3,3–5,4) | `latency/*.json`, `load_*.txt` | 4/4 plików, 0 Traceback; hasze kodu = sprzed pomiaru |
+| T4 | Analiza (raz; hasz `analyze_latency.py` eabe2892… = sprzed pomiaru) | `analyze_latency.py latency latency/analysis_latency.json` | tabela niżej |
+
+| Przebieg (9 przedmiotów) | takty | mediana | p99 | p99,9 | maks. | > 50 ms | pętla p99 (10 ms + p99) | sukces |
+|---|---|---|---|---|---|---|---|---|
+| E sieć, zielony | 13 021 | 6,6 ms | 9,0 ms | 9,9 ms | 10,3 ms | 0 | 19,0 ms | 4/9 |
+| E sieć, czerwony | 13 386 | 6,6 ms | 9,4 ms | 10,0 ms | 10,2 ms | 0 | 19,4 ms | 5/9 |
+| A klasyczny, zielony | 13 591 | 4,8 ms | 7,0 ms | 7,8 ms | 9,2 ms | 0 | 17,0 ms | 6/9 |
+| A klasyczny, czerwony | 13 596 | 5,0 ms | 7,3 ms | 16,9 ms | 54,9 ms | 2 | 17,3 ms | 6/9 |
+
+Werdykt wg `LOOP_TARGET_latency_r1.md`: **K3-clean SPEŁNIONE dla obu** — przy jednym przebiegu naraz pętla (10 ms okresu kamery + obliczenia) mieści się w ok. 19 ms dla 99 % taktów (sieć muchy: najdłuższy takt 10,3 ms obliczeń). Wynik K3 benchmarku kolorów (obciążony komputer) pozostaje FAILED; różnica potwierdza, że przyczyną było obciążenie (VERIFIED dla tego porównania: ten sam kod, ten sam typ przebiegu).
+
+| I1 | ILUSTRACJA (nie test) „jak widzi prawdziwa mucha vs nasza” na prośbę Adama | `fly_view_figure.py czerwony` → `fly_view/jak_widzi_mucha_czerwony.png`; scena rozwojowa 21 990 050 (zakres rozwojowy) | panel 2 = model omatidiów (siatka heks. co 5°, jasność R1–R6) — przybliżenie z literatury, nie dane MaleCNS; sieć dostała g = (0,68; 0,86) |
+
+## Test „widzenie jak oko złożone muchy” (16/17 XI 2026; prośba Adama; numeracja O1–O5)
+
+| # | Co | Plik / komenda | Wynik |
+|---|---|---|---|
+| O1 | Model optyki oka (296 omatidiów co 5°, FWHM 5°, jasność Rh1 0,05/0,55/0,40, kontrast Webera) + eksploracja na scenach 21 990 xxx | `eye_bench.py` | pierwsza wersja (średnia RGB, próg 0,20, maska chwytaka 0,10) nie widziała niczego — poprawiona PRZED celem; kontrasty: czerwony 0,40–0,64, żółty 0,12, zielona plamka kalibracyjna 0,008 |
+| O2 | Cel, ziarna, hasze PRZED testem; przegląd kodu (0 uwag) | `LOOP_TARGET_eye_r1.md`, `analyze_eye.py`; SEED_REGISTRY 21 993 xxx; `PRE_TEST_HASHES.txt` 21:55:43 | — |
+| O3 | **Test** (raz): 10 przebiegów × 45 przedmiotów, xargs -P 5 | `one_eye.sh`, `eye_jobs.txt` → `eye/*.json` | 10/10 plików, 0 Traceback; hasze = sprzed testu |
+| O4 | Analiza (raz) | `analyze_eye.py eye eye/analysis_eye.json` | tabela niżej |
+| O5 | Ilustracje (nie test) | `fly_view_figure.py`, `eye_view_figure.py` → `fly_view/*.png` | — |
+
+| Ramię | czerwony: chroma → oko | zielony (oko) | niebieski (oko) | żółty (oko) | H1 | H2 | Werdykt |
+|---|---|---|---|---|---|---|---|
+| E sieć muchy | 29 → **30** (1 : 2, p = 1) | 4 | 3 | 2 | tak | tak | **PASS** |
+| A klasyczny | 33 → 33 | 3 | 3 | 3 | tak | tak | PASS |
+
+Werdykt wg `LOOP_TARGET_eye_r1.md`: **spełnione dla sieci** — z wejściem o rozdzielczości i czułości oka muchy (model optyki) sieć steruje tak samo dobrze jak z detektorem koloru dla przedmiotów, które mucha widzi (ciemne dla Rh1), a przedmiotów jasnych dla Rh1 nie widzi (2–4/45), jak przewidywał model. Nadal NIE są to neurony płata wzrokowego (detektor kontrastu → LC10a).
+2026-11-18 07:12:50 ETAP 1 TEST start: touch_natural.py --seed 21871 --poses 6, 24 przebiegi (jobs.txt), cel LOOP_TARGET_touch_r1.md, hasze PRE_TEST_HASHES_touch_r1.txt
+2026-11-18 ~08:00 ETAP 1 TEST koniec: 24/24 przebiegi zapisane; hasze PRE = POST. Wynik: Glu +1 T1_A/B/C, H(F), H(L) PASS (26/26, wycięcie 0/26); Glu −1 T1_A FAILED 18/26 (lekki 1/6, średni 1/4), T1_B/C, H PASS. Raport TOUCH_R1_REPORT_20261118.md. Ziarna 21 871 xxx, 21 872/873 001–005 ZUŻYTE.
