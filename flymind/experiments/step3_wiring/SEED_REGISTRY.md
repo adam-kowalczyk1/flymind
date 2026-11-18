@@ -76,3 +76,4 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 944 000 – 21 944 999 | ŻYCIE (eksploracja, `alive.py`): ziarna szumu neuronów, bez robota, bez zadania; tasowania treningowe 21 100 001 (F), 21 100 006 (L) | 2026-11-18 | w użyciu (eksploracja) |
 | 21 944 201 – 21 944 213 | ŻYCIE 2 (eksploracja): `alive.py --feco/--head` (głowa `head.py`), wyniki `results/step3_20261115/alive_head_explore/` | 2026-11-18 | ZUŻYTE (eksploracja) |
 | 21 945 001 – 21 945 008 | UCIECZKA (eksploracja): `escape.py`, szum neuronów; tasowanie F treningowe 21 100 001; wyniki `results/step3_20261115/escape_explore/` | 2026-11-18 | ZUŻYTE (eksploracja) |
+| 21 946 001 – 21 946 002 | NIE DAĆ SIĘ DOTKNĄĆ (eksploracja): `avoid.py`, szum neuronów; tasowanie F treningowe 21 100 001; wyniki `results/step3_20261115/avoid_explore/` | 2026-11-18 | ZUŻYTE (eksploracja) |

@@ -35,13 +35,26 @@ def head_ids():
     return ids
 
 
+LOOM_TYPES = ("LPLC2", "LC4", "LPLC1", "LC6", "LC16")   # rzutowe neurony oka czułe na zbliżanie (literatura); pobudzane modelem oka
+
+
+def eye_ids():
+    import nets
+    import pandas as pd
+    a = pd.read_feather(nets.visual_path.ANN, columns=["bodyId", "type"])
+    return sorted(int(b) for b in a.bodyId[a.type.isin(LOOM_TYPES)])
+
+
 class HeadLife(B.BrainNet):
     """BrainNet (noga + BM + DNge078 + DNg15) + głowa; głowa w warstwie „I” (tasowanie L w obrębie warstw)."""
-    def __init__(self, glu, kind="N", shuffle_seed=None):
+    def __init__(self, glu, kind="N", shuffle_seed=None, eyes=False):
         orig = B.route_ids
         bm, d78, d15 = orig()
         have = set(bm + d78 + d15)
         h = [b for b in head_ids() if b not in have]
+        if eyes:                                                      # + wszystkie komórki typów zbliżania (oko pełne)
+            hs = set(h) | have
+            h += [b for b in eye_ids() if b not in hs]
         B.route_ids = lambda: (bm, d78, d15 + h)
         try:
             super().__init__(glu, kind, shuffle_seed)
