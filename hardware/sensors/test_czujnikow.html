@@ -66,7 +66,9 @@ pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
     <button id="fsrTest" disabled>Test krok po kroku</button>
   </div>
   <div>Czujnik 1 (A0)</div><div class="bar"><i id="b0"></i><span id="t0">—</span></div>
+  <div class="mute" id="d0"></div>
   <div>Czujnik 2 (A1)</div><div class="bar"><i id="b1"></i><span id="t1">—</span></div>
+  <div class="mute" id="d1"></div>
   <p class="step" id="fsrStep"></p>
   <div id="fsrVerdict"></div>
 </section>
@@ -107,6 +109,15 @@ function judgeFsr(idle, own, otherWhenOwn) {
   if (x > Math.max(PRESS_MIN, CROSS_MAX * p)) return ["NIE DZIAŁA", `reaguje też na drugi czujnik (${x}) — kable zamienione albo zwarte`];
   return ["DZIAŁA", `spoczynek ${i}, nacisk ${p} zliczeń (≈ ${toNewton(p).toFixed(1)} N wg krzywej katalogowej, opornik ${rFix() / 1000} kΩ)`];
 }
+function diagnose(win, r = rFix()) {         // podpowiedź z ostatniej ~1 s, sens tylko gdy NIE naciskasz
+  if (win.length < 20) return "";
+  const lo = Math.min(...win), hi = Math.max(...win), m = q(win, .5), kOhm = c => (r * (1023 / c - 1) / 1000).toFixed(0);
+  if (hi - lo > 150) return `Gdy nie dotykasz: skacze ${lo}–${hi} → luźny kabelek albo rezystor (sprawdź, czy siedzą w dziurkach).`;
+  if (m <= IDLE_MAX) return `Gdy nie dotykasz: ${m} → OK.`;
+  if (m > SAT) return `Gdy nie dotykasz: pełna skala → nóżki czujnika zwarte albo pin połączony prosto z +5 V (bez czujnika).`;
+  return `Gdy nie dotykasz: ${m} → czujnik ma ok. ${kOhm(m)} kΩ, powinien > 1000 kΩ. Coś go lekko ściska: wyprostuj ogonek przy kółku, ` +
+    `połóż płasko, nie trzymaj nóżek palcami. Nie pomaga → wyjmij czujnik z płytki: spadnie do zera = wina czujnika, zostanie = płytka/kabelki.`;
+}
 function judgeCamera(fps, stdOpen, meanOpen, meanCovered) {
   if (fps < 5) return ["NIE DZIAŁA", `za mało klatek (${fps.toFixed(1)}/s)`];
   if (stdOpen < 2) return ["NIE DZIAŁA", "obraz jednolity (czarny/szary) — zasłonięty obiektyw albo zła kamera"];
@@ -123,7 +134,9 @@ function judgeCamera(fps, stdOpen, meanOpen, meanCovered) {
     && judgeCamera(30, 40, 120, 10)[0] === "DZIAŁA" && judgeCamera(30, .5, 3, 3)[0] === "NIE DZIAŁA"
     && judgeCamera(30, 40, 120, 115)[0] === "NIE DZIAŁA?"
     && Math.abs(toNewton(1023 * 10e3 / (10e3 + 6e3), 10e3) - 1) < 0.01
-    && Math.abs(toNewton(1023 * 5.1e3 / (5.1e3 + 6e3), 5.1e3) - 1) < 0.01;
+    && Math.abs(toNewton(1023 * 5.1e3 / (5.1e3 + 6e3), 5.1e3) - 1) < 0.01
+    && diagnose(Array(50).fill(93), 5.1e3).includes("ok. 51 kΩ") && diagnose(Array(50).fill(4)).includes("OK")
+    && diagnose(Array(50).fill(1023)).includes("pełna skala") && diagnose([0, 400, 10, 380, ...Array(30).fill(5)]).includes("skacze");
   $("#selftest").textContent = ok ? "Sprawdzenie strony: OK" : "Sprawdzenie strony: BŁĄD logiki oceny — nie ufaj wynikom";
   window.SELFTEST_OK = ok;
 })();
@@ -202,7 +215,7 @@ $("#camCover").onclick = async () => {
 };
 
 // ---------- czujniki nacisku (Web Serial)
-let latest = [0, 0], log = null;
+let latest = [0, 0], log = null, recent = [];
 if (!("serial" in navigator)) { $("#noSerial").hidden = false; $("#fsrConnect").disabled = true; }
 $("#fsrConnect").onclick = async () => {
   let port;
@@ -220,8 +233,10 @@ $("#fsrConnect").onclick = async () => {
       if (p.length !== 3 || !p.every(s => /^\d+$/.test(s))) continue;
       got++; latest = [+p[1], +p[2]];
       if (log) log.push(latest);
+      recent.push(latest); if (recent.length > 100) recent.shift();
     }
     [0, 1].forEach(i => {
+      $("#d" + i).textContent = diagnose(recent.map(v => v[i]));
       $("#b" + i).style.width = (latest[i] / 1023 * 100) + "%";
       $("#t" + i).textContent = `${latest[i]} / 1023  (≈ ${toNewton(latest[i]).toFixed(1)} N)`;
     });
