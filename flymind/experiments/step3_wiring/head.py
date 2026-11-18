@@ -48,6 +48,10 @@ class HeadLife(B.BrainNet):
         finally:
             B.route_ids = orig
         self.rep["n_head"] = len(h)
+        import nets                                                   # kolejność neuronów jak w nets2.build_ext
+        order = list(dict.fromkeys(nets.bodies_for("pre")[0] + bm + d78 + d15 + h))
+        assert len(order) == self.N
+        self.pos = {b: i for i, b in enumerate(order)}
 
 
 if __name__ == "__main__":
