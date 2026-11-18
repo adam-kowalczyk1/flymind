@@ -1,5 +1,7 @@
 # FlyMind — wznowienie (AKTUALIZACJA 2026-11-18)
 
+> 18 XI wieczór: etap 3a „nerwy” PASS (NERVES_R1_REPORT_20261118.md); „ożywienie” szumem = drganie bez rytmu (alive_explore/NOTE_20261118.md). Zob. §0.1 w FLYMIND_MASTER_CONTEXT.md.
+
 **Najpierw przeczytaj `flymind/FLYMIND_MASTER_CONTEXT.md` §0 (stan 18 XI).** Najnowsze wyniki: `results/step3_20261115/`
 (STEP3/STEP6/REFLEX_R2/TOUCH_R1/LOUD_R1 raporty, `audit_log_step3_20261115.md`); ziarna: `experiments/step3_wiring/SEED_REGISTRY.md`
 (21 xxx xxx — sprawdzić przed użyciem). Python: `.venv/bin/python -I -B`. Nic nie uruchamiać na prawdziwym ramieniu bez polecenia Adama.

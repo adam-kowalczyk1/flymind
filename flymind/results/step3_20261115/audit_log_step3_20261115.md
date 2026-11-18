@@ -414,3 +414,9 @@ Werdykt wg `LOOP_TARGET_eye_r1.md`: **spełnione dla sieci** — z wejściem o r
 2026-11-18 ~08:00 ETAP 1 TEST koniec: 24/24 przebiegi zapisane; hasze PRE = POST. Wynik: Glu +1 T1_A/B/C, H(F), H(L) PASS (26/26, wycięcie 0/26); Glu −1 T1_A FAILED 18/26 (lekki 1/6, średni 1/4), T1_B/C, H PASS. Raport TOUCH_R1_REPORT_20261118.md. Ziarna 21 871 xxx, 21 872/873 001–005 ZUŻYTE.
 2026-11-18 08:41:24 ETAP 2 TEST start: dwa odruchy vs tasowania o tej samej aktywności, sceny 21874–21876, 66 przebiegów, cel LOOP_TARGET_loud_r1.md, hasze PRE_TEST_HASHES_loud_r1.txt (F5 Glu+1 wyrównany −2,1 %, najbliższe trafienie)
 2026-11-18 ETAP 2 TEST koniec: 66/66 przebiegów, hasze PRE = POST. Glu +1: dane 54/80, H-M(F) i H-M(L) POTWIERDZONE (wyrównane tasowania 0–40). Glu −1: dane 27/80, H-M(F) 1/5, H-M(L) 4/5 — NIE. Przewidywanie (oba nie) chybione dla Glu +1. Raport LOUD_R1_REPORT_20261118.md. Ziarna 21 874–876 xxx, 21 877/878 001–005 ZUŻYTE.
+
+## ETAP 3a — nerwy (18 XI)
+- 2026-11-18 11:54:28 START testu nerwów: cel LOOP_TARGET_nerves_r1.md, hasze PRE_TEST_HASHES_nerves_r1.txt, sceny 21941–21943, 30 przebiegów, uruchamiany RAZ.
+- 2026-11-18 11:55:20 START NIEUDANY (przed symulacją): jobs.txt wygenerowany w zsh — `set -- $x` nie podzielił słów, wszystkie 30 procesów zatrzymane przez assert argumentów (AssertionError), ŻADNA scena nie policzona, brak wyników. Logi w nerves_test/failed_start_zsh/. jobs.txt wygenerowany ponownie w bash (treść zgodna z celem), nowy hasz dopisany do PRE_TEST_HASHES_nerves_r1.txt; kod i cel bez zmian.
+- 2026-11-18 11:55:20 START testu nerwów (właściwy).
+- 2026-11-18 12:13:38 KONIEC testu nerwów: Glu +1 i Glu −1 — NV_A–NV_D PASS dla typ i pess (Glu −1 typ wycofanie 66/80; przewidywanie „nie” chybione). Raport NERVES_R1_REPORT_20261118.md, hasze POST zgodne.

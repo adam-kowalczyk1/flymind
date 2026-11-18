@@ -1,5 +1,13 @@
 # FLYMIND — kontekst główny (stan na 2026-11-07; AKTUALIZACJA 2026-11-18 poniżej)
 
+
+### §0.1 DOPISEK 2026-11-18 (wieczór) — nerwy i „ożywienie”
+- **Etap 3a „nerwy” (TEST, PASS oba Glu):** model 2× FSR402 + Arduino i serw STS3215 między mózgiem muchy a ramieniem (`step3_wiring/nerves.py`).
+  Glu +1 typowe: wycofanie 80/80, z wycięciem DNg15+DNge078 0/80, spokój przy chwycie 80/80, chwyt 82/90. Glu −1 typowe: 66/80 (bez nerwów 56/80).
+  Przy nerwach pesymistycznych ramię często „odbija” (28–29/80 prób). Źródło: `results/step3_20261115/NERVES_R1_REPORT_20261118.md`.
+- **„Ożywienie” (eksploracja, nie test):** sam szum neuronów do 10 mV — ramię stoi; 14–18 mV — dryf i drganie bez rytmu, tasowania tak samo.
+  Źródło: `results/step3_20261115/alive_explore/NOTE_20261118.md`.
+
 ## 0. AKTUALIZACJA 2026-11-18 — przeczytaj najpierw (sekcje 1–15 opisują stan z 7 XI i miejscami są nieaktualne)
 
 Wszystko nadal w symulacji MuJoCo; prawdziwe ramię niepodłączone. Źródłem są raporty wskazane w nawiasach; jeśli coś tu
