@@ -55,3 +55,14 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 951 000 – 149 / 21 952 000 – 149 / 21 953 000 – 149 | KROK 4 r2 TEST (dwa odruchy, 3× scen, `reflex.py`, cel `LOOP_TARGET_reflex_r2.md`): sceny `--seed 21951/21952/21953`, 6 póz — RAZ | 2026-11-16 | zarezerwowane |
 | 21 960 001 – 005 / 21 970 001 – 005 / 21 980 001 – 005 | KROK 4 r2 TEST: tasowania F / L / G, oba Glu | 2026-11-16 | zarezerwowane |
 | 21 951 000 – 149, 21 952 000 – 149, 21 953 000 – 149, 21 960/970/980 001 – 005 (zużyte) | KROK 4 r2 TEST: wykonany 16 XI 15:36, 96 przebiegów — wynik w audit_log_step3_20261115.md (R1–R4) | 2026-11-16 | ZUŻYTE |
+| 21 990 000 – 21 990 440 | BENCHMARK kolor×położenie (`colour_bench.py`) — PRACE ROZWOJOWE / próby dymne: sceny `--seed 21990` (45 przedmiotów × 1 poza); szum drogi wzrokowej = 18 000 000 + ziarno sceny → 39 990 000 – 39 990 440 | 2026-11-16 | w użyciu (rozwój) |
+| 21 991 000 – 21 991 440; 39 991 000 – 39 991 440 (szum = 18 000 000 + scena); 21 991 999 (bootstrap) | BENCHMARK kolor×położenie TEST (`colour_bench.py`, cel `LOOP_TARGET_colour_r1.md`): sceny `--seed 21991` — RAZ | 2026-11-16 | zarezerwowane |
+| 21 991 000 – 21 991 440; 39 991 000 – 39 991 440; 21 991 999 (zużyte) | BENCHMARK kolor×położenie TEST: wykonany 16 XI 19:16–20:30, 18 przebiegów — wynik w audit_log_step3_20261115.md (C1–C5) | 2026-11-16 | ZUŻYTE |
+| 21 992 000 – 21 992 440; 39 992 000 – 39 992 440 (szum) | CZYSTY POMIAR CZASU PĘTLI (`colour_bench.py`, cel `LOOP_TARGET_latency_r1.md`): sceny `--seed 21992` — RAZ | 2026-11-16 | zarezerwowane |
+| 21 992 000 – 21 992 440; 39 992 000 – 39 992 440 (zużyte) | CZYSTY POMIAR CZASU PĘTLI: wykonany 16 XI 21:24–21:30 (pierwsze uruchomienie 21:23 nie wystartowało — argparse, scen nie było) — wynik w audit_log (T1–T4) | 2026-11-16 | ZUŻYTE |
+| 21 993 000 – 21 993 440; 39 993 000 – 39 993 440 (szum) | TEST „oko złożone” (`eye_bench.py`, cel `LOOP_TARGET_eye_r1.md`): sceny `--seed 21993` — RAZ | 2026-11-16 | zarezerwowane |
+| 21 993 000 – 21 993 440; 39 993 000 – 39 993 440 (zużyte) | TEST „oko złożone”: wykonany 16 XI 21:56 – 17 XI, 10 przebiegów — wynik w audit_log (O1–O5) | 2026-11-17 | ZUŻYTE |
+| 21 421 000 – 21 421 449 (dopisek) | ETAP 1 TRENING (zwykły dotyk, `touch_natural.py`): sceny treningowe; tasowania 21 100 001 (F), 21 100 006 (L) | 2026-11-18 | w użyciu (trening) |
+| 21 871 000 – 21 871 149 | ETAP 1 TEST (zwykły dotyk, `touch_natural.py`, cel `LOOP_TARGET_touch_r1.md`): sceny `--seed 21871`, 6 póz — RAZ | 2026-11-18 | zarezerwowane |
+| 21 872 001 – 005 / 21 873 001 – 005 | ETAP 1 TEST: tasowania F / L, oba Glu | 2026-11-18 | zarezerwowane |
+| 21 871 000 – 149, 21 872 001 – 005, 21 873 001 – 005 (zużyte) | ETAP 1 TEST: wykonany 18 XI, 24 przebiegi — wynik w TOUCH_R1_REPORT_20261118.md | 2026-11-18 | ZUŻYTE |
