@@ -34,7 +34,7 @@ import touch_map as TM  # noqa: E402
 FF = "/Users/admin/miniforge3/bin/ffmpeg"
 W_PX, H_PX = 160, 100                     # obraz zmniejszany przez ffmpeg (ręce są duże; ponytail: większy, gdy trzeba szczegółu)
 BG_S, THR, BG_A = 1.5, 25, 0.02           # s do zdjęcia tła (ręka poza kadrem!), próg różnicy jasności 0–255, tempo uczenia tła
-LIVE = {}                                 # najnowszy stan (co 100 ms) dla strony hardware/sensors/test_czujnikow.html
+LIVE = {}                                 # najnowszy stan (co takt, 10 ms) dla strony hardware/sensors/test_czujnikow.html
 PAGE = os.path.join(HERE, "../../../hardware/sensors/test_czujnikow.html")
 ESC = ("DNp01", "DNp02", "DNp04", "DNp11")
 
@@ -68,7 +68,7 @@ class Frames:
         src = (["-fflags", "nobuffer", "-f", "avfoundation", "-framerate", str(fps), "-video_size", size, "-i", cam] if cam
                else ["-re", "-i", video])
         self.p = subprocess.Popen([FF, "-nostdin", "-loglevel", "error", *src, "-vf", f"scale={W_PX}:{H_PX},format=gray",
-                                   "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
+                                   "-flush_packets", "1", "-f", "rawvideo", "-"], stdout=subprocess.PIPE)   # każda klatka od razu do Pythona
         self.last, self.n, self.t0 = None, 0, time.time()
         threading.Thread(target=self._read, daemon=True).start()
 
@@ -199,18 +199,18 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
                        **{k: float(s[:, ix].mean()) for k, ix in net._grp.items()})
             for k, v in row.items():
                 log[k].append(v)
-            acc.append(row)
-            if len(acc) == 10:
+            acc = (acc + [row])[-10:]                                  # ostatnie 100 ms — tylko do częstości [Hz] i wydruku
+            if i % 10 == 9:
                 m = {k: np.mean([r[k] for r in acc], axis=0) for k in acc[0]}
                 say(f"t={m['t']:5.1f}s ręka θ={np.degrees(m['th']):4.0f}° L={m['L']:4.2f} strona={m['sa']:+.1f} | dotyk A0={m['A0_N']:.1f}N "
                     f"dłoń={m['P_N']:.1f}N | ucieczka={m['esc']:5.1f}Hz MDN={m['MDN']:5.1f} DNg15={m['DNg15']:5.1f} | "
-                    f"ramię(sym.)°={np.round(np.degrees(m['q'])).astype(int).tolist()} opóźn={1000 * m['lag']:.0f}ms")
-                LIVE.update(t=round(float(m["t"]), 2), th=float(np.degrees(m["th"])), L=float(m["L"]), sa=float(m["sa"]),
-                            A0_N=float(m["A0_N"]), P_N=float(m["P_N"]), cnt=[int(x) for x in m["cnt"]],
-                            q=np.degrees(m["q"]).round(1).tolist(), q0=np.degrees(log["q"][0]).round(1).tolist(), lag=float(1000 * m["lag"]),
-                            fps=round(frames.n / (time.time() - frames.t0), 1) if frames else 0,
-                            Hz={k: round(float(m[k]), 1) for k in net._grp}, **_img(f, eye))
-                acc = []
+                    f"ramię(sym.)°={np.round(np.degrees(m['q'])).astype(int).tolist()} mózg spóźniony={1000 * m['lag']:.0f}ms")
+            # strona: KAŻDY takt (10 ms), najnowsza klatka i kąty; częstości to średnia z ostatnich 100 ms (pojedynczy takt to szum)
+            LIVE.update(t=round(t, 2), th=float(np.degrees(row["th"])), L=float(row["L"]), sa=float(row["sa"]),
+                        A0_N=float(row["A0_N"]), P_N=float(row["P_N"]), cnt=[int(x) for x in row["cnt"]],
+                        q=np.degrees(row["q"]).round(1).tolist(), q0=np.degrees(log["q"][0]).round(1).tolist(), lag=float(1000 * row["lag"]),
+                        fps=round(frames.n / (time.time() - frames.t0), 1) if frames else 0,
+                        Hz={k: round(float(np.mean([r[k] for r in acc])), 1) for k in net._grp}, **_img(f, eye))
     except KeyboardInterrupt:
         say("przerwane (Ctrl+C) — zapisuję to, co jest")
     return {k: np.array(v) for k, v in log.items()}
@@ -230,7 +230,7 @@ def serve(port):
     class H(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path.startswith("/stan"):
-                body, ct = json.dumps(LIVE).encode(), "application/json"
+                body, ct = json.dumps(dict(LIVE)).encode(), "application/json"   # kopia: pętla zmienia LIVE co 10 ms
             else:
                 body, ct = open(PAGE, "rb").read(), "text/html; charset=utf-8"
             self.send_response(200)

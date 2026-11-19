@@ -327,7 +327,7 @@ $("#fsrTest").onclick = async () => {
   $("#fsrTest").disabled = false;
 };
 
-// ---------- mucha na żywo (dane z live_avoid.py: /stan co 100 ms)
+// ---------- mucha na żywo (dane z live_avoid.py: /stan co takt 10 ms; strona pyta przy każdym odświeżeniu ekranu)
 const BRAIN = location.port === "8793" ? "" : "http://127.0.0.1:8793";
 const FLY = [["esc", "Ucieczka — DNp01/02/04/11 (oko)"], ["MDN", "MDN — cofanie (dotyk)"], ["DNg15", "DNg15 (dotyk)"], ["DNge078", "DNge078 (dotyk)"]];
 $("#flyBars").innerHTML = FLY.map(([k, n]) => `<div>${n}</div><div class="bar"><i id="fb_${k}"></i><span id="ft_${k}">—</span></div>`).join("")
@@ -364,13 +364,13 @@ function drawFly(s) {
     $("#fq" + i).textContent = `${n.toFixed(2)} N  (odczyt ${s.cnt[i]} / 1023)`;
   });
   $("#flyStat").textContent = `t = ${s.t.toFixed(1)} s · kamera ${s.fps} kl./s · ręka w kadrze ${s.th.toFixed(0)}°, zbliżanie ${s.L.toFixed(2)} rad/s, `
-    + `${s.sa > 0.2 ? "z lewej" : s.sa < -0.2 ? "z prawej" : "na wprost"} · opóźnienie ${s.lag.toFixed(0)} ms`;
-  hist.push([s.Hz.esc || 0, s.Hz.MDN || 0, (s.A0_N + s.P_N) * 50]); if (hist.length > 200) hist.shift();
+    + `${s.sa > 0.2 ? "z lewej" : s.sa < -0.2 ? "z prawej" : "na wprost"} · mózg spóźniony wobec zegara ${s.lag.toFixed(0)} ms`;
+  hist.push([s.Hz.esc || 0, s.Hz.MDN || 0, (s.A0_N + s.P_N) * 50]); if (hist.length > 2000) hist.shift();   // ~20 s przy 100 stanach/s
   const c = $("#flyHist"), g = c.getContext("2d"), W = c.width, H = c.height;
   g.clearRect(0, 0, W, H);
   ["#e5484d", "#3e63dd", "#30a46c"].forEach((col, j) => {
     g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
-    hist.forEach((r, i) => { const x = W - (hist.length - 1 - i) * W / 199, y = H - 4 - Math.min(1, r[j] / 200) * (H - 8); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    hist.forEach((r, i) => { const x = W - (hist.length - 1 - i) * W / 1999, y = H - 4 - Math.min(1, r[j] / 200) * (H - 8); i ? g.lineTo(x, y) : g.moveTo(x, y); });
     g.stroke();
   });
 }
@@ -381,8 +381,8 @@ let lastT = -1;
       const s = await (await fetch(BRAIN + "/stan", { cache: "no-store" })).json();
       if (s.t !== undefined && s.t !== lastT) { if (s.t < lastT) { q0 = null; hist.length = 0; } lastT = s.t; drawFly(s); }
       else if (s.t === undefined) $("#flyStat").textContent = "Program działa — mózg muchy się buduje (~45 s)…";
-    } catch (e) { $("#flyStat").textContent = "Czekam na program w Terminalu (live_avoid.py)…"; }
-    await sleep(100);
+    } catch (e) { $("#flyStat").textContent = "Czekam na program w Terminalu (live_avoid.py)…"; await sleep(500); }
+    await new Promise(requestAnimationFrame);     // tyle razy, ile ekran się odświeża (60–120/s), bez zbędnego czekania
   }
 })();
 
