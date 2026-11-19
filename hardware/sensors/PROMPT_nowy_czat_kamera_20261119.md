@@ -54,6 +54,13 @@ Jestem Adam, właściciel projektu FlyMind (mucha z konektomu MaleCNS steruje ra
 - Są piny **wyzwalania (trigger) i strobu** — można zsynchronizować z Arduino / diodą (np. do pomiaru opóźnienia).
 - Kąta obiektywu README nie podaje (jest w `Manual/U20CAM-9281M-V11.pdf`, nieprzeczytany).
 
+## uvc-util (zbudowany 19 XI: `/Users/admin/tools/uvc-util/src/uvc-util`, działa bez uprawnień do kamery)
+- `kamera_szybko.sh` (naświetlanie 5 ms, gain 40): 640×400 → **80 kl./s**, 320×200 → **82 kl./s**. Tyle samo co z automatem,
+  czyli naświetlanie NIE jest ograniczeniem; ~80 kl./s to sufit trybu nieskompresowanego. Po otwarciu kamery przez
+  ffmpeg `exposure-time-abs` czyta się jako 23300 (poza zakresem 1–5000), więc nie wiadomo, czy macOS nie nadpisuje naświetlania.
+- **Do 120 kl./s potrzebny jest MJPG.** Pomysł: własny mały program (Swift albo PyObjC), który w AVFoundation wybiera
+  konkretny format kamery (MJPEG, 1280×800 / 640×480 @120) zamiast pozwalać ffmpeg wybrać; ewentualnie libuvc.
+
 ## Co zrobić (po kolei)
 1. **Diagnostyka kamery:**
    - przeczytaj `~/Desktop/kamera_diag.txt` (jeśli go nie ma, daj mi do wklejenia `bash /Users/admin/so101_fly_project/hardware/sensors/kamera_diag.sh`);
