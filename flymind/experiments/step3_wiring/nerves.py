@@ -33,21 +33,21 @@ Q_STEP = 2 * np.pi / 4096                        # rad, enkoder STS3215
 TAU_FULL, TAU_STEPS = 3.35, 1000                 # N·m przy 100 % PWM, rozdzielczość PWM
 
 
-def fsr_counts(f):
-    """Siła [N] → zliczenia ADC (bez szumu)."""
+def fsr_counts(f, r_fix=R_FIX):
+    """Siła [N] → zliczenia ADC (bez szumu); r_fix = opornik dzielnika [Ω]."""
     if f < 0.2:
         return 0.0
     r = np.exp(np.interp(np.log(min(f, 100.0)), F_TAB, R_TAB))
-    return ADC * R_FIX / (R_FIX + r)
+    return ADC * r_fix / (r_fix + r)
 
 
-def counts_to_force(c):
+def counts_to_force(c, r_fix=R_FIX):
     """Zliczenia → siła [N] krzywą nominalną (to, co zrobi program na komputerze)."""
-    c0 = fsr_counts(0.2)
+    c0 = fsr_counts(0.2, r_fix)
     if c < c0 * 0.5:                              # poniżej progu zadziałania = brak dotyku
         return 0.0
     c = min(c, ADC - 1)
-    r = R_FIX * (ADC - c) / c
+    r = r_fix * (ADC - c) / c
     return float(np.exp(np.interp(np.log(r), R_TAB[::-1], F_TAB[::-1])))
 
 
