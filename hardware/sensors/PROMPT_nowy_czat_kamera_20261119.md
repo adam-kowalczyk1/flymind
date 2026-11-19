@@ -44,6 +44,16 @@ Jestem Adam, właściciel projektu FlyMind (mucha z konektomu MaleCNS steruje ra
 - 320×200 przy 120 → ~74–79 kl./s.
 - `live_avoid.py` ustawiony na 640×400 przy 120 + `-fflags nobuffer` (commit po 8e71139). Kąt obiektywu wg opisu ~148° (pewnie po przekątnej). Program zakłada `--fov 70`, więc kąt trzeba zmierzyć: linijka 20 cm przed kamerą.
 
+## Z dokumentacji producenta (github.com/INNO-MAKER/U20CAM-9281M, sprawdzone 19 XI)
+- Model potwierdzony: **InnoMaker U20CAM-9281M**. OV9281 mono, migawka globalna, USB 2.0, wyjście **MJPG / YUY2**.
+- **120 kl./s przy 1280×800 tylko w MJPG.** Tryby MJPG: 1280×800 (120/30/15/10), 1280×720, 800×600 i 640×480 (do 120).
+  ffmpeg-avfoundation na Macu pokazuje tylko formaty nieskompresowane, więc 1280×800 w YUY2 = 10 kl./s (limit USB 2.0).
+- **Klatki/s ogranicza też czas naświetlania:** 120 kl./s wymaga ≤ 8,3 ms. Przy auto-naświetleniu w pokoju kamera zwalnia
+  (stąd ~3 kl./s na starcie). Na macOS producent zaleca `uvc-util` (github.com/jtfrey/uvc-util):
+  `-s auto-exposure-mode=1`, `-s exposure-time-abs=50` (5 ms). Dawki światła dodać jasniejszym oświetleniem / gain.
+- Są piny **wyzwalania (trigger) i strobu** — można zsynchronizować z Arduino / diodą (np. do pomiaru opóźnienia).
+- Kąta obiektywu README nie podaje (jest w `Manual/U20CAM-9281M-V11.pdf`, nieprzeczytany).
+
 ## Co zrobić (po kolei)
 1. **Diagnostyka kamery:**
    - przeczytaj `~/Desktop/kamera_diag.txt` (jeśli go nie ma, daj mi do wklejenia `bash /Users/admin/so101_fly_project/hardware/sensors/kamera_diag.sh`);
