@@ -191,10 +191,15 @@ $("#camStart").onclick = async () => {
     const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
     const sel = $("#camSel"); sel.innerHTML = "";
     devs.forEach((d, i) => sel.add(new Option(d.label || `kamera ${i}`, d.deviceId)));
-    const usb = devs.find(d => /usb camera|ov9281/i.test(d.label));         // domyślnie kamera nadgarstka, nie FaceTime
-    if (usb && usb.deviceId !== stream.getVideoTracks()[0].getSettings().deviceId) await openCam(usb.deviceId);
+    // domyślnie kamera nadgarstka (OV9281, chip 0c45:636d), nie wbudowana FaceTime ani iPhone
+    const usb = devs.find(d => /usb|uvc|ov9281|0c45/i.test(d.label)) || devs.find(d => !/facetime|built-in|iphone|continuity|virtual/i.test(d.label));
+    if (usb && usb.deviceId !== stream.getVideoTracks()[0].getSettings().deviceId) {
+      try { await openCam(usb.deviceId); }
+      catch (e) { show($("#camVerdict"), usb.label, ["NIE DZIAŁA", `nie udało się przełączyć na tę kamerę (${e.name}) — wybierz ją ręcznie z listy`]); await openCam(); }
+    }
     const cur = stream.getVideoTracks()[0].getSettings().deviceId; sel.value = cur; sel.hidden = devs.length < 2;
-    sel.onchange = () => openCam(sel.value);
+    sel.onchange = () => openCam(sel.value).catch(e => show($("#camVerdict"), sel.selectedOptions[0].text, ["NIE DZIAŁA", `nie udało się włączyć (${e.name})`]));
+    $("#camStep").textContent = "Kamery: " + devs.map(d => d.label || "?").join(" | ");
     countFrames();
     $("#camCover").disabled = false; $("#camStart").disabled = true;
     setInterval(() => {
