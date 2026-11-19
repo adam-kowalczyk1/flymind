@@ -98,6 +98,29 @@ def brake(R):
     return out
 
 
+def sweep(raws):
+    """Przegląd ręki: dla każdego ustawienia (prędkość, promień) i grupy (N, S) — ile unika i średni czas dotyku.
+    Czas ramienia nieruchomego z warunku frozen tego samego ustawienia (dla ustawienia bazowego: FROZEN)."""
+    R = {}
+    for raw in raws:
+        for (tag, cond), L in load_results(raw).items():
+            grp, _, setting = tag.partition("_")
+            grp = {"S9870": "S"}.get(grp, grp)
+            for r in L:
+                if r["seed"] <= 21950005:
+                    R.setdefault((setting or "v0.3_r0.04", grp, cond), []).append(r)
+    out = {}
+    for (setting, grp, cond), L in sorted(R.items()):
+        if cond == "frozen":
+            continue
+        fro = {r["dir"]: r["touched_s"] for r in R.get((setting, "N", "frozen"), [])} or FROZEN
+        ok = [r["touched_s"] < fro[r["dir"]] - 0.2 for r in L]
+        out[f"{setting} {grp} {cond}"] = dict(unika=f"{sum(ok)}/{len(ok)}", dotyk_s=round(float(np.mean([r["touched_s"] for r in L])), 2),
+                                             nieruchome_s=round(float(np.mean([fro[r['dir']] for r in L])), 2),
+                                             staw1=round(float(np.mean([r["dq_end"][0] for r in L])), 2))
+    return out
+
+
 def load_results(raw):
     R = {}
     for p in glob.glob(os.path.join(raw, "*.json")):
@@ -127,6 +150,9 @@ def _check():
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         _check()
+    elif "--sweep" in sys.argv:                     # analyze_diag.py RAW1 [RAW2 ...] --sweep
+        for k, v in sweep([p for p in sys.argv[1:] if p != "--sweep"]).items():
+            print(f"{k:28} {v}")
     elif "--brake" in sys.argv:                     # analyze_diag.py KATALOG_RAW --brake
         print(json.dumps(brake(load_results(sys.argv[1])), indent=1, ensure_ascii=False))
     else:

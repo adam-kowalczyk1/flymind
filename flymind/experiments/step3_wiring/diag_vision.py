@@ -58,6 +58,7 @@ def main():
     ap.add_argument("--dirs", default="left,right,front")
     ap.add_argument("--silence")
     ap.add_argument("--tag", default="N")
+    ap.add_argument("--hands", default="0.3:0.04", help="prędkość:promień ręki, np. 0.15:0.04,0.6:0.04")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     net = build()
@@ -74,17 +75,24 @@ def main():
         sp.save_npz(os.path.join(a.out, "net_W.npz"), sp.csr_matrix(net.W))
     if a.silence:
         silence(net, json.load(open(a.silence)))
-    for d in a.dirs.split(","):
-        for s in map(int, a.seeds.split(",")):
-            for c in a.conds.split(","):
-                out = os.path.join(a.out, f"{a.tag}_{c}_{d}_{s}")
-                if os.path.exists(out + ".json"):
-                    continue
-                res, log, sp = run(net, d, s, c)
-                np.savez_compressed(out + ".npz", spikes=sp, **{k: np.array(v) for k, v in log.items()})
-                with open(out + ".json", "x") as f:
-                    json.dump(dict(res, dir=d, seed=s, cond=c, tag=a.tag), f)
-                print(c, d, s, json.dumps(res), flush=True)
+    seeds = list(map(int, a.seeds.split(",")))
+    for hand in a.hands.split(","):                 # ręka: prędkość [m/s] : promień [m]
+        v, r = map(float, hand.split(":"))
+        A.V_HAND, A.R_HAND = v, r                   # trial() czyta stałe modułu avoid
+        tag = a.tag if (v, r) == (0.30, 0.04) else f"{a.tag}_v{v:g}_r{r:g}"
+        for d in a.dirs.split(","):
+            for s in seeds:
+                for c in a.conds.split(","):
+                    if c == "frozen" and s != seeds[0]:     # ramię nieruchome: czas dotyku zależy tylko od geometrii
+                        continue
+                    out = os.path.join(a.out, f"{tag}_{c}_{d}_{s}")
+                    if os.path.exists(out + ".json"):
+                        continue
+                    res, log, sp = run(net, d, s, c)
+                    np.savez_compressed(out + ".npz", spikes=sp, **{k: np.array(v) for k, v in log.items()})
+                    with open(out + ".json", "x") as f:
+                        json.dump(dict(res, dir=d, seed=s, cond=c, tag=tag, v_hand=v, r_hand=r), f)
+                    print(tag, c, d, s, json.dumps(res), flush=True)
 
 
 if __name__ == "__main__":
