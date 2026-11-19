@@ -64,8 +64,8 @@ def fast_step(s, Wc):
 
 class Frames:
     """ffmpeg → szare klatki W_PX×H_PX w wątku; trzyma tylko najnowszą."""
-    def __init__(self, cam=None, video=None, fps=30, size="1280x800"):   # 640x400@120 dało 0 klatek (19 XI); 1280x800@30 działa
-        src = (["-f", "avfoundation", "-framerate", str(fps), "-video_size", size, "-i", cam] if cam
+    def __init__(self, cam=None, video=None, fps=120, size="640x400"):   # kamera_diag 19 XI: 640x400@120 → ~78 kl./s; 1280x800 → tylko 10
+        src = (["-fflags", "nobuffer", "-f", "avfoundation", "-framerate", str(fps), "-video_size", size, "-i", cam] if cam
                else ["-re", "-i", video])
         self.p = subprocess.Popen([FF, "-nostdin", "-loglevel", "error", *src, "-vf", f"scale={W_PX}:{H_PX},format=gray",
                                    "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
@@ -294,8 +294,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--cam")
     ap.add_argument("--video")
-    ap.add_argument("--fps", type=int, default=30)
-    ap.add_argument("--size", default="1280x800")
+    ap.add_argument("--fps", type=int, default=120)
+    ap.add_argument("--size", default="640x400")
     ap.add_argument("--fsr")
     ap.add_argument("--fsr-csv")
     ap.add_argument("--r-fix", type=float, default=TM.R_FIX, help="opornik dzielnika [Ω]: 10000 albo 5100 — jaki wstawiono")

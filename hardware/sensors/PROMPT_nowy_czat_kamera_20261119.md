@@ -38,6 +38,12 @@ Jestem Adam, właściciel projektu FlyMind (mucha z konektomu MaleCNS steruje ra
   - logi testów: `flymind/experiments/step3_wiring/results/live_avoid_reka_r2/r3.npz`, `~/Desktop/test_reki*.txt`;
   - commity 0c3c3b7, 7737f9b, 2a6ed6e na gałęzi `flymind/fly-first-control`.
 
+## Wynik diagnostyki (19 XI 21:18, `~/Desktop/kamera_diag.txt`)
+- 1280×800: zawsze tylko **10 kl./s** („Configuration of video device failed, falling back to default”); żądanie 60 kl./s → 0 klatek.
+- **640×400: przy 120 → ~78 kl./s, przy 60 → 61, przy 30 → 32**; format bez znaczenia (nv12 / yuyv422 / domyślny).
+- 320×200 przy 120 → ~74–79 kl./s.
+- `live_avoid.py` ustawiony na 640×400 przy 120 + `-fflags nobuffer` (commit po 8e71139). Kąt obiektywu wg opisu ~148° (pewnie po przekątnej). Program zakłada `--fov 70`, więc kąt trzeba zmierzyć: linijka 20 cm przed kamerą.
+
 ## Co zrobić (po kolei)
 1. **Diagnostyka kamery:**
    - przeczytaj `~/Desktop/kamera_diag.txt` (jeśli go nie ma, daj mi do wklejenia `bash /Users/admin/so101_fly_project/hardware/sensors/kamera_diag.sh`);
