@@ -1,0 +1,168 @@
+<meta charset="utf-8">
+<title>Mózg muchy i ramię</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* układ: film ramienia | mapa mózgu obok siebie, pod spodem oś czasu i lista obszarów; jeden ciemny „mikroskopowy” wygląd */
+:root {
+  --bg: #0b0f14; --panel: #121821; --line: #1f2a36; --fg: #dbe4ee; --mute: #8193a6;
+  --spike: #fff4c2; --touch: #ff7a59; --eye: #58c4ff; --move: #9be37a;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-size: 1.6rem; margin: 0; font-weight: 600; text-wrap: balance; }
+.lede { color: var(--mute); max-width: 75ch; margin: 4px 0 0; line-height: 1.5; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 820px) { .stage { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; display: grid; gap: 8px; }
+.card h2 { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin: 0; font-weight: 600; }
+video, canvas { width: 100%; max-width: 100%; display: block; border-radius: 6px; background: #000; }
+#brain { aspect-ratio: 1 / 1; background: var(--bg); }
+.ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font: 600 .9rem var(--sans); color: var(--bg); background: var(--fg); border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--eye); outline-offset: 2px; }
+input[type=range] { flex: 1 1 200px; accent-color: var(--fg); }
+.clock { font: 500 .95rem var(--mono); font-variant-numeric: tabular-nums; min-width: 9ch; }
+.phase { font-weight: 600; }
+#timeline { aspect-ratio: 8 / 1; background: var(--bg); }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
+.row { display: grid; grid-template-columns: 12px minmax(0, 1fr) 64px; gap: 8px; align-items: center; font-size: .85rem; }
+.sw { width: 10px; height: 10px; border-radius: 50%; }
+.bar { height: 4px; background: var(--line); border-radius: 2px; grid-column: 2 / 4; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--spike); width: 0; }
+.hz { font: .8rem var(--mono); text-align: right; color: var(--mute); font-variant-numeric: tabular-nums; }
+.note { color: var(--mute); font-size: .82rem; line-height: 1.5; max-width: 90ch; }
+.key { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--mute); }
+.key b { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 4px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mózg muchy steruje ramieniem: ręka się zbliża i dotyka</h1>
+    <p class="lede">Jedna próba z symulacji. Po lewej widać ramię SO-101 i rękę (kula). Po prawej jest mapa około 15,6 tys. neuronów z danych mózgu muchy.
+      Każda kropka to jeden neuron i zapala się, gdy w danych 10 ms dał impuls. Film jest zwolniony 4 razy.</p>
+  </header>
+
+  <div class="stage">
+    <section class="card" aria-labelledby="h-arm">
+      <h2 id="h-arm">Ramię (symulacja)</h2>
+      <video id="vid" src="ramie.mp4" muted playsinline preload="auto"></video>
+    </section>
+    <section class="card" aria-labelledby="h-brain">
+      <h2 id="h-brain">Mózg muchy: gdzie są impulsy</h2>
+      <canvas id="brain" width="1000" height="1000" aria-label="Mapa neuronów z zapalającymi się impulsami"></canvas>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="h-time">
+    <h2 id="h-time">Oś czasu</h2>
+    <div class="ctrl">
+      <button id="play">Odtwórz</button>
+      <button id="slow" class="ghost">Wolniej</button>
+      <input id="seek" type="range" min="0" max="349" value="0" aria-label="Czas próby">
+      <span class="clock" id="clock">0,00 s</span>
+      <span class="phase" id="phase"></span>
+    </div>
+    <canvas id="timeline" width="1600" height="200" aria-label="Wykres dotyku, rośnięcia ręki w oku i ruchu barku"></canvas>
+    <div class="key"><span><b style="background:var(--eye)"></b>oko: ręka rośnie</span><span><b style="background:var(--touch)"></b>dotyk [N]</span><span><b style="background:var(--move)"></b>bark: cofanie</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-leg">
+    <h2 id="h-leg">Obszary: ile impulsów teraz (Hz na neuron)</h2>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <p class="note" id="foot"></p>
+</div>
+
+<script>
+"use strict";
+const COL = { eyeL: "#58c4ff", eyeR: "#58c4ff", vpn: "#7aa7ff", brain: "#8a7dff", bm: "#ff7a59", asc: "#b48cff", dn: "#e08cff",
+  dnkey: "#ff4f8b", dnesc: "#ffb347", inter: "#3fd1b0", femur: "#ff9a6b", tibia: "#c98f6b", feco: "#e3e36b", mn: "#9be37a", other: "#55606c" };
+const $ = s => document.querySelector(s);
+const vid = $("#vid"), cv = $("#brain"), cx = cv.getContext("2d"), tl = $("#timeline"), tx = tl.getContext("2d");
+let D, keys, regOf, X, Y, rate, glow, T, last = -1;
+
+fetch("mozg.json").then(r => r.json()).then(init).catch(e => { $("#foot").textContent = "Nie udało się wczytać danych (" + e + ")."; });
+
+function init(d) {
+  D = d; keys = Object.keys(d.regions); T = d.spikes.length;
+  regOf = Uint8Array.from(d.reg); X = new Float32Array(d.info.n); Y = new Float32Array(d.info.n);
+  for (let i = 0; i < d.info.n; i++) { X[i] = d.xy[2 * i]; Y[i] = d.xy[2 * i + 1]; }
+  glow = new Float32Array(d.info.n);
+  rate = d.spikes.map(s => { const c = new Array(keys.length).fill(0); for (const i of s) c[regOf[i]]++; return c.map((v, k) => v / Math.max(1, d.regions[keys[k]].n) / 0.01); });
+  $("#seek").max = T - 1;
+  $("#legend").innerHTML = keys.filter(k => d.regions[k].n > 0 && k !== "other").map(k =>
+    `<div class="row"><span class="sw" style="background:${COL[k]}"></span><span>${d.regions[k].label} <span class="hz">· ${d.regions[k].n}</span></span><span class="hz" id="hz-${k}">0</span><span class="bar"><i id="bar-${k}"></i></span></div>`).join("");
+  const r = d.info;
+  $("#foot").textContent = `Ilustracja, nie test: ziarno rozwojowe ${r.seed}, ręka z ${r.dir === "left" ? "lewej" : r.dir}, Glu ${r.glu}. ` +
+    `W tej próbie dotyk trwał ${String(r.touched_s).replace(".", ",")} s (przy nieruchomym ramieniu 1,80 s). W teście 19 XI ramię cofało się w 9 z 15 prób. ` +
+    `Położenia kropek są schematyczne: w danych nie ma współrzędnych neuronów, więc każdy leży w losowym miejscu obszaru swojej grupy. ` +
+    `Czujniki: A0 = szczęka stała → szczecinki nogi („udo”, podział jest hipotezą), P = dłoń → szczecinki głowy.`;
+  drawTimeline(); frame();
+}
+
+function tick() { return Math.max(0, Math.min(T - 1, Math.floor(vid.currentTime * D.info.fps))); }
+
+function drawBrain(t) {
+  cx.fillStyle = getComputedStyle(document.body).backgroundColor; cx.fillRect(0, 0, 1000, 1000);
+  cx.font = "600 24px 'IBM Plex Sans', system-ui"; cx.textAlign = "center";
+  for (const k of keys) {
+    const [x, y, rx, ry] = D.regions[k].xy; if (!D.regions[k].n) continue;
+    cx.strokeStyle = COL[k] + "55"; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(x, y, rx + 8, ry + 8, 0, 0, 2 * Math.PI); cx.stroke();
+  }
+  if (t !== last) {                                     // zaniknięcie poprzednich impulsów, potem nowe
+    for (let i = 0; i < glow.length; i++) glow[i] *= (t === last + 1 ? 0.55 : 0);
+    for (const i of D.spikes[t]) glow[i] = 1;
+    last = t;
+  }
+  for (let i = 0; i < glow.length; i++) {               // tło: przygaszone kropki w kolorze obszaru
+    cx.fillStyle = COL[keys[regOf[i]]] + "40"; cx.fillRect(X[i] - 1, Y[i] - 1, 2.4, 2.4);
+  }
+  cx.fillStyle = "#fff4c2";
+  for (let i = 0; i < glow.length; i++) if (glow[i] > 0.05) { cx.globalAlpha = glow[i]; const s = 2 + 3 * glow[i]; cx.fillRect(X[i] - s / 2, Y[i] - s / 2, s, s); }
+  cx.globalAlpha = 1; cx.fillStyle = "#dbe4ee";
+  const lab = { eyeL: "oko L", eyeR: "oko P", bm: "dłoń → szczecinki głowy", vpn: "wzrok → mózg", brain: "mózg", asc: "wstępujące", dn: "zstępujące (DN)",
+    dnkey: "DNg15 + DNge078", dnesc: "DN ucieczki", inter: "noga: interneurony", femur: "szczęka A0 → „udo”", tibia: "„goleń”", feco: "FeCO", mn: "motoneurony" };
+  for (const k in lab) { const [x, y, rx, ry] = D.regions[k].xy; cx.fillText(lab[k], x, k === "bm" ? y - ry - 14 : y + ry + 24); }
+}
+
+function drawTimeline() {
+  const s = D.series, W = 1600, H = 200, n = s.t.length, px = i => i / (n - 1) * W;
+  tx.clearRect(0, 0, W, H); tx.fillStyle = getComputedStyle(document.body).backgroundColor; tx.fillRect(0, 0, W, H);
+  const q0 = s.q[0][0], dq = s.q.map(q => q0 - q[0]), mx = Math.max(0.05, ...dq);
+  const lines = [[s.loom.map(v => v / Math.max(1, ...s.loom)), "#58c4ff"], [s.touch.map(v => Math.min(1, v / 12)), "#ff7a59"], [dq.map(v => v / mx), "#9be37a"]];
+  for (const [v, c] of lines) { tx.strokeStyle = c; tx.lineWidth = 3; tx.beginPath(); v.forEach((y, i) => i ? tx.lineTo(px(i), H - 12 - y * (H - 30)) : tx.moveTo(px(i), H - 12 - y * (H - 30))); tx.stroke(); }
+  tx.fillStyle = "#8193a6"; tx.font = "22px 'IBM Plex Mono', monospace";
+  for (let sec = 0; sec <= 3; sec++) tx.fillText(sec + " s", px(sec * 100) + 4, 24);
+  drawTimeline.bg = tx.getImageData(0, 0, W, H);
+}
+
+function phase(t) {
+  const s = D.series;
+  if (s.touch[t] > 0.2) return "dotyk!";
+  if (s.loom[t] > 0.5) return "oko widzi zbliżającą się rękę";
+  if (t > 150 && s.q[0][0] - s.q[t][0] > 0.05) return "ramię się cofa";
+  return t < 50 ? "spokój" : "ręka nadlatuje";
+}
+
+function frame() {
+  const t = tick();
+  drawBrain(t);
+  if (drawTimeline.bg) { tx.putImageData(drawTimeline.bg, 0, 0); tx.fillStyle = "#dbe4ee"; tx.fillRect(t / (T - 1) * 1600 - 1.5, 0, 3, 200); }
+  $("#seek").value = t; $("#clock").textContent = (t * D.info.dt_ms / 1000).toFixed(2).replace(".", ",") + " s"; $("#phase").textContent = phase(t);
+  const r = rate[t];
+  keys.forEach((k, j) => { const h = $("#hz-" + k), b = $("#bar-" + k); if (h) { h.textContent = r[j].toFixed(0) + " Hz"; b.style.width = Math.min(100, r[j] / 2) + "%"; } });
+  requestAnimationFrame(frame);
+}
+
+$("#play").onclick = () => { if (vid.paused) { if (vid.ended) vid.currentTime = 0; vid.play(); } else vid.pause(); };
+vid.onplay = () => $("#play").textContent = "Pauza"; vid.onpause = () => $("#play").textContent = "Odtwórz";
+$("#slow").onclick = () => { vid.playbackRate = vid.playbackRate === 1 ? 0.25 : 1; $("#slow").textContent = vid.playbackRate === 1 ? "Wolniej" : "Normalnie"; };
+$("#seek").oninput = e => { vid.pause(); vid.currentTime = (+e.target.value + 0.5) / D.info.fps; };
+</script>

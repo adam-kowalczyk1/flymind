@@ -51,11 +51,11 @@ def regions(net):
     sc = a.superclass.reindex(body).astype(str).values
     ty = a.type.reindex(body).astype(str).values
     reg = np.array(["other"] * net.N, object)
-    reg[np.isin(sc, ["cb_intrinsic", "cb_sensory"])] = "brain"
-    reg[sc == "visual_projection"] = "vpn"
-    reg[sc == "ascending"] = "asc"
-    reg[sc == "descending"] = "dn"
-    reg[np.isin(sc, ["vnc_intrinsic", "vnc_sensory", "sensory"])] = "inter"
+    reg[np.isin(sc, ["cb_intrinsic", "cb_sensory", "cb_motor", "cb_endocrine", "ol_intrinsic"])] = "brain"
+    reg[np.isin(sc, ["visual_projection", "visual_centrifugal"])] = "vpn"
+    reg[np.isin(sc, ["ascending_neuron", "sensory_ascending"])] = "asc"
+    reg[np.isin(sc, ["descending_neuron", "sensory_descending"])] = "dn"
+    reg[np.isin(sc, ["vnc_intrinsic", "vnc_sensory"])] = "inter"
     reg[sc == "vnc_motor"] = "mn"
     reg[np.isin(ty, ESC)] = "dnesc"
     _, d78, d15 = B.route_ids()
@@ -121,7 +121,7 @@ def main():
     m = sim.m
     m.vis.global_.offwidth, m.vis.global_.offheight = max(m.vis.global_.offwidth, W), max(m.vis.global_.offheight, H)
     r, cam = mujoco.Renderer(m, H, W), mujoco.MjvCamera()
-    cam.type, cam.lookat[:], cam.distance, cam.azimuth, cam.elevation = mujoco.mjtCamera.mjCAMERA_FREE, target + [0.02, 0.02, 0.02], 0.55, 150.0, -22.0
+    cam.type, cam.lookat[:], cam.distance, cam.azimuth, cam.elevation = mujoco.mjtCamera.mjCAMERA_FREE, target + [0.0, 0.03, 0.03], 0.45, 150.0, -20.0
     vid = os.path.join(a.out, "ramie.mp4")
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", "25",
                            "-i", "-", "-pix_fmt", "yuv420p", "-vcodec", "libx264", "-crf", "23", "-movflags", "+faststart", vid],
