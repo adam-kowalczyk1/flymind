@@ -7,14 +7,18 @@ Mózg liczony szybciej (aktualizacja tylko od neuronów, które właśnie strzel
 Kamera działa tylko z Terminal.app (uprawnienia macOS).  Uruchom:
   live_avoid.py --cam "USB Camera" [--fsr /dev/cu.usbmodemXXXX --r-fix 10000] [--seconds 60] [--out log.npz] [--brake hub] [--fov 70] [--flip]
   live_avoid.py --video plik.mp4 [--fsr-csv plik.csv]       (nagranie zamiast kamery)
-  live_avoid.py --check                                      (sprawdzian bez sprzętu, ~2 min)"""
+  live_avoid.py --check                                      (sprawdzian bez sprzętu, ~2 min)
+Podgląd na żywo: http://127.0.0.1:8793 (strona hardware/sensors/test_czujnikow.html, punkt 3; --serve 0 wyłącza)."""
 import argparse
+import base64
 import csv
+import json
 import os
 import subprocess
 import sys
 import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
 
@@ -30,6 +34,8 @@ import touch_map as TM  # noqa: E402
 FF = "/Users/admin/miniforge3/bin/ffmpeg"
 W_PX, H_PX = 160, 100                     # obraz zmniejszany przez ffmpeg (ręce są duże; ponytail: większy, gdy trzeba szczegółu)
 BG_S, THR, BG_A = 1.5, 25, 0.02           # s do zdjęcia tła (ręka poza kadrem!), próg różnicy jasności 0–255, tempo uczenia tła
+LIVE = {}                                 # najnowszy stan (co 100 ms) dla strony hardware/sensors/test_czujnikow.html
+PAGE = os.path.join(HERE, "../../../hardware/sensors/test_czujnikow.html")
 ESC = ("DNp01", "DNp02", "DNp04", "DNp11")
 
 
@@ -120,7 +126,7 @@ class Eye:
             self.bg, self.t_last = g, t
             return 0.0
         dt, self.t_last = max(dt, t - self.t_last), t          # prawdziwy odstęp między klatkami (kamera ~10 kl./s, takt 10 ms)
-        m = np.abs(g - self.bg) > THR
+        m = self.m = np.abs(g - self.bg) > THR
         self.bg[~m] += BG_A * (g - self.bg)[~m]
         a = m.mean()
         th = 2 * np.arctan(np.sqrt(a) * self.tan)               # plama jak kwadrat o boku √a szerokości kadru
@@ -169,37 +175,76 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
     net.net.run = run_senses
     log = {k: [] for k in ("t", "L", "th", "sa", "A0_N", "P_N", "esc", "MDN", "DNg15", "DNge078", "q", "lag", "cnt")}
     t0, seen, acc = time.time(), -1, []
-    for i in range(int(seconds / A.DT)):
-        t = i * A.DT
-        if realtime:
-            time.sleep(max(0.0, t0 + t - time.time()))
-        f = frames.last if frames else None
-        if frames and i == int(2 / A.DT):
-            say(f"[kamera: {frames.n / (time.time() - frames.t0):.0f} kl./s" + (" — BRAK OBRAZU, przerwij Ctrl+C]" if frames.n == 0 else "]"))
-        if isinstance(f, str):
-            break                                                  # koniec nagrania
-        L = eye.see(f, A.DT, t) if f is not None and frames.n != seen else eye.L
-        seen = frames.n if frames else seen
-        drive = A.MV * min(1.0, L / A.L_FULL)
-        st["loom"] = {"L": drive * (1 + eye.sa) / 2, "R": drive * (1 - eye.sa) / 2}
-        felt = TM.from_counts(*touch.c, touch.r_fix)
-        dq = net.step(np.array([felt[0], 0.0, felt[1]]), q6[:5], st["qd"][:5], A.DT)   # hw2p: A1 = dłoń → BM
-        q1 = np.clip(q6[1:4] + dq[1:4], lo, hi)
-        st["qd"][1:4] = (q1 - q6[1:4]) / A.DT
-        q6[1:4] = q1
-        s = last["s"] * 1000.0
-        row = dict(t=t, L=L, th=eye.th, sa=eye.sa, A0_N=felt[0], P_N=felt[1], q=q6[1:4].copy(), lag=time.time() - t0 - t, cnt=np.array(touch.c, float),
-                   **{k: float(s[:, ix].mean()) for k, ix in net._grp.items()})
-        for k, v in row.items():
-            log[k].append(v)
-        acc.append(row)
-        if len(acc) == 10:
-            m = {k: np.mean([r[k] for r in acc], axis=0) for k in acc[0]}
-            say(f"t={m['t']:5.1f}s ręka θ={np.degrees(m['th']):4.0f}° L={m['L']:4.2f} strona={m['sa']:+.1f} | dotyk A0={m['A0_N']:.1f}N "
-                f"dłoń={m['P_N']:.1f}N | ucieczka={m['esc']:5.1f}Hz MDN={m['MDN']:5.1f} DNg15={m['DNg15']:5.1f} | "
-                f"ramię(sym.)°={np.round(np.degrees(m['q'])).astype(int).tolist()} opóźn={1000 * m['lag']:.0f}ms")
-            acc = []
+    try:
+        for i in range(int(seconds / A.DT)):
+            t = i * A.DT
+            if realtime:
+                time.sleep(max(0.0, t0 + t - time.time()))
+            f = frames.last if frames else None
+            if frames and i == int(2 / A.DT):
+                say(f"[kamera: {frames.n / (time.time() - frames.t0):.0f} kl./s" + (" — BRAK OBRAZU, przerwij Ctrl+C]" if frames.n == 0 else "]"))
+            if isinstance(f, str):
+                break                                                  # koniec nagrania
+            L = eye.see(f, A.DT, t) if f is not None and frames.n != seen else eye.L
+            seen = frames.n if frames else seen
+            drive = A.MV * min(1.0, L / A.L_FULL)
+            st["loom"] = {"L": drive * (1 + eye.sa) / 2, "R": drive * (1 - eye.sa) / 2}
+            felt = TM.from_counts(*touch.c, touch.r_fix)
+            dq = net.step(np.array([felt[0], 0.0, felt[1]]), q6[:5], st["qd"][:5], A.DT)   # hw2p: A1 = dłoń → BM
+            q1 = np.clip(q6[1:4] + dq[1:4], lo, hi)
+            st["qd"][1:4] = (q1 - q6[1:4]) / A.DT
+            q6[1:4] = q1
+            s = last["s"] * 1000.0
+            row = dict(t=t, L=L, th=eye.th, sa=eye.sa, A0_N=felt[0], P_N=felt[1], q=q6[1:4].copy(), lag=time.time() - t0 - t, cnt=np.array(touch.c, float),
+                       **{k: float(s[:, ix].mean()) for k, ix in net._grp.items()})
+            for k, v in row.items():
+                log[k].append(v)
+            acc.append(row)
+            if len(acc) == 10:
+                m = {k: np.mean([r[k] for r in acc], axis=0) for k in acc[0]}
+                say(f"t={m['t']:5.1f}s ręka θ={np.degrees(m['th']):4.0f}° L={m['L']:4.2f} strona={m['sa']:+.1f} | dotyk A0={m['A0_N']:.1f}N "
+                    f"dłoń={m['P_N']:.1f}N | ucieczka={m['esc']:5.1f}Hz MDN={m['MDN']:5.1f} DNg15={m['DNg15']:5.1f} | "
+                    f"ramię(sym.)°={np.round(np.degrees(m['q'])).astype(int).tolist()} opóźn={1000 * m['lag']:.0f}ms")
+                LIVE.update(t=round(float(m["t"]), 2), th=float(np.degrees(m["th"])), L=float(m["L"]), sa=float(m["sa"]),
+                            A0_N=float(m["A0_N"]), P_N=float(m["P_N"]), cnt=[int(x) for x in m["cnt"]],
+                            q=np.degrees(m["q"]).round(1).tolist(), q0=np.degrees(log["q"][0]).round(1).tolist(), lag=float(1000 * m["lag"]),
+                            fps=round(frames.n / (time.time() - frames.t0), 1) if frames else 0,
+                            Hz={k: round(float(m[k]), 1) for k in net._grp}, **_img(f, eye))
+                acc = []
+    except KeyboardInterrupt:
+        say("przerwane (Ctrl+C) — zapisuję to, co jest")
     return {k: np.array(v) for k, v in log.items()}
+
+
+def _img(f, eye):
+    """Klatka 160×100 (szarość) i maska ręki jako base64 dla strony."""
+    if f is None or isinstance(f, str):
+        return {}
+    m = getattr(eye, "m", None)
+    m = np.zeros_like(f, bool) if m is None else m
+    return dict(w=W_PX, h=H_PX, img=base64.b64encode(f.tobytes()).decode(), mask=base64.b64encode(m.astype(np.uint8).tobytes()).decode())
+
+
+def serve(port):
+    """http://127.0.0.1:port/ = strona testu czujników z panelem muchy, /stan = LIVE jako JSON. Tylko localhost."""
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path.startswith("/stan"):
+                body, ct = json.dumps(LIVE).encode(), "application/json"
+            else:
+                body, ct = open(PAGE, "rb").read(), "text/html; charset=utf-8"
+            self.send_response(200)
+            self.send_header("Content-Type", ct)
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *a):
+            pass
+    srv = ThreadingHTTPServer(("127.0.0.1", port), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
 
 
 def _synthetic(path, n=600, fps=120):
@@ -260,11 +305,15 @@ if __name__ == "__main__":
     ap.add_argument("--fov", type=float, default=70.0, help="poziomy kąt widzenia obiektywu [°] — do zmierzenia")
     ap.add_argument("--flip", action="store_true", help="zamień lewą/prawą stronę kadru")
     ap.add_argument("--out")
+    ap.add_argument("--serve", type=int, default=8793, help="port strony na żywo (0 = bez strony)")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     if a.check:
         _check()
         sys.exit(0)
+    if a.serve:
+        serve(a.serve)
+        print(f"strona na żywo: http://127.0.0.1:{a.serve}  (otwórz w przeglądarce)", flush=True)
     print("buduję mózg muchy (~45 s)…", flush=True)
     net = build(a.glu, a.brake)
     print(f"tryb mózgu: {net._mode}. Przez pierwszą sekundę trzymaj rękę POZA kadrem (kamera uczy się tła).", flush=True)

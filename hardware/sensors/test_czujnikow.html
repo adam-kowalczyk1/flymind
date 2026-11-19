@@ -33,6 +33,12 @@ video{width:100%;max-width:480px;background:#000;border-radius:8px;display:block
 .verdict.warn{border-color:var(--warn);color:var(--warn)}
 code{font-size:.9em}
 pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
+.fly{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}
+.fly canvas,.fly svg{width:100%;background:#000;border-radius:8px;display:block}
+.fly svg{background:var(--bg);border:1px solid var(--line)}
+.bar.hot>i{background:var(--bad)}
+.lg{font-size:.85rem;color:var(--mute)}
+.lg b{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px}
 </style>
 </head>
 <body>
@@ -72,6 +78,24 @@ pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
   <div class="mute" id="d1"></div>
   <p class="step" id="fsrStep"></p>
   <div id="fsrVerdict"></div>
+</section>
+
+<section class="card" aria-labelledby="h-fly">
+  <h2 id="h-fly">3. Mucha na żywo</h2>
+  <p class="mute">Kamera i czujniki idą prosto do mózgu muchy (oko + dotyk w jednym mózgu). Ramię rusza się tylko w symulacji,
+    do prawdziwego nic nie jest wysyłane. Działa, gdy w Terminalu chodzi <code>live_avoid.py</code> — kamera i Arduino są
+    wtedy zajęte przez ten program, więc nie włączaj ich w punktach 1 i 2.</p>
+  <p class="stats" id="flyStat">Czekam na program w Terminalu…</p>
+  <div class="fly">
+    <div><canvas id="flyCam" width="160" height="100" aria-label="Co widzi mucha: obraz kamery, ręka zaznaczona na czerwono"></canvas>
+      <div class="lg">Co widzi oko: <b style="background:#e5484d"></b>ręka (różnica od tła)</div></div>
+    <div><svg id="flyArm" viewBox="-360 -360 720 720" style="aspect-ratio:1" role="img" aria-label="Ramię w symulacji, widok z boku"></svg>
+      <div class="lg">Ramię w symulacji, schemat z boku: <b style="background:var(--mute)"></b>start <b style="background:var(--acc)"></b>teraz</div>
+      <div class="lg stats" id="flyArmTxt"></div></div>
+  </div>
+  <div id="flyBars"></div>
+  <canvas id="flyHist" width="880" height="140" style="width:100%;margin-top:8px" aria-label="Ostatnie 20 s"></canvas>
+  <div class="lg">Ostatnie 20 s: <b style="background:#e5484d"></b>ucieczka <b style="background:#3e63dd"></b>MDN (cofanie) <b style="background:#30a46c"></b>nacisk (N×50)</div>
 </section>
 
 <section class="card" aria-labelledby="h-sum">
@@ -302,6 +326,65 @@ $("#fsrTest").onclick = async () => {
   show($("#fsrVerdict"), "czujnik 2 (A1)", judgeFsr(col(idle, 1), col(s2, 1), col(s1, 1)));
   $("#fsrTest").disabled = false;
 };
+
+// ---------- mucha na żywo (dane z live_avoid.py: /stan co 100 ms)
+const BRAIN = location.port === "8793" ? "" : "http://127.0.0.1:8793";
+const FLY = [["esc", "Ucieczka — DNp01/02/04/11 (oko)"], ["MDN", "MDN — cofanie (dotyk)"], ["DNg15", "DNg15 (dotyk)"], ["DNge078", "DNge078 (dotyk)"]];
+$("#flyBars").innerHTML = FLY.map(([k, n]) => `<div>${n}</div><div class="bar"><i id="fb_${k}"></i><span id="ft_${k}">—</span></div>`).join("")
+  + ["Czujnik 1 (A0, szczęka stała)", "Czujnik 2 (A1, dłoń)"].map((n, i) => `<div>${n}</div><div class="bar"><i id="fp${i}"></i><span id="fq${i}">—</span></div>`).join("");
+const hist = [], LINKS = [116, 135, 100];       // długości ogniw SO-101 [mm] — tylko do rysunku
+let q0 = null;
+function armPath(q) {                            // kąty stawów 1–3 [°] → łamana z boku (schemat)
+  let x = 0, y = 0, a = 0, pts = [[0, 0]];
+  q.forEach((d, i) => { a += d * Math.PI / 180; x += LINKS[i] * Math.cos(a); y -= LINKS[i] * Math.sin(a); pts.push([x, y]); });
+  return pts.map(p => p.map(v => v.toFixed(1)).join(",")).join(" ");   // zasięg ≤ 351 mm → mieści się w viewBox ±360
+}
+function drawFly(s) {
+  if (s.img) {
+    const c = $("#flyCam"), g = c.getContext("2d"), im = g.createImageData(s.w, s.h);
+    const px = Uint8Array.from(atob(s.img), ch => ch.charCodeAt(0)), mk = Uint8Array.from(atob(s.mask), ch => ch.charCodeAt(0));
+    for (let i = 0; i < px.length; i++) {
+      const v = px[i], m = mk[i];
+      im.data.set(m ? [229, 72 + v / 4, 77, 255] : [v, v, v, 255], 4 * i);
+    }
+    g.putImageData(im, 0, 0);
+  }
+  q0 = s.q0 || q0 || s.q;                        // start = pierwsza chwila pętli (z programu)
+  $("#flyArm").innerHTML = `<line x1="-360" y1="0" x2="360" y2="0" stroke="var(--line)" stroke-width="3"/><circle r="12" fill="var(--mute)"/>`
+    + `<polyline points="${armPath(q0)}" fill="none" stroke="var(--mute)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>`
+    + `<polyline points="${armPath(s.q)}" fill="none" stroke="var(--acc)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>`;
+  $("#flyArmTxt").textContent = `stawy 1–3: ${s.q.map(v => v.toFixed(0) + "°").join(" / ")} · od startu: ${s.q.map((v, i) => (v - q0[i] >= 0 ? "+" : "") + (v - q0[i]).toFixed(0) + "°").join(" / ")}`;
+  FLY.forEach(([k]) => {
+    const v = s.Hz[k] || 0;
+    $("#fb_" + k).style.width = Math.min(100, v / 2) + "%"; $("#fb_" + k).parentNode.classList.toggle("hot", v > 20);
+    $("#ft_" + k).textContent = v.toFixed(0) + " Hz";
+  });
+  [s.A0_N, s.P_N].forEach((n, i) => {
+    $("#fp" + i).style.width = Math.min(100, n * 20) + "%";
+    $("#fq" + i).textContent = `${n.toFixed(2)} N  (odczyt ${s.cnt[i]} / 1023)`;
+  });
+  $("#flyStat").textContent = `t = ${s.t.toFixed(1)} s · kamera ${s.fps} kl./s · ręka w kadrze ${s.th.toFixed(0)}°, zbliżanie ${s.L.toFixed(2)} rad/s, `
+    + `${s.sa > 0.2 ? "z lewej" : s.sa < -0.2 ? "z prawej" : "na wprost"} · opóźnienie ${s.lag.toFixed(0)} ms`;
+  hist.push([s.Hz.esc || 0, s.Hz.MDN || 0, (s.A0_N + s.P_N) * 50]); if (hist.length > 200) hist.shift();
+  const c = $("#flyHist"), g = c.getContext("2d"), W = c.width, H = c.height;
+  g.clearRect(0, 0, W, H);
+  ["#e5484d", "#3e63dd", "#30a46c"].forEach((col, j) => {
+    g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
+    hist.forEach((r, i) => { const x = W - (hist.length - 1 - i) * W / 199, y = H - 4 - Math.min(1, r[j] / 200) * (H - 8); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke();
+  });
+}
+let lastT = -1;
+(async function pollFly() {
+  for (;;) {
+    try {
+      const s = await (await fetch(BRAIN + "/stan", { cache: "no-store" })).json();
+      if (s.t !== undefined && s.t !== lastT) { if (s.t < lastT) { q0 = null; hist.length = 0; } lastT = s.t; drawFly(s); }
+      else if (s.t === undefined) $("#flyStat").textContent = "Program działa — mózg muchy się buduje (~45 s)…";
+    } catch (e) { $("#flyStat").textContent = "Czekam na program w Terminalu (live_avoid.py)…"; }
+    await sleep(100);
+  }
+})();
 
 $("#save").onclick = () => {
   const a = document.createElement("a");
