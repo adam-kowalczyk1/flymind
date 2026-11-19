@@ -4,8 +4,8 @@ Sprawdza tylko, czy kamerka i 2 czujniki nacisku FSR402 w ogóle działają. Nic
 
 1. **Kamerka:** podłącz ją do Maca, otwórz `test_czujnikow.html` w **Google Chrome** → „Włącz kamerkę” (zezwól na kamerę)
    → wybierz ją z listy → „Test zasłonięcia” i zasłoń obiektyw dłonią, gdy strona poprosi.
-2. **Czujniki nacisku:** potrzebne Arduino i 2 oporniki 10 kΩ. Każdy czujnik: 5V → FSR → pin A0 (czujnik 1) / A1 (czujnik 2);
-   z tego samego pinu opornik 10 kΩ do GND (rysunek na płytce stykowej: `plytka_stykowa.png`). W Arduino IDE otwórz `fsr_test/fsr_test.ino` i kliknij „Wgraj”.
+2. **Czujniki nacisku:** potrzebne Arduino i 2 oporniki 10 kΩ (albo 5,1 / 4,7 kΩ — wybór na stronie). Każdy czujnik: 5V → FSR → pin A0
+   (czujnik 1, szczęka stała) / A1 (czujnik 2, „dłoń” = spód serwa między szczękami, zmiana 19 XI); z tego samego pinu opornik do GND (rysunek na płytce stykowej: `plytka_stykowa.png`). W Arduino IDE otwórz `fsr_test/fsr_test.ino` i kliknij „Wgraj”.
    Potem na stronie: „Połącz z Arduino” → wybierz port → „Test krok po kroku” (nie dotykaj → naciskaj czujnik 1 → naciskaj czujnik 2).
 3. Na dole strony pojawi się wynik: ✅ DZIAŁA albo ❌ NIE DZIAŁA z powodem. „Zapisz wynik” zapisuje plik do Pobranych.
 
