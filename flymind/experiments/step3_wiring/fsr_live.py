@@ -2,7 +2,8 @@
 Co 100 ms: siła odczuta A0/A1 [N], częstość [Hz] receptorów „udo” i „goleń+stopa”, DNg15, DNge078 i różnica pul P−N stawów 1–3.
 Układ (19 XI): hw2p (domyślny) = pin A1 to czujnik „dłoń” → szczecinki głowy (BM), jak `avoid.py --touch hw2p`;
 hw2 = pin A1 to szczęka ruchoma → grupa „goleń+stopa”.
-Uruchom: fsr_live.py --csv plik.csv --out wynik.csv [--glu -1] [--layout hw2p|hw2] [--mapping somato|swap|halves] [--r-fix 5100]
+Tryb mózgu z panelu (--brake, fly_mode.py) jest tylko wypisywany: ta sieć nie ma mózgu, więc nie ma w niej hamulca DNg98+DNg70.
+Uruchom: fsr_live.py --csv plik.csv --out wynik.csv [--glu -1] [--layout hw2p|hw2] [--brake hub] [--mapping somato|swap|halves] [--r-fix 5100]
          fsr_live.py --port /dev/cu.usbmodemXXXX   (pyserial tylko w ~/miniforge3/envs/lerobot; Arduino tylko ODCZYT)"""
 import argparse
 import csv
@@ -67,10 +68,19 @@ def main():
     ap.add_argument("--mapping", default="somato")
     ap.add_argument("--layout", default="hw2p", choices=("hw2p", "hw2"))
     ap.add_argument("--r-fix", type=float, default=TM.R_FIX)
+    ap.add_argument("--brake", default="hub", choices=("hub", "intact", "silenced"), help="hub = jak w panelu FlyMind Hub")
     a = ap.parse_args()
     import brainleg as B
+    import fly_mode as FM
     net = B.BrainNet(a.glu)
     live = Live(net, a.mapping)
+    mode = FM.resolve(a.brake)
+    # BrainNet = noga + szczecinki dłoni + DNge078/DNg15 (3221 n.), BEZ mózgu: neuronów hamulca DNg98/DNg70 w niej nie ma (sprawdzone 19 XI)
+    missing = not any(b in net.pos for b in FM.BRAKE_BODY)
+    print(f"tryb mózgu muchy z panelu: {mode}" + (" — w tej sieci (bez mózgu) nie ma hamulca, tryb nie zmienia wyniku" if missing else ""),
+          file=sys.stderr, flush=True)
+    if not missing:
+        sys.exit("hamulec jest w sieci — dopisz wyciszenie (fly_mode.apply + przebudowa net.net) przed użyciem")
     keys = ["t_ms", "A0_N", "A1_N", "udo", "golen", "dlon", "DNg15", "DNge078", "j1", "j2", "j3", "press", "release"]
     rows, acc = [], []
     src = lines_csv(a.csv) if a.csv else lines_serial(a.port)

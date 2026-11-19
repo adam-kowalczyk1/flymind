@@ -18,6 +18,7 @@ import brainleg as B  # noqa: E402
 import head  # noqa: E402
 import nets  # noqa: E402
 import touch_map as TM  # noqa: E402
+import fly_mode as FM  # noqa: E402
 
 W, H = 720, 600
 # obszary schematu (środek x, y, promienie rx, ry) w układzie 1000 × 1000; podpis
@@ -88,12 +89,15 @@ def main():
     ap.add_argument("--seed", type=int, default=21948002)
     ap.add_argument("--glu", type=float, default=-1.0)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--brake", default="hub", choices=("hub", "intact", "silenced"), help="hub = jak w panelu FlyMind Hub")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     net = head.HeadLife(a.glu, "N", None, eyes=True)
     net.glu = a.glu
     net._eyes = A.eye_idx(net)
     net.pads = TM.pads_for(net, "somato")
+    mode = FM.resolve(a.brake)
+    print("tryb mózgu muchy:", mode, "| wyciszonych neuronów hamulca:", FM.apply(net, mode), flush=True)
     feel = TM.Feel(level="typ", seed=a.seed)
     feel.discs = ("A0", "P")
     spikes = []
@@ -146,7 +150,7 @@ def main():
         raise RuntimeError("ffmpeg")
     touch = np.array(log["touch"])
     data = dict(
-        info=dict(res, dir=a.dir, seed=a.seed, glu=a.glu, dt_ms=10, fps=25, n=int(net.N),
+        info=dict(res, dir=a.dir, seed=a.seed, glu=a.glu, brake=mode, dt_ms=10, fps=25, n=int(net.N),
                   note="Ilustracja, nie test. Położenia neuronów schematyczne (dane nie mają współrzędnych)."),
         regions={k: dict(xy=v[0], label=v[1], n=int((reg == k).sum())) for k, v in REG.items()},
         reg=[list(REG).index(k) for k in reg], xy=xy.ravel().tolist(),
