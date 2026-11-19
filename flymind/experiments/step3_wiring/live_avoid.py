@@ -29,7 +29,7 @@ import touch_map as TM  # noqa: E402
 
 FF = "/Users/admin/miniforge3/bin/ffmpeg"
 W_PX, H_PX = 160, 100                     # obraz zmniejszany przez ffmpeg (ręce są duże; ponytail: większy, gdy trzeba szczegółu)
-BG_S, THR = 1.0, 25                       # s tła na starcie (ręka poza kadrem!), próg różnicy jasności 0–255
+BG_S, THR, BG_A = 1.5, 25, 0.02           # s do zdjęcia tła (ręka poza kadrem!), próg różnicy jasności 0–255, tempo uczenia tła
 ESC = ("DNp01", "DNp02", "DNp04", "DNp11")
 
 
@@ -58,8 +58,8 @@ def fast_step(s, Wc):
 
 class Frames:
     """ffmpeg → szare klatki W_PX×H_PX w wątku; trzyma tylko najnowszą."""
-    def __init__(self, cam=None, video=None, fps=120):
-        src = (["-f", "avfoundation", "-framerate", str(fps), "-video_size", "640x400", "-pixel_format", "yuyv422", "-i", cam] if cam
+    def __init__(self, cam=None, video=None, fps=30, size="1280x800"):   # 640x400@120 dało 0 klatek (19 XI); 1280x800@30 działa
+        src = (["-f", "avfoundation", "-framerate", str(fps), "-video_size", size, "-i", cam] if cam
                else ["-re", "-i", video])
         self.p = subprocess.Popen([FF, "-nostdin", "-loglevel", "error", *src, "-vf", f"scale={W_PX}:{H_PX},format=gray",
                                    "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
@@ -106,21 +106,25 @@ class Touch:
 
 
 class Eye:
-    """Ręka w kadrze = piksele różne od tła (tło = mediana pierwszej sekundy). θ ≈ kąt widzenia plamy, strona z jej środka."""
+    """Ręka w kadrze = piksele różne od tła. Tło: pierwsza klatka po BG_S (kamera kończy ustawiać naświetlenie), potem powoli
+    uczy się tam, gdzie ręki nie ma. Jasność liczona względem mediany klatki (auto-naświetlenie nie udaje ręki)."""
     def __init__(self, fov_deg=70.0, flip=False):
-        self.tan, self.flip, self.bg, self.buf = np.tan(np.radians(fov_deg) / 2), flip, None, []
+        self.tan, self.flip, self.bg, self.t_last = np.tan(np.radians(fov_deg) / 2), flip, None, None
         self.th, self.L, self.sa = 0.0, 0.0, 0.0
 
     def see(self, f, dt, t):
+        if t < BG_S:
+            return 0.0
+        g = f.astype(float) - np.median(f)
         if self.bg is None:
-            if t < BG_S:
-                self.buf.append(f)
-                return 0.0
-            self.bg = np.median(np.array(self.buf), axis=0)
-        m = np.abs(f.astype(float) - self.bg) > THR
+            self.bg, self.t_last = g, t
+            return 0.0
+        dt, self.t_last = max(dt, t - self.t_last), t          # prawdziwy odstęp między klatkami (kamera ~10 kl./s, takt 10 ms)
+        m = np.abs(g - self.bg) > THR
+        self.bg[~m] += BG_A * (g - self.bg)[~m]
         a = m.mean()
         th = 2 * np.arctan(np.sqrt(a) * self.tan)               # plama jak kwadrat o boku √a szerokości kadru
-        self.L = 0.7 * self.L + 0.3 * max(0.0, (th - self.th) / dt)  # wygładzenie ~30 ms
+        self.L = 0.7 * self.L + 0.3 * max(0.0, (th - self.th) / dt)
         self.th = th
         if a > 0.002:
             cx = (np.nonzero(m)[1].mean() / (W_PX - 1)) * 2 - 1    # −1 lewa krawędź kadru, +1 prawa
@@ -163,13 +167,15 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
         last["s"] = run0(X, n)
         return last["s"]
     net.net.run = run_senses
-    log = {k: [] for k in ("t", "L", "th", "sa", "A0_N", "P_N", "esc", "MDN", "DNg15", "DNge078", "q", "lag")}
+    log = {k: [] for k in ("t", "L", "th", "sa", "A0_N", "P_N", "esc", "MDN", "DNg15", "DNge078", "q", "lag", "cnt")}
     t0, seen, acc = time.time(), -1, []
     for i in range(int(seconds / A.DT)):
         t = i * A.DT
         if realtime:
             time.sleep(max(0.0, t0 + t - time.time()))
         f = frames.last if frames else None
+        if frames and i == int(2 / A.DT):
+            say(f"[kamera: {frames.n / (time.time() - frames.t0):.0f} kl./s" + (" — BRAK OBRAZU, przerwij Ctrl+C]" if frames.n == 0 else "]"))
         if isinstance(f, str):
             break                                                  # koniec nagrania
         L = eye.see(f, A.DT, t) if f is not None and frames.n != seen else eye.L
@@ -182,7 +188,7 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
         st["qd"][1:4] = (q1 - q6[1:4]) / A.DT
         q6[1:4] = q1
         s = last["s"] * 1000.0
-        row = dict(t=t, L=L, th=eye.th, sa=eye.sa, A0_N=felt[0], P_N=felt[1], q=q6[1:4].copy(), lag=time.time() - t0 - t,
+        row = dict(t=t, L=L, th=eye.th, sa=eye.sa, A0_N=felt[0], P_N=felt[1], q=q6[1:4].copy(), lag=time.time() - t0 - t, cnt=np.array(touch.c, float),
                    **{k: float(s[:, ix].mean()) for k, ix in net._grp.items()})
         for k, v in row.items():
             log[k].append(v)
@@ -243,6 +249,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--cam")
     ap.add_argument("--video")
+    ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--size", default="1280x800")
     ap.add_argument("--fsr")
     ap.add_argument("--fsr-csv")
     ap.add_argument("--r-fix", type=float, default=TM.R_FIX, help="opornik dzielnika [Ω]: 10000 albo 5100 — jaki wstawiono")
@@ -260,9 +268,10 @@ if __name__ == "__main__":
     print("buduję mózg muchy (~45 s)…", flush=True)
     net = build(a.glu, a.brake)
     print(f"tryb mózgu: {net._mode}. Przez pierwszą sekundę trzymaj rękę POZA kadrem (kamera uczy się tła).", flush=True)
-    fr = Frames(cam=a.cam, video=a.video) if (a.cam or a.video) else None
+    fr = Frames(cam=a.cam, video=a.video, fps=a.fps, size=a.size) if (a.cam or a.video) else None
     log = loop(net, fr, Touch(a.fsr, a.fsr_csv, a.r_fix), Eye(a.fov, a.flip), a.seconds)
     if fr:
+        print(f"kamera: {fr.n} klatek = {fr.n / max(1e-9, time.time() - fr.t0):.0f} kl./s", flush=True)
         fr.stop()
     if a.out:
         np.savez_compressed(a.out, **log)
