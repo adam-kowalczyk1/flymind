@@ -46,6 +46,7 @@ pre{white-space:pre-wrap;font-size:.85rem;color:var(--mute);margin:4px 0}
   <div class="row">
     <button class="main" id="camStart">Włącz kamerkę</button>
     <select id="camSel" aria-label="Wybór kamery" hidden></select>
+    <button id="camFast" disabled>Szukaj szybkiego trybu</button>
     <button id="camCover" disabled>Test zasłonięcia</button>
   </div>
   <video id="vid" autoplay playsinline muted></video>
@@ -178,12 +179,41 @@ function countFrames() {
   if (v.requestVideoFrameCallback) { const cb = () => { tick(); v.requestVideoFrameCallback(cb); }; v.requestVideoFrameCallback(cb); }
   else { const cb = () => { tick(); requestAnimationFrame(cb); }; requestAnimationFrame(cb); }
 }
-async function openCam(deviceId) {
+// OV9281 (kamera nadgarstka, „USB Camera”): 1280×800 do 120 klatek/s; inne kamery biorą najbliższy tryb
+const WANT = { width: { ideal: 1280 }, height: { ideal: 800 }, frameRate: { ideal: 120 } };
+async function openCam(deviceId, want = WANT) {
   if (stream) stream.getTracks().forEach(t => t.stop());
-  // OV9281 (kamera nadgarstka, „USB Camera”): 1280×800 do 120 klatek/s; inne kamery biorą najbliższy tryb
-  const want = { width: { ideal: 1280 }, height: { ideal: 800 }, frameRate: { ideal: 120 } };
   stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId }, ...want } : want, audio: false });
   $("#vid").srcObject = stream;
+}
+// prawdziwa liczba klatek z kamery (nie ograniczona odświeżaniem ekranu): MediaStreamTrackProcessor w Chrome/Operze
+async function measureFps(ms = 2000) {
+  await sleep(800);                                                       // kamera się rozkręca po włączeniu
+  if (!window.MediaStreamTrackProcessor) { await sleep(ms); return fps; }
+  const c = stream.getVideoTracks()[0].clone(), rd = new MediaStreamTrackProcessor({ track: c }).readable.getReader();
+  let n = 0; const t0 = performance.now();
+  while (performance.now() - t0 < ms) {
+    const r = await Promise.race([rd.read(), sleep(500).then(() => ({ done: true }))]);
+    if (r.done) break; r.value.close(); n++;
+  }
+  const f = n * 1000 / (performance.now() - t0); rd.cancel().catch(() => {}); c.stop(); return f;
+}
+// próbuje kilku trybów OV9281 i zostawia najszybszy (przy remisie — większy obraz)
+const FAST_MODES = [[1280, 800], [1280, 720], [640, 400], [640, 480], [320, 240]];
+async function findFastMode() {
+  const dev = $("#camSel").value || stream.getVideoTracks()[0].getSettings().deviceId, rows = [];
+  for (const [w, h] of FAST_MODES) {
+    $("#camStep").textContent = `Sprawdzam ${w}×${h}…`;
+    try {
+      await openCam(dev, { width: { exact: w }, height: { exact: h }, frameRate: { ideal: 120 } });
+      rows.push({ w, h, asked: stream.getVideoTracks()[0].getSettings().frameRate, f: await measureFps() });
+    } catch (e) { rows.push({ w, h, f: 0, err: e.name }); }
+  }
+  const best = rows.filter(r => r.f > 0).sort((a, b) => (b.f - a.f > 3 ? 1 : a.f - b.f > 3 ? -1 : b.w * b.h - a.w * a.h))[0];
+  if (best) await openCam(dev, { width: { exact: best.w }, height: { exact: best.h }, frameRate: { ideal: 120 } });
+  $("#camStep").textContent = "Tryby: " + rows.map(r => `${r.w}×${r.h} → ${r.err || r.f.toFixed(0) + " kl/s"}`).join(" | ")
+    + (best ? ` — wybrany ${best.w}×${best.h}` : " — żaden nie działa");
+  results.camModes = rows;
 }
 $("#camStart").onclick = async () => {
   try {
@@ -201,7 +231,7 @@ $("#camStart").onclick = async () => {
     sel.onchange = () => openCam(sel.value).catch(e => show($("#camVerdict"), sel.selectedOptions[0].text, ["NIE DZIAŁA", `nie udało się włączyć (${e.name})`]));
     $("#camStep").textContent = "Kamery: " + devs.map(d => d.label || "?").join(" | ");
     countFrames();
-    $("#camCover").disabled = false; $("#camStart").disabled = true;
+    $("#camCover").disabled = false; $("#camFast").disabled = false; $("#camStart").disabled = true;
     setInterval(() => {
       const b = brightness(), s = stream && stream.getVideoTracks()[0].getSettings();
       if (b && s) $("#camStats").textContent = `${$("#camSel").selectedOptions[0]?.text || "kamera"}: ${s.width}×${s.height}, ${fps.toFixed(0)} klatek/s, jasność ${b.mean.toFixed(0)}${b.mono ? ", obraz czarno-biały" : ""}`;
@@ -209,6 +239,10 @@ $("#camStart").onclick = async () => {
   } catch (e) {
     show($("#camVerdict"), "kamerka", ["NIE DZIAŁA", `nie udało się włączyć (${e.name}) — zezwól stronie na kamerę albo sprawdź kabel USB`]);
   }
+};
+$("#camFast").onclick = async () => {
+  $("#camFast").disabled = true;
+  try { await findFastMode(); } finally { $("#camFast").disabled = false; }
 };
 $("#camCover").onclick = async () => {
   $("#camCover").disabled = true;
