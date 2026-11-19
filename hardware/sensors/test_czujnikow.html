@@ -180,7 +180,9 @@ function countFrames() {
 }
 async function openCam(deviceId) {
   if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId } } : true, audio: false });
+  // OV9281 (kamera nadgarstka, „USB Camera”): 1280×800 do 120 klatek/s; inne kamery biorą najbliższy tryb
+  const want = { width: { ideal: 1280 }, height: { ideal: 800 }, frameRate: { ideal: 120 } };
+  stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId }, ...want } : want, audio: false });
   $("#vid").srcObject = stream;
 }
 $("#camStart").onclick = async () => {
@@ -189,6 +191,8 @@ $("#camStart").onclick = async () => {
     const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
     const sel = $("#camSel"); sel.innerHTML = "";
     devs.forEach((d, i) => sel.add(new Option(d.label || `kamera ${i}`, d.deviceId)));
+    const usb = devs.find(d => /usb camera|ov9281/i.test(d.label));         // domyślnie kamera nadgarstka, nie FaceTime
+    if (usb && usb.deviceId !== stream.getVideoTracks()[0].getSettings().deviceId) await openCam(usb.deviceId);
     const cur = stream.getVideoTracks()[0].getSettings().deviceId; sel.value = cur; sel.hidden = devs.length < 2;
     sel.onchange = () => openCam(sel.value);
     countFrames();
