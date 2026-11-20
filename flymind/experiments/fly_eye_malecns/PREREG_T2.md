@@ -36,3 +36,11 @@ Po wyniku niczego nie stroję pod ten test.
 Próba: napęd mały (suma 0,07–0,24), przy starcie wszystkie komórki milkły (relu = 0), miękkie maksimum dawało stałą
 log(N)/10 → AUC 0,5 dla wszystkiego. Zmiany: (1) siły startowe g0 = 0,5 / średni napęd spoczynkowy (pierwsza 1 s bodźców
 treningowych), osobno dla LPi; (2) wynik bodźca = zwykłe maksimum relu(V) po komórkach i czasie. Reszta bez zmian.
+
+## T2 v2 — poprawki uprzęży po FAILED v1 (20 XI, spisane PRZED przebiegiem v2; wynik v1 zostaje: WYNIK_T2_v1.md)
+v1 skończył się NaN (pełny wariant) i odwrotnym znakiem odczytu. Zmiany TYLKO w uczeniu, model i dane bez zmian:
+(1) τ celu i LPi ≥ dt (10 ms); (2) wynik bodźca = maksimum V (nie relu(V)) po komórkach i czasie — komórki dalej widzą się
+przez relu(V); (3) odczyt softplus(a)·(wynik − c), czyli więcej aktywności = zbliżanie, zgodnie z AUC; (4) start z NaN nigdy
+nie jest wybierany. Próba (połowa bodźców treningowych, 100 kroków, model 000) — nie wynik: AUC trening rośnie do 0,96, bez NaN.
+Kryteria K1–K3, warianty, ziarna, napęd (te same pliki t2_drive_*.npz) — bez zmian. To jest druga próba tego samego testu;
+raportuję ją jako v2 obok v1.

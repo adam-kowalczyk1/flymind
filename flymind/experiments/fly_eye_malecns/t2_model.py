@@ -35,10 +35,10 @@ class Layer(torch.nn.Module):
         self.variant, self.g0, self.lg0 = variant, 1.0, 1.0
 
     def forward(self, D, DL):
-        """D: (S, cells, typy, T), DL: (S, lpi, typy_lpi, T) → wyjście komórek relu(V): (S, cells, T)."""
+        """D: (S, cells, typy, T), DL: (S, lpi, typy_lpi, T) → V komórek (S, cells, T); komórki widzą się przez relu(V)."""
         sp_ = torch.nn.functional.softplus
         g, lg = self.g0 * sp_(self.g + 0.5413), self.lg0 * sp_(self.lg + 0.5413)   # start: g0 (spoczynkowy napęd ≈ 0,5)
-        tau, ltau = 0.02 * torch.exp(self.tau), 0.02 * torch.exp(self.ltau[self.lt])
+        tau, ltau = (0.02 * torch.exp(self.tau)).clamp(min=DT), (0.02 * torch.exp(self.ltau[self.lt])).clamp(min=DT)   # v2: τ ≥ dt (Euler stabilny)
         S, C, _, T = D.shape
         I = torch.einsum("sctk,t->sck", D, g)                                # D: (bodziec, komórka, typ, czas)
         IL = torch.einsum("sltk,t->slk", DL, lg)
@@ -51,12 +51,12 @@ class Layer(torch.nn.Module):
             inp = inp + sp_(self.g_rec + 0.5413) * torch.sparse.mm(self.R, r.T).T
             V = V + DT / tau * (-V + self.b + inp)
             VL = VL + DT / ltau * (-VL + self.lb[self.lt] + IL[:, :, k])
-            out.append(torch.relu(V))
+            out.append(V)                                                    # v2: zapis V; inne komórki widzą relu(V)
         return torch.stack(out, -1)
 
     def score(self, D, DL):
         y = self.forward(D, DL)
-        return y.flatten(1).amax(1)                                             # maksimum po komórkach i czasie
+        return y.flatten(1).amax(1)                                             # v2: maksimum V (nie relu) — gradient także gdy komórki milczą
 
 
 def main(drive, target, variant, out):
@@ -92,10 +92,11 @@ def main(drive, target, variant, out):
         yl, w = torch.tensor(lab[tr], dtype=torch.float32), torch.tensor(np.where(lab[tr] == 1, (lab[tr] == 0).sum() / max(1, lab[tr].sum()), 1.0), dtype=torch.float32)
         for step in range(STEPS if variant != "untrained" else 300):
             y = net.score(D[tr], DL[tr])
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(net.a * (y - net.c), yl, weight=w)
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(torch.nn.functional.softplus(net.a) * (y - net.c), yl, weight=w)   # v2: a > 0 — więcej = zbliżanie, jak w AUC
             opt.zero_grad(); loss.backward(); opt.step()
-        if best is None or loss.item() < best[0]:
-            best = (loss.item(), seed, {k: v.detach().clone() for k, v in net.state_dict().items()}, net)
+        lv = loss.item() if np.isfinite(loss.item()) else np.inf                 # v2: NaN nigdy nie wygrywa
+        if best is None or lv < best[0]:
+            best = (lv, seed, {k: v.detach().clone() for k, v in net.state_dict().items()}, net)
     loss, seed, _, net = best
     with torch.no_grad():
         y = net.score(D, DL).numpy()
