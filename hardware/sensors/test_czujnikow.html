@@ -363,7 +363,7 @@ function drawFly(s) {
     $("#fp" + i).style.width = Math.min(100, n * 20) + "%";
     $("#fq" + i).textContent = `${n.toFixed(2)} N  (odczyt ${s.cnt[i]} / 1023)`;
   });
-  $("#flyStat").textContent = `t = ${s.t.toFixed(1)} s · kamera ${s.fps} kl./s · ręka w kadrze ${s.th.toFixed(0)}°, zbliżanie ${s.L.toFixed(2)} rad/s, `
+  $("#flyStat").textContent = `t = ${s.t.toFixed(1)} s · kamera ${s.fps} kl./s · ${s.th ? `ręka w kadrze ${s.th.toFixed(0)}°, ` : ""}zbliżanie ${s.L.toFixed(2)} rad/s, `
     + `${s.sa > 0.2 ? "z lewej" : s.sa < -0.2 ? "z prawej" : "na wprost"} · mózg spóźniony wobec zegara ${s.lag.toFixed(0)} ms`;
   hist.push([s.Hz.esc || 0, s.Hz.MDN || 0, (s.A0_N + s.P_N) * 50]); if (hist.length > 2000) hist.shift();   // ~20 s przy 100 stanach/s
   const c = $("#flyHist"), g = c.getContext("2d"), W = c.width, H = c.height;

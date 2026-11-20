@@ -5,7 +5,7 @@ Kod klasyczny = TYLKO czujniki: wykrycie ręki w obrazie (różnica od tła) →
 (jak avoid.py: 40 mV przy 2 rad/s, strona z położenia ręki w kadrze); FSR → touch_map.from_counts (ta sama funkcja co w symulacji).
 Mózg liczony szybciej (aktualizacja tylko od neuronów, które właśnie strzeliły — te same spiki co alif.ALIF.step, sprawdzane w --check).
 Kamera działa tylko z Terminal.app (uprawnienia macOS).  Uruchom:
-  live_avoid.py --cam "USB Camera" [--fsr /dev/cu.usbmodemXXXX --r-fix 10000] [--seconds 60] [--out log.npz] [--brake hub] [--fov 70] [--flip]
+  live_avoid.py --cam "USB Camera" [--fsr /dev/cu.usbmodemXXXX --r-fix 10000] [--seconds 60] [--out log.npz] [--brake hub] [--eye mucha|plama] [--fov 70] [--flip]
   live_avoid.py --video plik.mp4 [--fsr-csv plik.csv]       (nagranie zamiast kamery)
   live_avoid.py --check                                      (sprawdzian bez sprzętu, ~2 min)
 Podgląd na żywo: http://127.0.0.1:8793 (strona hardware/sensors/test_czujnikow.html, punkt 3; --serve 0 wyłącza)."""
@@ -141,6 +141,13 @@ class Eye:
         return self.L
 
 
+def make_eye(kind, fov=70.0, flip=False):
+    if kind == "plama":
+        return Eye(fov, flip)
+    import oko_mucha as O
+    return O.FlyEye(flip, out_full=O.OUT_FULL2, vshs=True, g0=O.G0)
+
+
 def build(glu=-1, brake="hub", sigma=2.0, seed=19112026):
     net = head.HeadLife(glu, "N", eyes=True)
     mode = FM.resolve(brake)
@@ -191,7 +198,7 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
             L = eye.see(f, A.DT, t) if f is not None and frames.n != seen else eye.L
             seen = frames.n if frames else seen
             drive = A.MV * min(1.0, L / A.L_FULL)
-            st["loom"] = {"L": drive * (1 + eye.sa) / 2, "R": drive * (1 - eye.sa) / 2}
+            st["loom"] = getattr(eye, "loom", None) or {"L": drive * (1 + eye.sa) / 2, "R": drive * (1 - eye.sa) / 2}   # oko muchy: strony osobno
             felt = TM.from_counts(*touch.c, touch.r_fix)
             dq = net.step(np.array([felt[0], 0.0, felt[1]]), q6[:5], st["qd"][:5], A.DT)   # hw2p: A1 = dłoń → BM
             q1 = np.clip(q6[1:4] + dq[1:4], lo, hi)
@@ -308,6 +315,8 @@ if __name__ == "__main__":
     ap.add_argument("--brake", default="hub", choices=("hub", "intact", "silenced"))
     ap.add_argument("--fov", type=float, default=70.0, help="poziomy kąt widzenia obiektywu [°] — do zmierzenia")
     ap.add_argument("--flip", action="store_true", help="zamień lewą/prawą stronę kadru")
+    ap.add_argument("--eye", default="mucha", choices=("mucha", "plama"),
+                    help="mucha = oko_mucha.py (fotoreceptory → T4/T5 → LPLC2 + VS/HS, test 2 PASS); plama = stare (różnica od tła)")
     ap.add_argument("--out")
     ap.add_argument("--serve", type=int, default=8793, help="port strony na żywo (0 = bez strony)")
     ap.add_argument("--check", action="store_true")
@@ -322,7 +331,7 @@ if __name__ == "__main__":
     net = build(a.glu, a.brake)
     print(f"tryb mózgu: {net._mode}. Przez pierwszą sekundę trzymaj rękę POZA kadrem (kamera uczy się tła).", flush=True)
     fr = Frames(cam=a.cam, video=a.video, fps=a.fps, size=a.size, fmt=a.fmt) if (a.cam or a.video or a.fmt is not None) else None
-    log = loop(net, fr, Touch(a.fsr, a.fsr_csv, a.r_fix), Eye(a.fov, a.flip), a.seconds)
+    log = loop(net, fr, Touch(a.fsr, a.fsr_csv, a.r_fix), make_eye(a.eye, a.fov, a.flip), a.seconds)
     if fr:
         print(f"kamera: {fr.n} klatek = {fr.n / max(1e-9, time.time() - fr.t0):.0f} kl./s", flush=True)
         fr.stop()

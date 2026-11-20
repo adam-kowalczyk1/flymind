@@ -16,3 +16,13 @@ K1 10/10, K2 10/10, K3 10/10, K4 10/10.
 Uczciwie: po naprawie sceny ruch kamery daje 0 także BEZ VS/HS — porażka testu 1 była winą sceny. VS/HS pomaga głównie
 przy bardzo kontrastowej krawędzi (ciemne pole: 0,17 → 0,06) i kosztuje ~7 % sygnału zbliżania, gdy kamera się rusza.
 Oko odpala przy θ ≈ 31°. To nadal sceny syntetyczne — prawdziwa kamera niesprawdzona.
+
+## Z mózgiem muchy (live_avoid.py --video, --brake intact, sceny ziarna 24 102 001, 20 XI)
+| scena | nowe oko (`--eye mucha`): ucieczka DNp01/02/04/11 max / średnio | stare oko (`--eye plama`) |
+|---|---|---|
+| zbliżanie | 250 / 38 Hz | 262 / 18 Hz |
+| kamera w górę/dół | **0 / 0 Hz** | **300 / 17 Hz** (fałszywy alarm) |
+| ciemne pole wjeżdża | 0 / 0 Hz | 0 / 0 Hz* |
+| nieruchoma rzecz | 0 / 0 Hz | 0 / 0 Hz* |
+\* stare oko uczy tła przez 1,5 s, a nagrania trwały ~2–2,5 s pętli — jego wynik tu niemiarodajny. Ramię w symulacji
+od samego wzroku nie rusza (znane: LPLC2 → brak neuronów ruchowych przedniej nogi). Prawdziwa kamera: niesprawdzone.
