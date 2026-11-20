@@ -173,6 +173,18 @@ Ten sam mózg co na żywo (`live_avoid.build`, glu −1, hamulec hub). Czubek �
 - Uczciwie: to są własności modelu (konektom + nasza sieć ALIF + nasze wejście 40 mV/N). Nie twierdzę, że prawdziwa
   mucha tak robi. Twierdzę tylko, że w tym mózgu miejsce dotyku ma znaczenie, a nadaje mu je anatomia, nie nasz dobór.
 
+## Wieczorny test na sprzęcie (bez ramienia, tylko Arduino) — instrukcja
+1. **Suwmiarka:**
+   - czujnik: średnica folii, średnica pola czynnego (jaśniejszy krąg), grubość;
+   - szczęka stała: szerokość czubka 5 mm i 10 mm od czubka, długość wystającego „schodka” czubka.
+   - Model mówi: 6–10 mm szerokości, schodek ~10 mm. Jeśli wydruk się różni, policzę od nowa.
+2. **Czujnik na stole, cały podparty:** położyć na krążek kolejno telefon (~200 g), szklankę z wodą, butelkę 0,5 l
+   (~520 g). Strona testu czujników zapisuje odczyty.
+3. **Ten sam czujnik na krawędzi stołu,** tak żeby ~połowa pola czynnego wisiała w powietrzu (jak na czubku szczęki).
+   Te same ciężarki, kładzione na podpartą część.
+4. Porównanie 2 vs 3 mówi, czy czujnik na czubku z wystającą folią czuje tak samo, słabiej czy wcale.
+   Od tego zależy decyzja, czy przenosimy czujnik na czubek.
+
 ## Następne kroki (propozycja, nic nie uruchomione)
 0. **Dostęp do neuPrint (Adam):** zalogować się na neuprint.janelia.org (konto Google) i skopiować swój token API.
    Wtedy policzę mapę czubek / nasada regułą Elabbady i podłączę czujnik czubka do „końca nogi”.
