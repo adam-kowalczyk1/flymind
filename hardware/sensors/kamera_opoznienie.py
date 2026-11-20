@@ -61,6 +61,7 @@ def main():
     ap.add_argument("--cam", default="USB Camera")
     ap.add_argument("--size", default="640x400")
     ap.add_argument("--fps", type=int, default=120)
+    ap.add_argument("--fmt", type=int, help="numer formatu z kamera_mjpg (zamiast ffmpeg)")
     ap.add_argument("--n", type=int, default=20, help="ile mignięć (każde = biały + czarny)")
     ap.add_argument("--half", type=float, default=0.25, help="s jednego koloru (0,25 s = 2 mignięcia/s, bezpieczne dla oczu)")
     ap.add_argument("--check", action="store_true")
@@ -68,7 +69,7 @@ def main():
     if a.check:
         return _check()
     from live_avoid import Frames
-    fr = Frames(cam=a.cam, fps=a.fps, size=a.size)
+    fr = Frames(cam=a.cam, fps=a.fps, size=a.size, fmt=a.fmt)
     t_end = time.time() + 10
     while fr.n < 30 and time.time() < t_end:
         time.sleep(0.01)
@@ -100,7 +101,7 @@ def main():
     exp = subprocess.run([UVC, "-I", "0", "-g", "auto-exposure-mode", "-g", "exposure-time-abs", "-g", "gain"],
                          capture_output=True, text=True).stdout.replace("\n", "; ")
     r = analyse(rec)
-    head = f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {a.size}@{a.fps}  kamera {fps:.0f} kl./s  | {exp}"
+    head = f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {f'kamera_mjpg format {a.fmt}' if a.fmt is not None else f'ffmpeg {a.size}@{a.fps}'}  kamera {fps:.0f} kl./s  | {exp}"
     body = (r["err"] if "err" in r else
             f"opóźnienie ekran→program: mediana {r['med']:.0f} ms (od {r['lo']:.0f} do {r['hi']:.0f}, {r['n']} pomiarów; "
             f"na biały {r['to_white']:.0f}, na czarny {r['to_black']:.0f}); jasność czarny {r['dark']:.0f}, biały {r['light']:.0f}; "

@@ -32,6 +32,7 @@ import reflex as R  # noqa: E402
 import touch_map as TM  # noqa: E402
 
 FF = "/Users/admin/miniforge3/bin/ffmpeg"
+KM = "/Users/admin/tools/kamera_mjpg"     # hardware/sensors/kamera_mjpg.swift: AVFoundation z wybranym formatem (np. MJPG)
 W_PX, H_PX = 160, 100                     # obraz zmniejszany przez ffmpeg (ręce są duże; ponytail: większy, gdy trzeba szczegółu)
 BG_S, THR, BG_A = 1.5, 25, 0.02           # s do zdjęcia tła (ręka poza kadrem!), próg różnicy jasności 0–255, tempo uczenia tła
 LIVE = {}                                 # najnowszy stan (co takt, 10 ms) dla strony hardware/sensors/test_czujnikow.html
@@ -64,11 +65,13 @@ def fast_step(s, Wc):
 
 class Frames:
     """ffmpeg → szare klatki W_PX×H_PX w wątku; trzyma tylko najnowszą."""
-    def __init__(self, cam=None, video=None, fps=120, size="640x400"):   # kamera_diag 19 XI: 640x400@120 → ~78 kl./s; 1280x800 → tylko 10
+    def __init__(self, cam=None, video=None, fps=120, size="640x400", fmt=None):   # kamera_diag 19 XI: 640x400@120 → ~78 kl./s
         src = (["-fflags", "nobuffer", "-f", "avfoundation", "-framerate", str(fps), "-video_size", size, "-i", cam] if cam
                else ["-re", "-i", video])
-        self.p = subprocess.Popen([FF, "-nostdin", "-loglevel", "error", *src, "-vf", f"scale={W_PX}:{H_PX},format=gray",
-                                   "-flush_packets", "1", "-f", "rawvideo", "-"], stdout=subprocess.PIPE)   # każda klatka od razu do Pythona
+        cmd = ([KM, "stream", str(fmt), str(W_PX), str(H_PX)] if fmt is not None else   # format kamery po numerze z kamera_mjpg
+               [FF, "-nostdin", "-loglevel", "error", *src, "-vf", f"scale={W_PX}:{H_PX},format=gray",
+                "-flush_packets", "1", "-f", "rawvideo", "-"])                       # każda klatka od razu do Pythona
+        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         self.last, self.n, self.t0 = None, 0, time.time()
         threading.Thread(target=self._read, daemon=True).start()
 
@@ -296,6 +299,7 @@ if __name__ == "__main__":
     ap.add_argument("--video")
     ap.add_argument("--fps", type=int, default=120)
     ap.add_argument("--size", default="640x400")
+    ap.add_argument("--fmt", type=int, help="numer formatu kamery z kamera_mjpg (zamiast ffmpeg; np. MJPG 120 kl./s)")
     ap.add_argument("--fsr")
     ap.add_argument("--fsr-csv")
     ap.add_argument("--r-fix", type=float, default=TM.R_FIX, help="opornik dzielnika [Ω]: 10000 albo 5100 — jaki wstawiono")
@@ -317,7 +321,7 @@ if __name__ == "__main__":
     print("buduję mózg muchy (~45 s)…", flush=True)
     net = build(a.glu, a.brake)
     print(f"tryb mózgu: {net._mode}. Przez pierwszą sekundę trzymaj rękę POZA kadrem (kamera uczy się tła).", flush=True)
-    fr = Frames(cam=a.cam, video=a.video, fps=a.fps, size=a.size) if (a.cam or a.video) else None
+    fr = Frames(cam=a.cam, video=a.video, fps=a.fps, size=a.size, fmt=a.fmt) if (a.cam or a.video or a.fmt is not None) else None
     log = loop(net, fr, Touch(a.fsr, a.fsr_csv, a.r_fix), Eye(a.fov, a.flip), a.seconds)
     if fr:
         print(f"kamera: {fr.n} klatek = {fr.n / max(1e-9, time.time() - fr.t0):.0f} kl./s", flush=True)
