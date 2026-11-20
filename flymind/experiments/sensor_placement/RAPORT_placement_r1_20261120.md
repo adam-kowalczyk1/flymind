@@ -139,6 +139,29 @@ Plik: `results/placement_r1b_t2.5-3.5-4.5.json`. Wariant „czubek” pozostaje 
 
   Mapa jest **wyprowadzona tą regułą, nie opublikowana**.
 
+## Dopisek 5: „mucha wie, gdzie czuje” w całym mózgu (cel `TARGET_where_r1.md`, kod `where_test.py`)
+Ten sam mózg co na żywo (`live_avoid.build`, glu −1, hamulec hub). Czubek → 84 szczecinki „końca nogi”, A0 → 93 „środkowe”.
+1 N przez 1 s, 5 ziaren szumu, ramię nieruchome, oko wyłączone.
+
+| warunek | MDN (cofanie) [Hz] | staw 2 (cofanie ramienia) | szczęka (zaciskanie) | DN ucieczki, DNg15, DNge078 |
+|---|---|---|---|---|
+| nic | 0 | 0 | 0 | 0 |
+| **czubek** | **16,1 ± 2,1** | −1,99 | 0,04 | 0 |
+| **A0** | 10,2 ± 2,6 | −1,09 | **0,40** | 0 |
+| oba | 25,9 | −3,47 | 0,44 | 0 |
+
+- **W1** (MDN czubek > A0 w ≥ 4/5 ziaren): **ZDANE, 5/5.** Dotyk końca „nogi” mocniej uruchamia cofanie. Zgadza się
+  z literaturą: dotyk końca nogi wywołuje unikanie (Medeiros 2024).
+- **W2** (rozróżnienie czubek / A0 ≥ 0,9): **ZDANE, 1,00.** Mózg odpowiada jakościowo inaczej:
+  - **czubek → cofanie** (MDN, staw 2), szczęka się prawie nie zaciska;
+  - **A0 → zaciśnięcie szczęki** (0,40), słabsze cofanie.
+- **W3** (opis): różnica czubek–A0 jest **przeciętna** na tle 100 losowych podziałów tych samych szczecinek (percentyl 0,55).
+  - Każde dwie różne grupy szczecinek dają w tym mózgu jakąś różnicę; samo „wie, gdzie” nie jest więc wyjątkowe dla tej mapy.
+  - Uczciwie: miara W3 była źle skonstruowana. Wymiary, które w próbach czubek / A0 były stale zerowe, dostały
+    znikome odchylenie i wyolbrzymiły odległości losowych podziałów. Do powtórzenia na samych MDN / staw 2 / szczęka.
+- Co zostaje: kierunek W1 i podział ról (czubek = cofanie, środek szczęki = zaciskanie) wynikają z mapy z danych, a nie z doboru.
+  Nie wiadomo jeszcze, czy losowe podziały dają TEN SAM podział ról. To jest następny sprawdzian.
+
 ## Następne kroki (propozycja, nic nie uruchomione)
 0. **Dostęp do neuPrint (Adam):** zalogować się na neuprint.janelia.org (konto Google) i skopiować swój token API.
    Wtedy policzę mapę czubek / nasada regułą Elabbady i podłączę czujnik czubka do „końca nogi”.
