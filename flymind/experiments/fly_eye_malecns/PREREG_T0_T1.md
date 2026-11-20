@@ -28,3 +28,13 @@ krawędzie ON/OFF (12 kierunków), te same co w bramce G2-fv. Bez szumu (determi
 **PASS:** w ≥ 30 z 50 modeli mediana DSI T4a–d (ON) ≥ 0,2 i mediana DSI T5a–d (OFF) ≥ 0,2. Tylko raport: kierunki
 preferowane vs flyvis, DSI oryginału, kontrola „przesunięcia potasowane w parze typów” (suma pary zachowana).
 Jeśli FAILED: zapisuję, niczego nie stroję pod ten test; dalsza droga = osobny plan (np. douczanie na MaleCNS).
+
+## Wynik T0 (20 XI): FAILED — ρ = 0,43 (próg 0,5), pary z odpowiednikiem 90 % (próg 60 %). Plik t0_gate.json.
+Diagnoza: miara „suma średnich warunkowych po przesunięciach” zawyża typy szerokopolowe (TmY9→TmY9: flyvis 11, MaleCNS 707,
+bo MaleCNS ma setki przesunięć, flyvis kilka). Tylko 30 % masy synaps MaleCNS między tymi parami mieści się w kluczach flyvis.
+
+## T0b — poprawiona miara (spisana PRZED policzeniem)
+Dla pary (A → B): średnia po WSZYSTKICH komórkach B w rdzeniu (promień 12) całkowitej liczby synaps od komórek A
+(bez warunku, wszystkie przesunięcia). We flyvis to samo z pełnej tabeli krawędzi (komórki B w promieniu 12 od środka).
+Raport: ρ Spearmana tych wartości (pary bez fotoreceptorów/CT1/Am); udział masy w kluczach flyvis osobno dla wejść T4a–d i T5a–d.
+Bramka T0b: ρ ≥ 0,5. **T1 liczę niezależnie od wyniku T0b** (jest tani); jeśli T0b FAILED, T1 jest oznaczony jako eksploracyjny.
