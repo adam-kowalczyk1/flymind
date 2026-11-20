@@ -23,7 +23,7 @@ def hexdist(u, v):
     return (np.abs(u) + np.abs(v) + np.abs(u + v)) / 2
 
 
-def main():
+def load():
     K = pd.read_csv(f"{RES}/flyvis_keys.csv")
     fv_types = set(K.source_type) | set(K.target_type)
     a = pd.read_feather(os.path.join(D, "body-annotations-male-cns-v1.0-minconf-0.5.feather"),
@@ -57,6 +57,37 @@ def main():
     w["du"] = w.body_post.map(U) - w.body_pre.map(U)
     w["dv"] = w.body_post.map(V) - w.body_pre.map(V)
     w["core"] = hexdist(w.body_post.map(U), w.body_post.map(V)) <= RCORE
+    ncore = pd.Series({t: sum(1 for b, tt in ft.items() if tt == t and b in U and hexdist(U[b], V[b]) <= RCORE) for t in set(ft.values())})
+    return K, w, ncol, ncore, U, V
+
+
+def t0b():
+    """PREREG T0b: średnia (po wszystkich komórkach post w rdzeniu) całkowitego wejścia od typu pre; ρ z flyvis; pokrycie T4/T5."""
+    K, w, ncol, ncore, U, V = load()
+    F = pd.read_csv(f"{RES}/flyvis_pairs_uncond.csv").set_index(["source_type", "target_type"]).n
+    m = w[w.core].groupby(["pt", "qt"]).weight.sum()
+    m = pd.Series({k: v / ncore[k[1]] for k, v in m.items() if ncore.get(k[1], 0) > 0})
+    keep = [k for k in F.index if not k[0].startswith(("R", "CT1", "Am")) and not k[1].startswith(("CT1", "Am"))]
+    x = np.array([F[k] for k in keep]); y = np.array([m.get(k, 0.0) for k in keep])
+    rho = spearmanr(x, y).statistic
+    keys = set(map(tuple, K[["source_type", "target_type", "du", "dv"]].values.tolist()))
+    tt = w[w.core & w.qt.str.match(r"^T[45][abcd]$")]
+    infv = np.array([(p, q, d, e) in keys for p, q, d, e in zip(tt.pt, tt.qt, tt.du, tt.dv)])
+    pr = set((p, q) for p, q in K[["source_type", "target_type"]].values.tolist())
+    inpair = np.array([(p, q) in pr for p, q in zip(tt.pt, tt.qt)])
+    out = dict(spearman_uncond=float(rho), n_pairs=len(keep), PASS=bool(rho >= 0.5),
+               T4T5_mass_in_flyvis_pairs=float(tt.weight[inpair].sum() / tt.weight.sum()),
+               T4T5_mass_in_flyvis_keys_of_those=float(tt.weight[inpair & infv].sum() / tt.weight[inpair].sum()),
+               ratio_median_malecns_over_flyvis=float(np.median((y + 0.1) / (x + 0.1))),
+               ds_pairs={f"{a}→{b}": (round(float(F.get((a, b), 0)), 1), round(float(m.get((a, b), 0)), 1))
+                         for a, b in [("Mi1", "T4a"), ("Tm3", "T4a"), ("Mi4", "T4a"), ("Mi9", "T4a"), ("C3", "T4a"), ("CT1(M10)", "T4a"),
+                                      ("Tm1", "T5a"), ("Tm2", "T5a"), ("Tm4", "T5a"), ("Tm9", "T5a"), ("L1", "Mi1"), ("L2", "Tm1")]})
+    json.dump(out, open(f"{RES}/t0b_gate.json", "w"), indent=1, ensure_ascii=False)
+    print(json.dumps(out, indent=1, ensure_ascii=False))
+
+
+def main():
+    K, w, ncol, ncore, U, V = load()
     s = w[w.core].groupby(["pt", "qt", "du", "dv", "body_post"]).weight.sum().reset_index()
     M = s.groupby(["pt", "qt", "du", "dv"]).weight.mean().reset_index()
     M.columns = ["source_type", "target_type", "du", "dv", "n_syn"]
@@ -86,4 +117,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    t0b() if "--t0b" in sys.argv else main()
