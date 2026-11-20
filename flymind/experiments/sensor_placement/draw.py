@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import placement as PL
 
-def draw(layouts, path, title):
+def draw(layouts, path, title, src="placement_r1b.json"):
     G = PL.Gripper(); P, N = G.points(0.0)
-    d = json.load(open(os.path.join(PL.OUT, "placement_r1b.json")))
+    d = json.load(open(os.path.join(PL.OUT, src)))
     C = d["cand"]
     fig, ax = plt.subplots(1, 2, figsize=(13, 8))
     s = np.arange(len(P))[::10]
@@ -37,3 +37,9 @@ if __name__ == "__main__":
          os.path.join(PL.OUT, "miejsca_r1b.png"),
          "FSR402 (pełne koło = pole czynne Ø12,7 mm, przerywane = folia Ø18,3): szary = obecne (szczęka stała + dłoń), "
          "czerwony A = najlepsza para (folia 0,45 mm), niebieski B = najlepsza para z krążkiem 1,45 mm")
+    e = json.load(open(os.path.join(PL.OUT, "placement_r1b_cover50.json")))
+    draw([("teraz", [e["baseline"]["fsr1"], e["baseline"]["palm"]], "tab:gray"),
+          ("1", [e["score"]["1.45"]["top"][0]["pair"][1]], "tab:green"), ("2", [e["score"]["1.45"]["top"][0]["pair"][0]], "tab:green")],
+         os.path.join(PL.OUT, "miejsca_r1b_czubek.png"),
+         "WARIANT DODATKOWY (pole czynne płasko ≥ 50 %, folia wystaje za krawędź czubka): zielone 1 = czubek szczęki stałej, "
+         "2 = obecne miejsce A0 (30 mm od czubka); szary = obecny układ", src="placement_r1b_cover50.json")
