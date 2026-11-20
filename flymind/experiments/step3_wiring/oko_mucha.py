@@ -18,7 +18,8 @@ W_PX, H_PX, BLK = 160, 100, 4                 # kadr jak w live_avoid; bloki 4×
 GW, GH = W_PX // BLK, H_PX // BLK
 TAU_HP, TAU_LP = 0.25, 0.05                   # adaptacja fotoreceptora/laminy, opóźnienie w detektorze ruchu [s]
 MV, L_FULL = 40.0, 2.0                        # jak avoid.py: 40 mV = pełny napęd, osiągany przy L = 2 rad/s
-OUT_FULL = 0.0537                             # z --calib 20 XI (0,05368; scena kalibracyjna, ziarno 24 100 900, przed testem)
+OUT_FULL = 0.0537                             # z --calib 20 XI (0,05368; scena kalibracyjna, ziarno 24 100 900, przed testem 1)
+G0, OUT_FULL2 = 0.04628, 0.04322             # test 2 (VS/HS): z --calib2 20 XI, przed testem 2 (ziarno 24 100 900)
 FOV_H, FPS, SIGMA = 100.0, 80, 3.0            # scen syntetycznych: kąt widzenia (niezmierzony), kl./s (zmierzone), szum
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../results/oko_emd_20261120")
 
@@ -51,8 +52,8 @@ def hr(s, d, ax):
 class FlyEye:
     """Interfejs jak live_avoid.Eye: see(f, dt, t) → L (tu: „równoważne” L = L_FULL · wyjście / OUT_FULL), do tego
     .loom = napęd stron {"L","R"} [mV], .m = maska zmian (pokazywana na stronie), .th = 0 (oko nie mierzy kąta plamy)."""
-    def __init__(self, flip=False, out_full=None):
-        self.flip, self.out_full = flip, out_full or OUT_FULL
+    def __init__(self, flip=False, out_full=None, vshs=False, g0=None):
+        self.flip, self.out_full, self.vshs, self.g0 = flip, out_full or OUT_FULL, vshs, g0 or G0
         self.x = self.don = self.doff = self.t_last = None
         self.L, self.th, self.sa, self.out = 0.0, 0.0, 0.0, (0.0, 0.0)
         self.loom = {"L": 0.0, "R": 0.0}
@@ -74,6 +75,10 @@ class FlyEye:
         h, v = H.ravel(), V.ravel()
         arm = np.maximum(0, np.stack([ARMS[0] @ h, -(ARMS[1] @ h), ARMS[2] @ v, -(ARMS[3] @ v)]))
         lplc2 = np.prod(arm, axis=0) ** 0.25
+        self.armbest = float(arm[:, lplc2.argmax()].mean())      # do kalibracji G0 (test 2)
+        self.glob = abs(H.mean()) + abs(V.mean())                # HS + VS: ruch całego obrazu (PREREG_OKO_VSHS.md)
+        if self.vshs:
+            lplc2 = lplc2 / (1 + self.glob / self.g0)
         oL, oR = lplc2[LEFT].max(), lplc2[~LEFT].max()
         self.out = (oR, oL) if self.flip else (oL, oR)
         self.m = np.kron(np.abs(hp) > 0.1, np.ones((BLK, BLK), bool))
@@ -89,7 +94,7 @@ def scene(kind, seed, T=3.0):
     """Lista (t, klatka uint8 100×160). Render 2× i uśrednienie 2×2 (gładki ruch), potem szum σ = SIGMA na kadrze oka."""
     rng = np.random.default_rng(seed)
     S, pd = 2, 2 * W_PX / FOV_H                                  # piksele renderu na stopień
-    tex = ndimage.gaussian_filter(rng.standard_normal((3 * H_PX * S, 3 * W_PX * S)), 3 * S)
+    tex = ndimage.gaussian_filter(rng.standard_normal((6 * H_PX * S, 6 * W_PX * S)), 3 * S)   # test 1 miał 3× — za mało (WYNIK.md)
     tex = 140 + 25 * tex / tex.std()
     yy, xx = np.mgrid[:H_PX * S, :W_PX * S].astype(float)
     cy0, cx0 = H_PX * S / 2, W_PX * S / 2
@@ -103,14 +108,20 @@ def scene(kind, seed, T=3.0):
             dx = 50 * u * pd
         elif kind == "pan_v":
             dy = 50 * u * pd
+        elif kind == "pan_d":
+            dx = dy = 50 / np.sqrt(2) * u * pd
+        elif kind == "loom_pan":
+            dy = 20 * u * pd
         elif kind == "roll":
             rot = np.radians(90 * u)
         c, s_ = np.cos(rot), np.sin(rot)
         X, Y = xx - cx0, yy - cy0
-        img = ndimage.map_coordinates(tex, [c * Y + s_ * X + 1.5 * H_PX * S + dy, -s_ * Y + c * X + 1.5 * W_PX * S + dx], order=1)
+        cy_, cx_ = c * Y + s_ * X + 3 * H_PX * S + dy, -s_ * Y + c * X + 3 * W_PX * S + dx
+        assert cy_.min() >= 0 and cx_.min() >= 0 and cy_.max() < tex.shape[0] - 1 and cx_.max() < tex.shape[1] - 1, "tło się skończyło"
+        img = ndimage.map_coordinates(tex, [cy_, cx_], order=1)
         disc = None                                               # (środek x w ułamku szerokości, średnica [°])
         if kind.startswith("loom") and t >= 0.5:
-            disc = ({"loom": 0.5, "loom_L": 0.25, "loom_R": 0.75}[kind], loom_th(t))
+            disc = ({"loom": 0.5, "loom_L": 0.25, "loom_R": 0.75, "loom_pan": 0.5}[kind], loom_th(t))
         elif kind == "recede" and 3.0 - t - 1 / FPS >= 0.5:      # scena 1 odwrócona w czasie
             disc = (0.5, loom_th(3.0 - t - 1 / FPS))
         elif kind == "side" and t >= 0.5:
@@ -119,6 +130,8 @@ def scene(kind, seed, T=3.0):
             disc = (0.5, 40.0)
         if disc:
             img[np.hypot(xx - disc[0] * W_PX * S, yy - cy0) <= disc[1] / 2 * pd] = 40.0
+        if kind == "dark_in":
+            img[yy > H_PX * S - 50 * u * pd] = 5.0                # ciemne pole wjeżdża z dołu, kamera stoi
         if kind == "light" and t >= 1.0:
             img = img * 1.5
         f = img.reshape(H_PX, S, W_PX, S).mean((1, 3)) + SIGMA * rng.standard_normal((H_PX, W_PX))
@@ -127,6 +140,7 @@ def scene(kind, seed, T=3.0):
 
 
 KINDS = ["loom", "loom_L", "loom_R", "side", "pan_h", "pan_v", "roll", "recede", "static", "light"]
+KINDS2 = KINDS + ["pan_d", "dark_in", "loom_pan"]                 # test 2; K1 na scenach 4–12, K4 na loom_pan
 
 
 def run(kind, seed, eye):
@@ -137,21 +151,34 @@ def run(kind, seed, eye):
     return np.array(o)                                            # kolumny: t, out_L, out_R, L (stare oko: tylko L ma sens)
 
 
-def calib():
-    o = run("loom", 24100900, FlyEye(out_full=1.0))
+def _at37(o, col):
     t37 = 2.0 - 0.1 / np.tan(np.radians(36.87 / 2))               # θ = 36,87° ⇔ L = 2 rad/s (t ≈ 1,70 s)
-    sel = np.abs(o[:, 0] - t37) <= 2.5 / FPS
-    return float(o[sel, 1:3].max(axis=1).mean())
+    return float(col[np.abs(o[:, 0] - t37) <= 2.5 / FPS].mean())
 
 
-def test():
+def calib(vshs=False, g0=None):
+    """OUT_FULL: wyjście w scenie kalibracyjnej (ziarno 24 100 900) przy θ = 37°. Z vshs także G0 (PREREG_OKO_VSHS.md)."""
+    if vshs:
+        e, rows = FlyEye(out_full=1.0), []
+        for t, f in scene("loom", 24100900):
+            e.see(f, 1 / FPS, t)
+            rows.append((t, getattr(e, "armbest", 0.0)))
+        rows = np.array(rows)
+        g0 = _at37(rows, rows[:, 1])
+    o = run("loom", 24100900, FlyEye(out_full=1.0, vshs=vshs, g0=g0))
+    return _at37(o, o[:, 1:3].max(axis=1)), g0
+
+
+def test(v=1):
+    """v=1: PREREG_OKO_EMD.md (oko bez VS/HS, ziarna 24 100 0xx). v=2: PREREG_OKO_VSHS.md (z VS/HS, ziarna 24 101 0xx, K4)."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from live_avoid import Eye
+    kinds, seeds, k1 = (KINDS, range(24100001, 24100011), KINDS[3:]) if v == 1 else (KINDS2, range(24101001, 24101011), KINDS2[3:12])
+    make = (lambda: FlyEye()) if v == 1 else (lambda: FlyEye(out_full=OUT_FULL2, vshs=True, g0=G0))  # noqa: E731
     t0, R = time.time(), {}
-    for seed in range(24100001, 24100011):
-        r = {k: run(k, seed, FlyEye()) for k in KINDS}
-        old = {k: run(k, seed, Eye(FOV_H))[:, 3] for k in KINDS}
-        pk = {k: float(r[k][:, 1:3].max()) for k in KINDS}
+    for seed in seeds:
+        r = {k: run(k, seed, make()) for k in kinds}
+        pk = {k: float(r[k][:, 1:3].max()) for k in kinds}
         side = {}
         for k, i in (("loom_L", 1), ("loom_R", 2)):
             o, j = r[k], int(r[k][:, 1:3].max(axis=1).argmax())
@@ -161,17 +188,25 @@ def test():
         late = float(st[st[:, 0] >= 2.0, 1:3].max(axis=1).mean())
         lo = r["loom"]
         j50 = int(np.argmax(lo[:, 1:3].max(axis=1) > 0.5 * pk["loom"]))
-        R[seed] = dict(peak=pk, ratio={k: pk[k] / pk["loom"] for k in KINDS[3:]},
-                       K1=all(pk[k] <= 0.25 * pk["loom"] for k in KINDS[3:]), K2=side["loom_L"] and side["loom_R"],
+        R[seed] = dict(peak=pk, ratio={k: pk[k] / pk["loom"] for k in kinds[3:]},
+                       K1=all(pk[k] <= 0.25 * pk["loom"] for k in k1), K2=side["loom_L"] and side["loom_R"],
                        K3=late <= 0.05 * pk["loom"], static_late=late / pk["loom"],
-                       fire_theta=float(np.degrees(2 * np.arctan(0.1 / max(2.0 - lo[j50, 0], 1e-3)))),
-                       old_peak_L={k: float(old[k].max()) for k in KINDS})
-        print(seed, "K1", R[seed]["K1"], "K2", R[seed]["K2"], "K3", R[seed]["K3"],
-              "| max stosunek", max(R[seed]["ratio"], key=R[seed]["ratio"].get), round(max(R[seed]["ratio"].values()), 3), flush=True)
-    n = {k: sum(R[s][k] for s in R) for k in ("K1", "K2", "K3")}
-    verdict = "PASS" if all(v >= 9 for v in n.values()) else "FAILED"
+                       fire_theta=float(np.degrees(2 * np.arctan(0.1 / max(2.0 - lo[j50, 0], 1e-3)))))
+        if v == 1:
+            R[seed]["old_peak_L"] = {k: float(run(k, seed, Eye(FOV_H))[:, 3].max()) for k in kinds}
+        else:
+            R[seed]["K4"] = pk["loom_pan"] >= 0.5 * pk["loom"]
+            ab = {k: float(run(k, seed, FlyEye(out_full=1.0))[:, 1:3].max()) for k in kinds}   # to samo oko BEZ VS/HS
+            R[seed]["ratio_bez_VSHS"] = {k: ab[k] / ab["loom"] for k in kinds[3:]}
+        print(seed, {k: R[seed][k] for k in ("K1", "K2", "K3", "K4") if k in R[seed]},
+              "| max stosunek", max((R[seed]["ratio"][k], k) for k in k1), flush=True)
+    keys = ("K1", "K2", "K3") + (("K4",) if v == 2 else ())
+    n = {k: sum(R[s][k] for s in R) for k in keys}
+    verdict = "PASS" if all(x >= 9 for x in n.values()) else "FAILED"
     os.makedirs(RES, exist_ok=True)
-    json.dump(dict(verdict=verdict, n=n, seeds=R, OUT_FULL=OUT_FULL, seconds=time.time() - t0), open(f"{RES}/test_syntetyczny.json", "w"), indent=1)
+    name = "test_syntetyczny.json" if v == 1 else "test2_vshs.json"
+    json.dump(dict(verdict=verdict, n=n, seeds=R, OUT_FULL=OUT_FULL if v == 1 else OUT_FULL2, G0=G0, seconds=time.time() - t0),
+              open(f"{RES}/{name}", "w"), indent=1)
     print("WYNIK:", verdict, n, f"({time.time() - t0:.0f} s)")
     return R, verdict
 
@@ -185,7 +220,11 @@ def _check():
 
 if __name__ == "__main__":
     if "--calib" in sys.argv:
-        print("OUT_FULL =", calib())
+        print("OUT_FULL =", calib()[0])
+    elif "--calib2" in sys.argv:
+        print("OUT_FULL2, G0 =", calib(vshs=True))
+    elif "--test2" in sys.argv:
+        test(2)
     elif "--test" in sys.argv:
         test()
     else:
