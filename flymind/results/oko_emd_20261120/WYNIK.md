@@ -8,3 +8,10 @@
   1,26 × zbliżania, obrót 1,16, ręka bokiem 0,50 — czyli stare oko myli ruch kamery ze zbliżaniem; nowe tłumi go 4–∞ razy.
 Hipoteza (NIESPRAWDZONA, post hoc): siatka 40×25 jest szersza niż wyższa, jednostki LPLC2 przy górnym/dolnym brzegu mają
 obcięte pola, więc przy ruchu pionowym ramiona nie znoszą się symetrycznie. Zgodnie z planem nie stroję stałych pod ten test.
+
+## Diagnoza po teście (20 XI, wynik FAILED zostaje)
+Scena 6 „kamera w górę/dół” była ZŁA: faktura tła za mała, od t ≈ 1,9 s w kadr wjeżdża czarne pole (0), przy 2,5 s
+zajmuje 60 % kadru (`scene("pan_v")`: min 0, frac < 10 = 0,2 → 0,6). Szczyt fałszywego sygnału przy t = 2,9 s. Szum w ciemnym
+kadrze NIE jest przyczyną (stała jasność 5–140 + σ 3 → 0,000–0,002 OUT_FULL). Wniosek: oko reaguje na bardzo kontrastową
+krawędź (czarne pole, log-kontrast ~2,9 wobec ~1,1 krążka; detektor Reichardta rośnie z kwadratem kontrastu). To realna
+słabość (w prawdziwym obrazie są czarne przedmioty), więc w teście 2 jest osobna scena „ciemne pole wjeżdża”.
