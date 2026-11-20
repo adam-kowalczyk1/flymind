@@ -116,6 +116,29 @@ Plik: `results/placement_r1b_t2.5-3.5-4.5.json`. Wariant „czubek” pozostaje 
 - Żeby to zastosować do naszych 322 szczecinek T2 L, potrzebne są **położenia synaps** z neuPrint, a tych lokalnie
   nie mamy. Mapa wyjdzie wtedy jako „wyprowadzona tą regułą”, a nie „opublikowana”.
 
+## Dopisek 4: mapa koniec nogi / nasada policzona (cel `TARGET_bristle_map_r1.md`, kod `bristle_map.py`)
+- Dane: 321 z 322 szkieletów SWC MaleCNS v1.0 (publiczne, CC-BY), pobrane za zgodą Adama, 3,6 MB w
+  `data/malecns/skeletons_T2L_bristle/` (poza repo). 310 neuronów miało ≥ 3 zakończenia.
+- Miara: odległość środka zakończeń aksonu od środka populacji. Małe = koniec nogi (reguła Elabbady 2026).
+  Synaps nie było, więc użyłem zakończeń szkieletu (przybliżenie).
+- **Sprawdzian: ZDANY.**
+  - Typ SNta wyjaśnia η² = **0,78** zmienności. Przy potasowanych typach η² = 0,08 (1000×), p < 0,001.
+  - Odporność: z medianą zamiast średniej η² = 0,81.
+  - Typy mają więc spójne miejsce: od końca nogi SNta21, SNta29, SNta19, SNta26, SNta30… do nasady SNta35, SNta34, SNta22/33.
+- **Obecna hipoteza `touch_map.json` jest ODWROTNIE.** Grupa „femur” (udo) leży bliżej środka niż „tibia_tarsus”
+  (mediana 3 613 vs 4 476 jedn., Mann-Whitney p = 7·10⁻¹⁷), czyli według reguły jest bliżej KOŃCA nogi.
+  Arbitralne przypisanie z 19 XI trafiło na odwrót. Mapowanie „swap” było tym właściwym.
+- Przypisanie do czujników według celu:
+  - **czubek → 84 neurony** z rang u ≤ 0,27 (typy SNta21, SNta29 i część SNta19/26/30);
+  - **A0 → 93 neurony** z u 0,31–0,61.
+  - Lista w `results/bristle_map_r1.json`.
+- Ograniczenia:
+  - środek populacji, a nie zmierzony środek ośrodka;
+  - zakończenia szkieletu, a nie synapsy;
+  - reguła pochodzi z nogi przedniej samicy (FANC), a my mamy środkową nogę samca (MaleCNS).
+
+  Mapa jest **wyprowadzona tą regułą, nie opublikowana**.
+
 ## Następne kroki (propozycja, nic nie uruchomione)
 0. **Dostęp do neuPrint (Adam):** zalogować się na neuprint.janelia.org (konto Google) i skopiować swój token API.
    Wtedy policzę mapę czubek / nasada regułą Elabbady i podłączę czujnik czubka do „końca nogi”.
