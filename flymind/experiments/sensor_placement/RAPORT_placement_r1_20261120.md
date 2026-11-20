@@ -66,7 +66,59 @@ Kryteria (cel):
 - **r1 miał błąd** (zewnętrzna ściana serwa liczona jako szczęka, przedmiot mógł wejść za dłoń). Poprawione w r1b;
   wnioski r1 i r1b są te same, liczby r1b w tabeli.
 
+## Dopisek 1 (20 XI, przed południem): grubszy krążek, spoza planu
+Krążek 2,5 / 3,5 / 4,5 mm podnosi pokrycie pudełek (S2 do 0,80), ale długie przedmioty przy czubkach dalej tylko 0,41–0,51.
+Plik: `results/placement_r1b_t2.5-3.5-4.5.json`. Wariant „czubek” pozostaje najlepszy dla twojego przykładu.
+
+## Dopisek 2: poślizg w MuJoCo (cel `TARGET_slip_r1.md`, sha256 `61265b0e…a4d1`, kod `slip.py`)
+- Model:
+  - szczęki = schody co 1 mm z prawdziwych siatek;
+  - przegub szczęki z modelu producenta (bezwładność przekładni 0,028, tłumienie 0,6, tarcie 0,052);
+  - czujniki = krążki Ø12,7 × 0,45 mm;
+  - przedmiot w poprzek szczęk, szczęki w dół, siła ciągnąca 0 → 20 N w 4 s.
+- Sprawdziany przed liczeniem:
+  - szczęka ruchoma w modelu leży dokładnie tam, gdzie siatka;
+  - pręt Ø15 przy czubku daje 19,6 N na czujniku czubka, a szczęka zamyka się do q = −0,007 (zgodnie z geometrią).
+- **Poprawki zrobione przed wynikami** (błędy w ustawieniu, nie w kryteriach):
+  - MJCF czytał kąty w stopniach, więc szczęka przechodziła przez limit;
+  - brakowało bezwładności przekładni;
+  - start z q = 1,0: słaby chwyt nie zamykał się w 1 s, teraz start z q = 0,4.
+- **Unieważnione po wynikach:** 4 próby na układ, w których pudełko przesunięte o 60 mm nie leżało między szczękami
+  (błąd projektu próby). Liczby poniżej są bez nich. Z nimi wynik jest w nawiasie.
+
+| układ | M1 czuje trzymanie | M2 ostrzega PRZED poślizgiem | M3 czuje wypadanie (≤ 200 ms) |
+|---|---|---|---|
+| **T** czubek + A0 | **0,75** (0,68) — pręty 28 / 36 | 0,16 | 0,55 |
+| H obecny (A0 + dłoń) | 0,05 — pręty 0 / 36 | 0,03 | 0,03 |
+| R najlepsza para r1 (szczęka ruchoma) | 0,05 — pręty 0 / 36 | 0,06 | 0,03 |
+
+- **Q1** (T: M1 ≥ 0,8 i ≥ H + 0,3): **NIE ZDANE** (0,75 < 0,8; druga część spełniona: 0,75 vs 0,05).
+- **Q2** (T: M3 ≥ 0,8): **NIE ZDANE** (0,55).
+- **Q3** (opis): żaden układ nie ostrzega przed poślizgiem (M2 ≤ 0,16). Siła normalna na FSR prawie się nie zmienia,
+  zanim przedmiot ruszy; zmienia się dopiero, gdy już się przesuwa. Zgadza się to z literaturą: poślizg widać jako spadek
+  siły, a FSR jest za wolny na drgania.
+- **Ważna poprawka do analizy geometrii:** okrągły pręt dotyka ściany tylko wzdłuż linii na wysokości swojej osi.
+  - Czujnik na czubku czuje pręty, których oś jest ≤ ~15 mm od czubka: wszystkie 12 / 12 przy osi ≤ 10 mm.
+  - Grubsze pręty trzymane głębiej (oś ~17–23 mm od czubka) nie trafiają w żaden czujnik.
+  - Wynik „S3 = 0,92–1,00” z geometrii był więc za optymistyczny, bo pręty traktowano tam jak płaskie.
+    Realnie jest ok. 0,75–0,80 dla czubka, a 0 dla obecnego układu.
+- Pole `q_hold` w `slip_r1.json` to kąt szczęki na KOŃCU próby, a nie w chwili trzymania (zła nazwa; na metryki nie wpływa).
+
+## Dopisek 3: „mucha wie, gdzie czuje” — mapa szczecinek
+- W danych MaleCNS (pole type/subclass/entryNerve) nie ma miejsca szczecinki na nodze. Obecny podział „udo / goleń”
+  w `touch_map.json` to HIPOTEZA: grupy z połączeń, a przypisanie grupy do części nogi jest arbitralne.
+- Literatura podaje regułę: **Elabbady i in. 2026, Current Biology**, doi:10.1016/j.cub.2026.03.045, dane
+  github.com/tuthill-lab/elabbady_bristles_2026.
+  - Szczecinki z KOŃCA nogi kończą się w **środku** ośrodka nogi w zwoju brzusznym, a z nasady przy jego **brzegu**
+    (koncentryczne pierścienie).
+  - Miara: średnia odległość synaps aksonu od środka ośrodka.
+  - Zrobione na samicy (FANC), przednia noga. Brak gotowej tabeli typ → część nogi dla MANC/MaleCNS.
+- Żeby to zastosować do naszych 322 szczecinek T2 L, potrzebne są **położenia synaps** z neuPrint, a tych lokalnie
+  nie mamy. Mapa wyjdzie wtedy jako „wyprowadzona tą regułą”, a nie „opublikowana”.
+
 ## Następne kroki (propozycja, nic nie uruchomione)
+0. **Dostęp do neuPrint (Adam):** zalogować się na neuprint.janelia.org (konto Google) i skopiować swój token API.
+   Wtedy policzę mapę czubek / nasada regułą Elabbady i podłączę czujnik czubka do „końca nogi”.
 1. Adam mierzy czujnik i szczękę (suwmiarka: szerokość czubka, schodki).
 2. Test na sprzęcie bez ramienia: FSR na czubku z wystającą folią, ciężarki 50–500 g w środku czubka. Czy odczyt rośnie
    tak samo jak przy całym polu podpartym?
