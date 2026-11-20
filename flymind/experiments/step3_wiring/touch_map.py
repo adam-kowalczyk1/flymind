@@ -111,6 +111,9 @@ def pads_for(net, mapping="somato"):
         order = list(dict.fromkeys(nets.bodies_for("pre")[0] + bm + d78 + d15))
         assert len(order) == net.N
         net.pos = {b: i for i, b in enumerate(order)}
+    if mapping == "elabbady":                           # 20 XI: (A0 = środek szczęki → szczecinki „środkowe”, A1 = czubek → „koniec nogi”)
+        bm = json.load(open(os.path.join(HERE, "../sensor_placement/results/bristle_map_r1.json")))   # reguła Elabbady 2026, wyprowadzone
+        return [net.pos[b] for b in bm["A0"]], [net.pos[b] for b in bm["tip"]]
     mp = _map()
     f, t = ([net.pos[b] for b in mp[k]] for k in ("femur", "tibia_tarsus"))
     return {"somato": (f, t), "swap": (t, f)}[mapping]

@@ -148,11 +148,14 @@ def make_eye(kind, fov=70.0, flip=False):
     return O.FlyEye(flip, out_full=O.OUT_FULL2, vshs=True, g0=O.G0)
 
 
-def build(glu=-1, brake="hub", sigma=2.0, seed=19112026):
+def build(glu=-1, brake="hub", sigma=2.0, seed=19112026, layout="hw2p"):
     net = head.HeadLife(glu, "N", eyes=True)
     mode = FM.resolve(brake)
     FM.apply(net, mode)
     net.pads = TM.pads_for(net, "somato")
+    net._layout = layout
+    if layout == "czubek":                              # 20 XI: A0 środek szczęki, A1 czubek szczęki stałej; mapa Elabbady (sensor_placement)
+        net.pads = TM.pads_for(net, "elabbady")
     net._spec = R.JN.LB._W(net.W)
     net.net = R.SparseALIF(net._spec, R.ALIFParams(noise=sigma), seed)
     net.net.step = fast_step(net.net, net.net.W.tocsc())
@@ -200,7 +203,8 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
             drive = A.MV * min(1.0, L / A.L_FULL)
             st["loom"] = getattr(eye, "loom", None) or {"L": drive * (1 + eye.sa) / 2, "R": drive * (1 - eye.sa) / 2}   # oko muchy: strony osobno
             felt = TM.from_counts(*touch.c, touch.r_fix)
-            dq = net.step(np.array([felt[0], 0.0, felt[1]]), q6[:5], st["qd"][:5], A.DT)   # hw2p: A1 = dłoń → BM
+            tin = [felt[0], felt[1], 0.0] if net._layout == "czubek" else [felt[0], 0.0, felt[1]]   # czubek: A1 → „koniec nogi”; hw2p: A1 = dłoń → BM
+            dq = net.step(np.array(tin), q6[:5], st["qd"][:5], A.DT)
             q1 = np.clip(q6[1:4] + dq[1:4], lo, hi)
             st["qd"][1:4] = (q1 - q6[1:4]) / A.DT
             q6[1:4] = q1
@@ -213,7 +217,7 @@ def loop(net, frames, touch, eye, seconds, realtime=True, say=print):
             if i % 10 == 9:
                 m = {k: np.mean([r[k] for r in acc], axis=0) for k in acc[0]}
                 say(f"t={m['t']:5.1f}s ręka θ={np.degrees(m['th']):4.0f}° L={m['L']:4.2f} strona={m['sa']:+.1f} | dotyk A0={m['A0_N']:.1f}N "
-                    f"dłoń={m['P_N']:.1f}N | ucieczka={m['esc']:5.1f}Hz MDN={m['MDN']:5.1f} DNg15={m['DNg15']:5.1f} | "
+                    f"{'czubek' if net._layout == 'czubek' else 'dłoń'}={m['P_N']:.1f}N | ucieczka={m['esc']:5.1f}Hz MDN={m['MDN']:5.1f} DNg15={m['DNg15']:5.1f} | "
                     f"ramię(sym.)°={np.round(np.degrees(m['q'])).astype(int).tolist()} mózg spóźniony={1000 * m['lag']:.0f}ms")
             # strona: KAŻDY takt (10 ms), najnowsza klatka i kąty; częstości to średnia z ostatnich 100 ms (pojedynczy takt to szum)
             LIVE.update(t=round(t, 2), th=float(np.degrees(row["th"])), L=float(row["L"]), sa=float(row["sa"]),
@@ -271,10 +275,10 @@ def _synthetic(path, n=600, fps=120):
     p.wait()
 
 
-def _check():
+def _check(layout="hw2p"):
     import tempfile
     d = tempfile.mkdtemp()
-    net = build(brake="intact")
+    net = build(brake="intact", layout=layout)
     ref = R.SparseALIF(net._spec, R.ALIFParams(noise=2.0), 7)
     fst = R.SparseALIF(net._spec, R.ALIFParams(noise=2.0), 7)
     fst.step = fast_step(fst, fst.W.tocsc())
@@ -293,8 +297,10 @@ def _check():
     assert grow.sum() > 50 and L[grow].max() > 0.3 and log["sa"][grow].mean() > 0.3, "zbliżanie z lewej niewidoczne"
     assert held.sum() > 30 and L[held][10:].max() < 0.05, "ręka stoi, a oko widzi zbliżanie"
     assert L[th == 0].max() == 0, "oko widzi coś w pustym kadrze"
-    assert log["P_N"].max() > 1.0 and log["P_N"][:100].max() < 0.2, "nacisk dłoni nie dochodzi"
-    print("live_avoid _check OK; max opóźnienie", round(1000 * log["lag"].max()), "ms; ucieczka przed/po ręce [Hz]:",
+    assert log["P_N"].max() > 1.0 and log["P_N"][:100].max() < 0.2, "nacisk A1 nie dochodzi"
+    if layout == "czubek":
+        assert log["MDN"][log["P_N"] > 1].mean() > 5.0, "nacisk czubka nie uruchamia cofania (MDN)"
+    print(f"live_avoid _check OK ({layout}); max opóźnienie", round(1000 * log["lag"].max()), "ms; ucieczka przed/po ręce [Hz]:",
           round(log["esc"][th == 0].mean(), 1), round(log["esc"][grow].mean(), 1),
           "| DNg15 bez/w nacisku:", round(log["DNg15"][log["P_N"] < 0.2].mean(), 1), round(log["DNg15"][log["P_N"] > 1].mean(), 1),
           "| ramię Δ° =", np.round(np.degrees(log["q"][-1] - log["q"][0])).astype(int).tolist())
@@ -319,16 +325,17 @@ if __name__ == "__main__":
                     help="mucha = oko_mucha.py (fotoreceptory → T4/T5 → LPLC2 + VS/HS, test 2 PASS); plama = stare (różnica od tła)")
     ap.add_argument("--out")
     ap.add_argument("--serve", type=int, default=8793, help="port strony na żywo (0 = bez strony)")
+    ap.add_argument("--layout", default="hw2p", choices=("hw2p", "czubek"), help="hw2p: A1 na dłoni; czubek: A1 na czubku szczęki stałej (20 XI)")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     if a.check:
-        _check()
+        _check(a.layout)
         sys.exit(0)
     if a.serve:
         serve(a.serve)
         print(f"strona na żywo: http://127.0.0.1:{a.serve}  (otwórz w przeglądarce)", flush=True)
     print("buduję mózg muchy (~45 s)…", flush=True)
-    net = build(a.glu, a.brake)
+    net = build(a.glu, a.brake, layout=a.layout)
     print(f"tryb mózgu: {net._mode}. Przez pierwszą sekundę trzymaj rękę POZA kadrem (kamera uczy się tła).", flush=True)
     fr = Frames(cam=a.cam, video=a.video, fps=a.fps, size=a.size, fmt=a.fmt) if (a.cam or a.video or a.fmt is not None) else None
     log = loop(net, fr, Touch(a.fsr, a.fsr_csv, a.r_fix), make_eye(a.eye, a.fov, a.flip), a.seconds)
