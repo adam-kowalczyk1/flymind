@@ -162,6 +162,17 @@ Ten sam mózg co na żywo (`live_avoid.build`, glu −1, hamulec hub). Czubek �
 - Co zostaje: kierunek W1 i podział ról (czubek = cofanie, środek szczęki = zaciskanie) wynikają z mapy z danych, a nie z doboru.
   Nie wiadomo jeszcze, czy losowe podziały dają TEN SAM podział ról. To jest następny sprawdzian.
 
+## Dopisek 6: czy podział ról wynika z mapy? (cel `TARGET_where_r2.md`, kod `where_r2.py`)
+- **G1 gradient** (5 przedziałów po ~62 szczecinki, od końca nogi do nasady): **NIE ZDANE**, bo gradientu nie ma.
+  - MDN: 4,2 / 6,7 / 0 / 0 / 4,3 Hz.
+  - Zaciskanie szczęki: 0,01 / 0,18 / **0,30** / 0,22 / 0,02.
+  - Obraz to „**środek nogi → zaciskanie, oba końce → cofanie**”, a nie płynna zmiana.
+- **G2 losowe grupy:** **ZDANE.** 0 z 200 losowych par daje tak duży podział ról jak mapa z danych.
+  - Zaciskanie ≥ 0,36 nie wyszło ani razu; 95. percentyl losowych to 0,16.
+  - Podział „czubek → cofanie, A0 → zaciskanie” jest więc **swoisty dla mapy wyprowadzonej z danych**, a nie przypadkiem.
+- Uczciwie: to są własności modelu (konektom + nasza sieć ALIF + nasze wejście 40 mV/N). Nie twierdzę, że prawdziwa
+  mucha tak robi. Twierdzę tylko, że w tym mózgu miejsce dotyku ma znaczenie, a nadaje mu je anatomia, nie nasz dobór.
+
 ## Następne kroki (propozycja, nic nie uruchomione)
 0. **Dostęp do neuPrint (Adam):** zalogować się na neuprint.janelia.org (konto Google) i skopiować swój token API.
    Wtedy policzę mapę czubek / nasada regułą Elabbady i podłączę czujnik czubka do „końca nogi”.
