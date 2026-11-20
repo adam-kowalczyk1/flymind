@@ -32,12 +32,12 @@ class Layer(torch.nn.Module):
         self.lt = torch.tensor(lpi_types_of_cells)
         self.R = torch.sparse_coo_tensor(torch.stack(rec[:2]), rec[2], (n_cells, n_cells)).coalesce()
         self.P = [torch.sparse_coo_tensor(torch.stack(e[:2]), e[2], (n_cells, n_lpi)).coalesce() for e in lpi_edges]
-        self.variant = variant
+        self.variant, self.g0, self.lg0 = variant, 1.0, 1.0
 
     def forward(self, D, DL):
         """D: (S, cells, typy, T), DL: (S, lpi, typy_lpi, T) → wyjście komórek relu(V): (S, cells, T)."""
         sp_ = torch.nn.functional.softplus
-        g, lg = sp_(self.g + 0.5413), sp_(self.lg + 0.5413)                     # start: 1,0
+        g, lg = self.g0 * sp_(self.g + 0.5413), self.lg0 * sp_(self.lg + 0.5413)   # start: g0 (spoczynkowy napęd ≈ 0,5)
         tau, ltau = 0.02 * torch.exp(self.tau), 0.02 * torch.exp(self.ltau[self.lt])
         S, C, _, T = D.shape
         I = torch.einsum("sctk,t->sck", D, g)                                # D: (bodziec, komórka, typ, czas)
@@ -56,7 +56,7 @@ class Layer(torch.nn.Module):
 
     def score(self, D, DL):
         y = self.forward(D, DL)
-        return torch.logsumexp(10 * y.flatten(1), 1) / 10                       # ≈ max po komórkach i czasie
+        return y.flatten(1).amax(1)                                             # maksimum po komórkach i czasie
 
 
 def main(drive, target, variant, out):
@@ -84,6 +84,9 @@ def main(drive, target, variant, out):
         with torch.no_grad():
             for p in (net.g, net.lg, net.g_lpi):
                 p.add_(0.3 * torch.randn_like(p))
+        npre = 100                                                                # PRE = 1 s spoczynku na początku bodźca
+        net.g0 = float(0.5 / max(D[tr][..., :npre].sum(2).mean(), 1e-6))
+        net.lg0 = float(0.5 / max(DL[tr][..., :npre].sum(2).mean(), 1e-6))
         params = [net.a, net.c] if variant == "untrained" else list(net.parameters())
         opt = torch.optim.Adam(params, lr=LR)
         yl, w = torch.tensor(lab[tr], dtype=torch.float32), torch.tensor(np.where(lab[tr] == 1, (lab[tr] == 0).sum() / max(1, lab[tr].sum()), 1.0), dtype=torch.float32)

@@ -31,3 +31,8 @@ nie da się tego zrobić tak dobrze.
 - **K2:** AUC(prawdziwe okablowanie) − AUC(potasowane) ≥ 0,10.
 - **K3:** średni wynik „zbliżanie w czasie ruchu kamery” ≥ 0,5 × średni wynik czystych zbliżań testowych.
 Po wyniku niczego nie stroję pod ten test.
+
+## Poprawka przed prawdziwym przebiegiem (20 XI, po próbie na 8 bodźcach — to nie były wyniki)
+Próba: napęd mały (suma 0,07–0,24), przy starcie wszystkie komórki milkły (relu = 0), miękkie maksimum dawało stałą
+log(N)/10 → AUC 0,5 dla wszystkiego. Zmiany: (1) siły startowe g0 = 0,5 / średni napęd spoczynkowy (pierwsza 1 s bodźców
+treningowych), osobno dla LPi; (2) wynik bodźca = zwykłe maksimum relu(V) po komórkach i czasie. Reszta bez zmian.

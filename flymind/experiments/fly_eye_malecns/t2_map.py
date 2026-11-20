@@ -29,7 +29,7 @@ def main():
         ftype = f.body_pre.map(lambda b: T.ALIAS.get(ty[b], ty[b]))
         out[f"{tgt}_cells"] = cells
         out[f"{tgt}_in"] = np.c_[f.body_post.map(ci), f.body_pre.map(U), f.body_pre.map(V), f.weight, f.body_pre.map(sg)].astype(float)
-        out[f"{tgt}_in_type"] = ftype.values.astype(str)
+        out[f"{tgt}_in_type"] = np.array(ftype.tolist(), dtype=str)
         lpi = e[e.body_pre.map(lambda b: str(ty.get(b, ""))).str.startswith("LPi")]
         out[f"{tgt}_lpi"] = np.c_[lpi.body_post.map(ci), lpi.body_pre, lpi.weight, lpi.body_pre.map(sg)].astype(float)
         rec = e[e.body_pre.isin(ci)]
@@ -42,7 +42,7 @@ def main():
     g = w[w.body_post.isin(li) & w.body_pre.isin(U.keys())]
     out["lpi_cells"], out["lpi_type"] = lpis, np.array([ty[b] for b in lpis]).astype(str)
     out["lpi_in"] = np.c_[g.body_post.map(li), g.body_pre.map(U), g.body_pre.map(V), g.weight, g.body_pre.map(sg)].astype(float)
-    out["lpi_in_type"] = g.body_pre.map(lambda b: T.ALIAS.get(ty[b], ty[b])).values.astype(str)
+    out["lpi_in_type"] = np.array(g.body_pre.map(lambda b: T.ALIAS.get(ty[b], ty[b])).tolist(), dtype=str)
     for k in ("LPLC2", "LC4"):
         out[f"{k}_lpi"][:, 1] = [li[int(b)] for b in out[f"{k}_lpi"][:, 1]]
     tot = w[w.body_post.isin(li)].groupby("body_post").weight.sum()
