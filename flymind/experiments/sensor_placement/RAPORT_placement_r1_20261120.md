@@ -194,3 +194,27 @@ Ten sam mózg co na żywo (`live_avoid.build`, glu −1, hamulec hub). Czubek �
 3. Poślizg w MuJoCo dla układu „czubek + A0”: czy spadek siły wyprzedza wypadnięcie pręta.
 4. Przypisanie w mózgu **według miejsca**: czubek → szczecinki końca nogi, A0 → bliżej nasady / obciążenie.
    Bez dobierania pod wynik.
+
+## Dodatek 7 — dlaczego czubek prawie nie rusza ramienia (why r1, cel c01bf58, 20 XI)
+
+Ramię (bark, łokieć, nadgarstek) w modelu = różnica pul ruchowych **nogi przedniej T1 L**. Czubek wchodzi w szczecinki **nogi środkowej T2 L**.
+3,3 N, 1 s, ramię nieruchome, 5 ziaren (2011230–34), `why_r1.py` → `results/why_r1.json`.
+
+| warunek | pule T1 (Hz, stawy 1–3, POS/NEG) | ramię Δ° w 1 s |
+|---|---|---|
+| nic | 0/0, 0/0, 0/0 | 0, 0, 0 |
+| czubek | 0,1/0,2, 0,1/1,9, 0/0 | 0, −0,5, 0 |
+| A0 | 0/0,4, 0/1,6, 0/0 | 0,1, −0,5, 0 |
+| dłoń (BM, głowa) | 143/0, 0,6/27, 26/0 | −40, −7, −7 |
+| czubek bez MDN | 0/0,3, 0,1/1,4, 0/0 | 0,1, −0,4, 0 |
+| dłoń bez MDN | 144/0, 0,6/26, 25/0 | −40, −7, −7 |
+
+- **D1: „nie dochodzi”** — pobudzenie pul T1 z czubka to 1,2 % tego z dłoni (S = 0,012, K = 0,010; próg 0,2).
+- **D2:** wyciszenie MDN prawie nic nie zmienia ani dla czubka (K 1,9 → 1,6), ani dla dłoni. MDN nie jest drogą do ramienia.
+- **D3 (budowa):** brak wag bezpośrednich. Drogi dwuetapowe z czubka są małe i mieszane w znaku. Dłoń ma silne drogi (BM → DNg15/DNge078 → neurony ruchowe T1).
+- **Poza celem (opis):** MDN ma w sieci 501 odbiorców i drogi do pul T1 w 2–3 krokach (2 318 / 815 104), czubek w 3 krokach 878 769, dłoń 5 087 953.
+  Drogi więc **istnieją w budowie**, ale aktywność czubka (MDN ~16 Hz) gaśnie po drodze i nie przekracza progu neuronów pośrednich.
+
+**Wniosek:** w tym mózgu dotyk nogi środkowej daje cofanie „w obrębie nogi” (MDN) i zaciskanie szczęki, ale **nie steruje nogą przednią**, czyli ramieniem.
+Mocne cofanie ramienia od dotyku idzie wyłącznie drogą z głowy (BM → DNg15/DNge078), którą w układzie „czubek” nic nie pobudza, bo nie ma czujnika na dłoni.
+Nic nie stroiłem. Podłączenie czubka także do szczecinek głowy byłoby wyborem mapy pod wynik, więc tego nie robię.
