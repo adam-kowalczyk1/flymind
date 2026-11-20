@@ -38,3 +38,15 @@ Dla pary (A → B): średnia po WSZYSTKICH komórkach B w rdzeniu (promień 12) 
 (bez warunku, wszystkie przesunięcia). We flyvis to samo z pełnej tabeli krawędzi (komórki B w promieniu 12 od środka).
 Raport: ρ Spearmana tych wartości (pary bez fotoreceptorów/CT1/Am); udział masy w kluczach flyvis osobno dla wejść T4a–d i T5a–d.
 Bramka T0b: ρ ≥ 0,5. **T1 liczę niezależnie od wyniku T0b** (jest tani); jeśli T0b FAILED, T1 jest oznaczony jako eksploracyjny.
+
+## Wynik T1: FAILED (WYNIK_T1.md) — sieć niestabilna (|V| ~ 10¹⁴), DSI 0,00 w 4/4 modelach; reszta zatrzymana.
+
+## T1b — sam „kształt” połączeń MaleCNS (spisane PRZED liczeniem, 20 XI)
+Tryb `shape`: dla każdej pary typów (bez fotoreceptorów/CT1/Am) liczby przesunięć z MaleCNS przeskalowane tak, by suma
+po kluczach flyvis pary była równa sumie flyvis: n = n_MaleCNS · Σ n_flyvis / Σ n_MaleCNS. Para bez synaps MaleCNS w kluczach
+→ liczby flyvis (krawędź mieszana, raportuję udział). Czyli: z MaleCNS bierzemy TYLKO rozkład przestrzenny (które
+przesunięcia i w jakich proporcjach) — właśnie to, co według teorii (Mi9 i Mi4 po przeciwnych stronach) robi kierunek.
+Kontrola `shape_shuffle`: te same liczby potasowane między przesunięciami w parze (ziarno 24 103 000 + model).
+Modele 000–019 (`shape`) i 000–009 (`shape_shuffle`). **PASS:** w ≥ 12 z 20 modeli mediana DSI T4a–d (ON) ≥ 0,2 i T5a–d
+(OFF) ≥ 0,2 **oraz** sieć stabilna (max |V| < 100 w odpowiedziach). Raport: odległość kierunków preferowanych od znanych
+(czy kierunek wynika z okablowania MaleCNS), porównanie z flyvis i z kontrolą.

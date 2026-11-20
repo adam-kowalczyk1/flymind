@@ -1,5 +1,5 @@
 """T1 (PREREG_T0_T1.md): modele flyvis z liczbami synaps MaleCNS → czy T4/T5 liczą kierunek.
-envs/flyvis (FLYVIS_ROOT_DIR=data/flyvis): t1_transplant.py MODE FIRST LAST OUT.json   MODE = orig | malecns | shuffle
+envs/flyvis (FLYVIS_ROOT_DIR=data/flyvis): t1_transplant.py MODE FIRST LAST OUT.json   MODE = orig | malecns | shuffle | shape | shape_shuffle
 orig = liczby flyvis (ta sama droga liczenia — sprawdzian metody), malecns = zamiana wg T0, shuffle = kontrola: liczby MaleCNS
 potasowane między przesunięciami w obrębie pary typów (suma pary ta sama; ziarno 24 103 000 + model)."""
 import json
@@ -29,7 +29,12 @@ def counts(mode, model):
     J = K.merge(M, on=["source_type", "target_type", "du", "dv"], how="left", suffixes=("", "_m"))
     rep = ~(J.source_type.map(HYBRID) | J.target_type.map(HYBRID))
     n = np.where(rep, J.n_syn_m.fillna(0.0), J.n_syn).astype(float)
-    if mode == "shuffle":
+    if mode.startswith("shape"):
+        for _, ix in J[rep].groupby(["source_type", "target_type"]).groups.items():
+            ix = np.asarray(ix)
+            sm = J.n_syn_m.fillna(0.0).values[ix].sum()
+            n[ix] = J.n_syn.values[ix] if sm == 0 else J.n_syn_m.fillna(0.0).values[ix] * J.n_syn.values[ix].sum() / sm
+    if mode.endswith("shuffle"):
         rng = np.random.default_rng(24103000 + model)
         for _, ix in J[rep].groupby(["source_type", "target_type"]).groups.items():
             ix = np.asarray(ix)
@@ -58,8 +63,9 @@ def main(mode, first, last, out):
         with torch.no_grad():
             net.edges_syn_count.data = torch.tensor(np.log(np.maximum(n, 1e-6)), dtype=net.edges_syn_count.dtype)
         ds = responses(net)
+        vmax = float(np.nanmax(np.abs(ds.responses.values)))
         dsi, dist = direction_selectivity_index(ds), angular_distance_to_known(preferred_direction(ds))
-        r = dict(model=k, mode=mode, frac_keys_replaced=frac, s=round(time.time() - t0, 1))
+        r = dict(model=k, mode=mode, frac_keys_replaced=frac, vmax=vmax, s=round(time.time() - t0, 1))
         for t in T4 + T5:
             i = int(np.where(dsi.cell_type.values == t)[0][0])
             r[f"DSI_{t}"] = float(dsi.isel(neuron=i).sel(intensity=1 if t in T4 else 0).squeeze())
