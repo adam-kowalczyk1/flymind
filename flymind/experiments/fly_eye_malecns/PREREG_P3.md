@@ -27,3 +27,9 @@ Ziarna 24 107 000 + nr modelu. Czas: ok. 0,33 s/krok → 250 000 kroków ≈ 25�
 - Raport: kierunki preferowane T4/T5 vs znane; potem te oczy w T2 (komórki zbliżania) i na nagraniu oko_r2.
 Po wyniku nic nie stroję. Nazwa uczciwa: oko HYBRYDOWE — od MaleCNS pochodzi głównie kto z kim i w którym miejscu;
 fotoreceptory, CT1, Am i znaki z flyvis; siły uczone. Na Explory pokaz zostaje na obecnym oku (to jest badanie w tle).
+
+## Zmiana 21 XI wieczór, PRZED uczeniem (Adam: „odpal trenowanie”)
+Próba i główne uczenie łączę: 4 modele ruszają od razu, naraz (po 2 wątki), `run_p3_main.sh`, ziarna 24 107 000–003
+(000, 001 = prawdziwe; 002, 003 = potasowane shuf0/shuf1). **Bramka G0 liczona na modelu 000 po 50 000 krokach**
+(te same warunki co wyżej); jeśli nie przejdzie — zatrzymuję wszystkie 4 i zapisuję FAILED. Test 30 min: 1,29 s/krok
+dla 1 modelu (dane w 1 wątku); 4 naraz — szybkość niezmierzona, szacunek 4–6 dób.
