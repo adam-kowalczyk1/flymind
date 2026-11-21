@@ -12,3 +12,15 @@ Sprawdza tylko, czy kamerka i 2 czujniki nacisku FSR402 w ogóle działają. Nic
 Progi (te same co w modelu nerwów `flymind/experiments/step3_wiring/nerves.py`): spoczynek ≤ 60 zliczeń, nacisk ≥ 300 zliczeń
 (ok. 0,8 N wg krzywej katalogowej), drugi czujnik przy nacisku pierwszego ≤ 30 % (inaczej kable zamienione/zwarte).
 Program Arduino skompilowany 18 XI dla Uno, Nano, Uno R4 Minima i Uno R4 WiFi. Ze sprzętem jeszcze niesprawdzone.
+
+## Bez płytki stykowej (21 XI)
+Te same 4 elementy: 2 × FSR, 2 oporniki (te same co na płytce; `--r-fix` w programie musi się zgadzać). FSR i opornik nie mają biegunów.
+Co ma się stykać (4 węzły):
+1. **5V** → nóżka FSR 1 **i** nóżka FSR 2 (rozgałęzienie „Y”, bo pin 5V jest jeden).
+2. druga nóżka FSR 1 + nóżka opornika R1 + kabel do **A0**.
+3. druga nóżka FSR 2 + nóżka opornika R2 + kabel do **A1**.
+4. druga nóżka R1 → **GND**, druga nóżka R2 → **inny pin GND** (Uno ma 3 piny GND, więc tu rozgałęzienie niepotrzebne).
+
+Węzły 1–3: lutowanie + koszulka termokurczliwa albo szybkozłączki (np. WAGO 221 na 3 przewody). Nie lutuj przy samym czujniku,
+bo folia się topi; lutuj na kablu lub złączce. Kable przypnij do ramienia opaskami; ogonek FSR nie może się zginać przy polu czynnym.
+Sprawdzenie: `fsr_test.ino` + „Test krok po kroku” na `test_czujnikow.html` (spoczynek ≤ 60, nacisk ≥ 300).
