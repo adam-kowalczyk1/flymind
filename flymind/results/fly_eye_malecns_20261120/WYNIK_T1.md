@@ -7,3 +7,8 @@ daje DSI identyczne z wbudowaną funkcją flyvis (t1_smoke_orig.json).
 do |V| ~ 10¹⁴ (np. T2 1,4·10⁹ w spoczynku; flyvis: 3,2). Wyuczone właściwości typów flyvis są dostrojone do liczb samicy;
 MaleCNS ma w wielu parach więcej synaps (mediana 1,45×, szerokopolowe typy nawet ×10–60 w kluczach flyvis), co wypycha
 pętle zwrotne poza stabilność. Wniosek: właściwości typów NIE przenoszą się 1:1 między mapami połączeń.
+
+## Errata (21 XI, P3)
+Liczby MaleCNS w T1 (`malecns_keys.csv`) to średnie tylko po komórkach celu, które MAJĄ dane przesunięcie (średnia
+warunkowa) — sumy par wychodziły ok. 2–3× większe niż we flyvis, co tłumaczy eksplozję sieci. T1b skalował sumy do flyvis,
+więc go to nie dotyczy. Wersja poprawna (bezwarunkowa) w `p3_connectome.py`.
