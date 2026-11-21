@@ -57,6 +57,17 @@ class FlyEye:
         self.x = self.don = self.doff = self.t_last = None
         self.L, self.th, self.sa, self.out = 0.0, 0.0, 0.0, (0.0, 0.0)
         self.loom = {"L": 0.0, "R": 0.0}
+        self.ec = (0.0, 0.0)                                      # P2: przewidziane przesunięcie obrazu od ostatniej klatki [px] (x w prawo, y w dół)
+
+    def _remap(self, blk):
+        """P2 (kopia ruchu): stan oka (adaptacja, opóźnione sygnały) przesunięty o przewidziany ruch obrazu z polecenia ruchu —
+        ruch zgodny z przewidywaniem nie daje zmiany ani ruchu, zostaje tylko to, czego polecenie nie przewidziało (np. zbliżanie).
+        Nasz analog inżynierski (u muchy: kopia ruchu do VS/HS, Kim i in. 2015) — nie znany obwód."""
+        dx, dy = self.ec
+        if dx or dy:
+            for a in ("x", "don", "doff"):
+                setattr(self, a, ndimage.shift(getattr(self, a), (dy / blk, dx / blk), order=1, mode="nearest"))
+            self.ec = (0.0, 0.0)
 
     def see(self, f, dt, t):
         x = np.log(f.reshape(GH, BLK, GW, BLK).mean((1, 3)) + 8.0)
@@ -64,6 +75,7 @@ class FlyEye:
             self.x, self.don, self.doff, self.t_last = x, np.zeros_like(x), np.zeros_like(x), t
             return 0.0
         dt, self.t_last = max(t - self.t_last, 1e-3), t
+        self._remap(BLK)
         self.x += (1 - np.exp(-dt / TAU_HP)) * (x - self.x)
         hp = x - self.x
         on, off = np.maximum(hp, 0), np.maximum(-hp, 0)
@@ -125,6 +137,7 @@ class FlyEye3(FlyEye):
             self.x, self.don, self.doff, self.t_last = x, np.zeros_like(x), np.zeros_like(x), t
             return 0.0
         dt, self.t_last = max(t - self.t_last, 1e-3), t
+        self._remap(BLK3)
         self.x += (1 - np.exp(-dt / TAU_HP)) * (x - self.x)
         hp = x - self.x
         self.m = np.kron(np.abs(hp) > 0.1, np.ones((BLK3, BLK3), bool))
