@@ -218,3 +218,13 @@ Ramię (bark, łokieć, nadgarstek) w modelu = różnica pul ruchowych **nogi pr
 **Wniosek:** w tym mózgu dotyk nogi środkowej daje cofanie „w obrębie nogi” (MDN) i zaciskanie szczęki, ale **nie steruje nogą przednią**, czyli ramieniem.
 Mocne cofanie ramienia od dotyku idzie wyłącznie drogą z głowy (BM → DNg15/DNge078), którą w układzie „czubek” nic nie pobudza, bo nie ma czujnika na dłoni.
 Nic nie stroiłem. Podłączenie czubka także do szczecinek głowy byłoby wyborem mapy pod wynik, więc tego nie robię.
+
+**Decyzja (21 XI, Adam: „jak wolisz” → wybrałem):** drugi czujnik idzie na **czubek szczęki stałej**, pod warunkiem wieczornego testu ciężarkami.
+Jeśli czujnik w połowie wysunięty poza krawędź nie odczytuje nacisku wiarygodnie, zostaje na dłoni.
+Powody:
+- według r1b ręka dotyka najpierw czubków i krawędzi, a dłoń prawie nigdy;
+- czubek łapie długie przedmioty (dłoń: 0);
+- cofanie ramienia przed ręką i tak robi wzrok.
+
+Koszt: dotyk przestaje cofać ramię. Wyniki „hamulca” i avoid r1, oparte na dłoni, zostają jako wyniki symulacji.
+Program: `live_avoid --layout czubek` dopiero po fizycznym przełożeniu czujnika; domyślne hw2p bez zmian do tego czasu.
