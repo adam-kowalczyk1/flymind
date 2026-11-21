@@ -38,3 +38,5 @@ dla 1 modelu (dane w 1 wątku); 4 naraz — szybkość niezmierzona, szacunek 4�
 Model 000: 252 kroki w 906 s = **3,6 s/krok** (1 model sam: 1,29). 250 000 kroków ≈ 10,4 doby dla wszystkich 4.
 Propozycja do decyzji Adama (spisana teraz, przed wynikami): ocena główna (K1–K3) na punkcie kontrolnym **100 000 kroków**
 (≈ 4,2 doby), dalsze uczenie do 250 000 tylko jako rozszerzenie (raport osobno). Jeśli Adam nie zdecyduje — zostaje 250 000.
+**Decyzja Adama 21 XI wieczór: „Ocena po 100 000”.** Ocena główna K1–K3 na punkcie kontrolnym najbliższym 100 000 kroków
+(ten sam numer kroku dla wszystkich 4 modeli); potem uczenie zatrzymane, chyba że Adam zdecyduje inaczej.
