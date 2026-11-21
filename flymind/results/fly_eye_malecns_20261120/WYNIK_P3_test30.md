@@ -16,3 +16,11 @@ Uruchomienie: `run_p3_test30.sh` (twarde zatrzymanie po 40 min). Sintel pobrany 
 Przy 1,3 s/krok: 250 000 kroków ≈ **90 h ≈ 3,8 doby na model**; 4 modele po 2 naraz ≈ 7,5 doby (Mac bez innych ciężkich
 zadań). Moje wcześniejsze oszacowanie (25–30 h) było za niskie — nie liczyło przygotowania danych.
 Możliwe przyspieszenie: równoległe ładowanie danych (`num_workers` > 0) — niesprawdzone.
+
+## Test 2 (21 XI 15:47–16:18, Mac bez GeForce NOW) — `run_p3_test30b.sh`
+- 15 min jak test 1 (dane w 1 wątku): **672 kroki w 866 s = 1,29 s/krok, równo** → spowolnienie z testu 1 to było zajęcie Maca.
+  Pamięć 3,4 GB. Strata: 12 zapisów, mediany ćwiartek 1049 / 1363 / 1160 / 2084 — po 672 krokach spadku jeszcze nie widać
+  (za wcześnie, flyvis uczy 250 000 kroków).
+- 15 min z 4 wątkami danych (`p3_train.py`, P3_WORKERS=4): **nie działa** — wątki danych padają przy pierwszej walidacji
+  (`TypeError: 'NoneType' object is not callable` w procesie pomocniczym, macOS spawn). Naprawa niesprawdzona.
+Wniosek: pełne uczenie 1 modelu ≈ 90 h; 4 modele naraz (po 2 wątki) — niezmierzone, szacunek 4–6 dób.
