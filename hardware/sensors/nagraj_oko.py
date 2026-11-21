@@ -46,7 +46,7 @@ def main():
            ["-f", "avfoundation", "-framerate", "120", "-video_size", "640x400", "-i", "USB Camera"])
     # te same klatki idą do pliku (pełne) i do tego skryptu (16×10), który zapisuje czas przyjścia każdej → zegar komputera
     ff = subprocess.Popen([FF, "-y", "-nostdin", "-loglevel", "error", *src, "-filter_complex", "[0:v]format=gray,split=2[a][b];[b]scale=16:10[c]",
-                           "-map", "[a]", "-c:v", "ffv1", OUT + ".mkv", "-map", "[c]", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+                           "-map", "[a]", "-c:v", "ffv1", OUT + ".mkv", "-map", "[c]", "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
                           stdin=subprocess.DEVNULL, stdout=subprocess.PIPE)
     ft = []
     threading.Thread(target=lambda: [ft.append(time.time()) for _ in iter(lambda: ff.stdout.read(160), b"")], daemon=True).start()
