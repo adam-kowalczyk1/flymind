@@ -33,3 +33,8 @@ Próba i główne uczenie łączę: 4 modele ruszają od razu, naraz (po 2 wątk
 (000, 001 = prawdziwe; 002, 003 = potasowane shuf0/shuf1). **Bramka G0 liczona na modelu 000 po 50 000 krokach**
 (te same warunki co wyżej); jeśli nie przejdzie — zatrzymuję wszystkie 4 i zapisuję FAILED. Test 30 min: 1,29 s/krok
 dla 1 modelu (dane w 1 wątku); 4 naraz — szybkość niezmierzona, szacunek 4–6 dób.
+
+## Pomiar szybkości 4 naraz (21 XI 20:29–20:44, ok. 300 kroków, przed jakimkolwiek wynikiem)
+Model 000: 252 kroki w 906 s = **3,6 s/krok** (1 model sam: 1,29). 250 000 kroków ≈ 10,4 doby dla wszystkich 4.
+Propozycja do decyzji Adama (spisana teraz, przed wynikami): ocena główna (K1–K3) na punkcie kontrolnym **100 000 kroków**
+(≈ 4,2 doby), dalsze uczenie do 250 000 tylko jako rozszerzenie (raport osobno). Jeśli Adam nie zdecyduje — zostaje 250 000.
