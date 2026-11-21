@@ -89,6 +89,67 @@ class FlyEye:
         return self.L
 
 
+# ---------------------------------------------------------------- v3 (P1b, 21 XI): poprawki po prawdziwej kamerze (oko_r1 = nagranie robocze)
+BLK3, TAU_LP3, CGC3 = 5, 0.02, (6.0, 0.05)    # bloki 5×5 → 32×20 (ok. 3° na pole), szybszy detektor, kontrola kontrastu (σ pól, ε)
+OUT_FULL3, G3 = 0.11096, 0.13140             # kalibracja 21 XI na oko_r1 (nagranie robocze): mediana szczytu 7 zbliżań → 1; G3 = 90. percentyl ruchu całego obrazu
+
+
+def _units3():
+    gh, gw, step, rad = H_PX // BLK3, W_PX // BLK3, 3.2, 8.0
+    hy, hx = np.mgrid[:gh, :gw - 1] + np.array([0.0, 0.5])[:, None, None]
+    vy, vx = np.mgrid[:gh - 1, :gw] + np.array([0.5, 0.0])[:, None, None]
+    arms, left = [[], [], [], []], []
+    for cy in np.arange(0.6 * rad, gh - 0.6 * rad + 1e-9, step):
+        for cx in np.arange(0.6 * rad, gw - 0.6 * rad + 1e-9, step):
+            inh, inv = np.hypot(hx - cx, hy - cy) <= rad, np.hypot(vx - cx, vy - cy) <= rad
+            for k, m in enumerate((inh & (hx > cx), inh & (hx < cx), inv & (vy > cy), inv & (vy < cy))):
+                arms[k].append(m.ravel() / m.sum())
+            left.append(cx < gw / 2)
+    return [np.array(a) for a in arms], np.array(left)
+
+
+ARMS3, LEFT3 = _units3()
+
+
+class FlyEye3(FlyEye):
+    """Jak FlyEye z VS/HS, plus (PREREG_OKO_KAMERA_R2.md): (1) kontrola wzmocnienia kontrastu po adaptacji — sygnał dzielony przez
+    lokalny RMS kontrastu (jak normalizacja w laminie): blada dłoń na jasnej ścianie daje krawędzie tak silne jak ciemny dysk;
+    (2) pola 5×5 i opóźnienie 20 ms — szybkie krawędzie bliskiej dłoni nie przeskakują detektora."""
+    def __init__(self, flip=False, out_full=None, g0=None):
+        super().__init__(flip, out_full=out_full or OUT_FULL3, vshs=True, g0=g0 or G3)
+
+    def see(self, f, dt, t):
+        gh, gw = H_PX // BLK3, W_PX // BLK3
+        x = np.log(f.reshape(gh, BLK3, gw, BLK3).mean((1, 3)) + 8.0)
+        if self.x is None:
+            self.x, self.don, self.doff, self.t_last = x, np.zeros_like(x), np.zeros_like(x), t
+            return 0.0
+        dt, self.t_last = max(t - self.t_last, 1e-3), t
+        self.x += (1 - np.exp(-dt / TAU_HP)) * (x - self.x)
+        hp = x - self.x
+        self.m = np.kron(np.abs(hp) > 0.1, np.ones((BLK3, BLK3), bool))
+        hp = hp / (np.sqrt(ndimage.gaussian_filter(hp * hp, CGC3[0], mode="nearest")) + CGC3[1])
+        on, off = np.maximum(hp, 0), np.maximum(-hp, 0)
+        H = hr(on, self.don, 1) + hr(off, self.doff, 1)
+        V = hr(on, self.don, 0) + hr(off, self.doff, 0)
+        a = 1 - np.exp(-dt / TAU_LP3)
+        self.don += a * (on - self.don)
+        self.doff += a * (off - self.doff)
+        h, v = H.ravel(), V.ravel()
+        arm = np.maximum(0, np.stack([ARMS3[0] @ h, -(ARMS3[1] @ h), ARMS3[2] @ v, -(ARMS3[3] @ v)]))
+        lplc2 = np.prod(arm, axis=0) ** 0.25
+        self.glob = abs(H.mean()) + abs(V.mean())
+        if self.g0:
+            lplc2 = lplc2 / (1 + self.glob / self.g0)
+        oL, oR = lplc2[LEFT3].max(), lplc2[~LEFT3].max()
+        self.out = (oR, oL) if self.flip else (oL, oR)
+        if self.out_full:
+            self.loom = {s: MV * min(1.0, o / self.out_full) for s, o in zip("LR", self.out)}
+            self.L = L_FULL * max(self.out) / self.out_full
+            self.sa = float((self.out[0] - self.out[1]) / (sum(self.out) + 1e-12))
+        return self.L
+
+
 # ---------------------------------------------------------------- sceny syntetyczne (plan, sekcja „Sceny”)
 def scene(kind, seed, T=3.0):
     """Lista (t, klatka uint8 100×160). Render 2× i uśrednienie 2×2 (gładki ruch), potem szum σ = SIGMA na kadrze oka."""

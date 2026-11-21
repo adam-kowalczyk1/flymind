@@ -29,13 +29,16 @@ def frames(path):
     return pts, F
 
 
+EYE = os.environ.get("OKO", "v2")                       # v2 = oko z testu 2 (P1); v3 = FlyEye3 (P1b)
+
+
 def run_eye(pts, F):
-    eye = O.FlyEye(out_full=O.OUT_FULL2, vshs=True, g0=O.G0)
+    eye = O.FlyEye3() if EYE == "v3" else O.FlyEye(out_full=O.OUT_FULL2, vshs=True, g0=O.G0)
     out = np.zeros((len(F), 2))
     for k, (t, f) in enumerate(zip(pts, F)):
         eye.see(f.astype(float), None, t)
         out[k] = eye.out
-    return out / O.OUT_FULL2                                # 1 = pełny napęd zbliżania (40 mV) w mózgu
+    return out / eye.out_full                               # 1 = pełny napęd zbliżania (40 mV) w mózgu
 
 
 def evaluate(pts, F, plan):
