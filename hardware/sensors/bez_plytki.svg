@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="1110" viewBox="0 0 1300 1110" font-family="Helvetica, Arial, sans-serif">
+<rect width="1300" height="1110" fill="#fff"/>
+<text x="40" y="44" font-size="28" font-weight="bold" fill="#222">Czujniki nacisku BEZ płytki stykowej — Arduino UNO R4 Minima</text>
+<text x="40" y="72" font-size="16" fill="#555">Rysunek ideowy: piny rozsunięte dla czytelności. Gdzie są naprawdę — ramka na dole.</text>
+
+<!-- płytka -->
+<rect x="160" y="100" width="920" height="170" rx="14" fill="#00878f"/>
+<text x="620" y="175" font-size="30" font-weight="bold" fill="#fff" text-anchor="middle">Arduino UNO R4 Minima</text>
+<text x="620" y="205" font-size="16" fill="#d8f3f4" text-anchor="middle">USB do Maca (zasilanie + odczyt)</text>
+<!-- piny -->
+<rect x="148" y="168" width="24" height="24" fill="#d62828"/><text x="186" y="187" font-size="18" font-weight="bold" fill="#fff">5V</text>
+<rect x="188" y="258" width="24" height="24" fill="#222"/><text x="200" y="250" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">GND</text>
+<rect x="333" y="258" width="24" height="24" fill="#e9b500"/><text x="345" y="250" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">A0</text>
+<rect x="833" y="258" width="24" height="24" fill="#2a9d3f"/><text x="845" y="250" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">A1</text>
+<rect x="1008" y="258" width="24" height="24" fill="#222"/><text x="1020" y="250" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">GND</text>
+
+<g fill="none" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- 5V: pin → w lewo → w dół → szyna -->
+  <path d="M148 180 H80 V840 H940 V530 H875 V570" stroke="#d62828"/>
+  <path d="M440 840 V530 H375 V570" stroke="#d62828"/>
+  <!-- kanał 1 -->
+  <path d="M345 282 V570" stroke="#e9b500"/>
+  <path d="M345 480 H310" stroke="#e9b500"/>
+  <path d="M230 480 H200 V282" stroke="#222"/>
+  <!-- kanał 2 -->
+  <path d="M845 282 V570" stroke="#2a9d3f"/>
+  <path d="M845 480 H900" stroke="#2a9d3f"/>
+  <path d="M980 480 H1020 V282" stroke="#222"/>
+</g>
+
+<!-- oporniki 10 kΩ: brązowy, czarny, pomarańczowy, złoty -->
+<g>
+  <rect x="230" y="466" width="80" height="28" rx="12" fill="#e8d3a6" stroke="#8a6d3b" stroke-width="2"/>
+  <rect x="244" y="466" width="8" height="28" fill="#7b3f00"/><rect x="258" y="466" width="8" height="28" fill="#111"/>
+  <rect x="272" y="466" width="8" height="28" fill="#f28c00"/><rect x="292" y="466" width="6" height="28" fill="#c9a227"/>
+  <text x="270" y="456" font-size="20" font-weight="bold" fill="#222" text-anchor="middle">R1 = 10 kΩ</text>
+  <rect x="900" y="466" width="80" height="28" rx="12" fill="#e8d3a6" stroke="#8a6d3b" stroke-width="2"/>
+  <rect x="914" y="466" width="8" height="28" fill="#7b3f00"/><rect x="928" y="466" width="8" height="28" fill="#111"/>
+  <rect x="942" y="466" width="8" height="28" fill="#f28c00"/><rect x="962" y="466" width="6" height="28" fill="#c9a227"/>
+  <text x="940" y="456" font-size="20" font-weight="bold" fill="#222" text-anchor="middle">R2 = 10 kΩ</text>
+</g>
+
+<!-- czujniki FSR402: dwie nóżki na końcu ogonka, krążek na dole -->
+<g>
+  <rect x="337" y="570" width="46" height="110" rx="4" fill="#c7a24a" stroke="#7a6020" stroke-width="2"/>
+  <circle cx="360" cy="730" r="58" fill="#c7a24a" stroke="#7a6020" stroke-width="2"/>
+  <circle cx="360" cy="730" r="40" fill="#5b6f8c"/>
+  <text x="360" y="808" font-size="20" font-weight="bold" fill="#222" text-anchor="middle">FSR 1</text>
+  <text x="200" y="730" font-size="17" fill="#333" text-anchor="middle">środek szczęki</text>
+  <text x="200" y="752" font-size="17" fill="#333" text-anchor="middle">(sygnał → A0)</text>
+  <rect x="837" y="570" width="46" height="110" rx="4" fill="#c7a24a" stroke="#7a6020" stroke-width="2"/>
+  <circle cx="860" cy="730" r="58" fill="#c7a24a" stroke="#7a6020" stroke-width="2"/>
+  <circle cx="860" cy="730" r="40" fill="#5b6f8c"/>
+  <text x="860" y="808" font-size="20" font-weight="bold" fill="#222" text-anchor="middle">FSR 2</text>
+  <text x="1080" y="730" font-size="17" fill="#333" text-anchor="middle">czubek szczęki</text>
+  <text x="1080" y="752" font-size="17" fill="#333" text-anchor="middle">(sygnał → A1)</text>
+</g>
+
+<!-- węzły: tu trzy przewody muszą się stykać -->
+<g font-size="20" font-weight="bold" text-anchor="middle">
+  <circle cx="440" cy="840" r="16" fill="#ff7a00" stroke="#222" stroke-width="2"/><text x="440" y="847" fill="#fff">1</text>
+  <circle cx="345" cy="480" r="16" fill="#ff7a00" stroke="#222" stroke-width="2"/><text x="345" y="487" fill="#fff">2</text>
+  <circle cx="845" cy="480" r="16" fill="#ff7a00" stroke="#222" stroke-width="2"/><text x="845" y="487" fill="#fff">3</text>
+</g>
+<text x="460" y="878" font-size="17" fill="#333">węzeł 1: 5V do obu czujników (pin 5V jest tylko jeden)</text>
+<text x="362" y="398" font-size="17" fill="#333">węzeł 2:</text><text x="362" y="420" font-size="17" fill="#333">FSR 1 + R1 + kabel A0</text>
+<text x="828" y="398" font-size="17" fill="#333" text-anchor="end">węzeł 3:</text><text x="828" y="420" font-size="17" fill="#333" text-anchor="end">FSR 2 + R2 + kabel A1</text>
+
+<!-- legenda -->
+<g font-size="17" fill="#222">
+  <circle cx="1120" cy="330" r="12" fill="#ff7a00" stroke="#222" stroke-width="2"/>
+  <text x="1140" y="326">= lut + koszulka</text><text x="1140" y="346">albo WAGO 221</text>
+  <line x1="1105" y1="380" x2="1135" y2="380" stroke="#d62828" stroke-width="6"/><text x="1145" y="386">5V</text>
+  <line x1="1105" y1="410" x2="1135" y2="410" stroke="#222" stroke-width="6"/><text x="1145" y="416">GND</text>
+  <line x1="1105" y1="440" x2="1135" y2="440" stroke="#e9b500" stroke-width="6"/><text x="1145" y="446">A0</text>
+  <line x1="1105" y1="470" x2="1135" y2="470" stroke="#2a9d3f" stroke-width="6"/><text x="1145" y="476">A1</text>
+</g>
+
+<!-- uwaga o oporniku -->
+<rect x="40" y="905" width="600" height="180" rx="10" fill="#fff4e5" stroke="#f28c00" stroke-width="2"/>
+<text x="60" y="938" font-size="20" font-weight="bold" fill="#b35900">Opornik: 10 kΩ = 10 000 Ω</text>
+<text x="60" y="968" font-size="17" fill="#333">Paski: brązowy · czarny · POMARAŃCZOWY · złoty.</text>
+<text x="60" y="994" font-size="17" fill="#333">10 Ω (brązowy · czarny · CZARNY) nie zadziała:</text>
+<text x="60" y="1018" font-size="17" fill="#333">odczyt zawsze ≈ 0, czujnik „nic nie czuje”.</text>
+<text x="60" y="1048" font-size="17" fill="#333">W programie: --r-fix 10000 (na stronie testu: 10 kΩ).</text>
+<text x="60" y="1072" font-size="17" fill="#333">Czujnik i opornik nie mają plusa i minusa.</text>
+
+<!-- gdzie naprawdę są piny -->
+<rect x="670" y="905" width="590" height="180" rx="10" fill="#eef7f7" stroke="#00878f" stroke-width="2"/>
+<text x="690" y="938" font-size="20" font-weight="bold" fill="#00575c">Na prawdziwej płytce (dolna krawędź)</text>
+<g font-size="13" text-anchor="middle" fill="#333">
+  <text x="700" y="968">IOREF</text><text x="745" y="968">RESET</text><text x="790" y="968">3.3V</text>
+  <text x="835" y="968" font-weight="bold" fill="#d62828">5V</text><text x="880" y="968" font-weight="bold">GND</text>
+  <text x="925" y="968" font-weight="bold">GND</text><text x="970" y="968">VIN</text>
+  <text x="1035" y="968" font-weight="bold" fill="#a67c00">A0</text><text x="1075" y="968" font-weight="bold" fill="#2a9d3f">A1</text>
+  <text x="1115" y="968">A2</text><text x="1155" y="968">A3</text><text x="1195" y="968">A4</text><text x="1235" y="968">A5</text>
+</g>
+<g>
+  <rect x="690" y="976" width="20" height="20" fill="#999"/><rect x="735" y="976" width="20" height="20" fill="#999"/>
+  <rect x="780" y="976" width="20" height="20" fill="#999"/><rect x="825" y="976" width="20" height="20" fill="#d62828"/>
+  <rect x="870" y="976" width="20" height="20" fill="#222"/><rect x="915" y="976" width="20" height="20" fill="#222"/>
+  <rect x="960" y="976" width="20" height="20" fill="#999"/>
+  <rect x="1025" y="976" width="20" height="20" fill="#e9b500"/><rect x="1065" y="976" width="20" height="20" fill="#2a9d3f"/>
+  <rect x="1105" y="976" width="20" height="20" fill="#999"/><rect x="1145" y="976" width="20" height="20" fill="#999"/>
+  <rect x="1185" y="976" width="20" height="20" fill="#999"/><rect x="1225" y="976" width="20" height="20" fill="#999"/>
+</g>
+<text x="690" y="1022" font-size="13" fill="#555">POWER (zasilanie)</text><text x="1025" y="1022" font-size="13" fill="#555">ANALOG IN</text>
+<text x="690" y="1048" font-size="17" fill="#333">R1 → jeden GND, R2 → drugi GND (obok siebie).</text>
+<text x="690" y="1072" font-size="17" fill="#333">Kabel z czubka prowadź bokiem szczęki, nie po FSR 1.</text>
+</svg>

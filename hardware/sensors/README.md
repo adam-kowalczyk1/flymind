@@ -14,7 +14,7 @@ Progi (te same co w modelu nerwów `flymind/experiments/step3_wiring/nerves.py`)
 Program Arduino skompilowany 18 XI dla Uno, Nano, Uno R4 Minima i Uno R4 WiFi. Ze sprzętem jeszcze niesprawdzone.
 
 ## Bez płytki stykowej (21 XI)
-Te same 4 elementy: 2 × FSR, 2 oporniki (te same co na płytce; `--r-fix` w programie musi się zgadzać). FSR i opornik nie mają biegunów.
+Rysunek: `bez_plytki.png`. Elementy: 2 × FSR, 2 oporniki **10 kΩ** (brązowy-czarny-pomarańczowy; 10 Ω nie zadziała), w programie `--r-fix 10000`. FSR i opornik nie mają biegunów.
 Co ma się stykać (4 węzły):
 1. **5V** → nóżka FSR 1 **i** nóżka FSR 2 (rozgałęzienie „Y”, bo pin 5V jest jeden).
 2. druga nóżka FSR 1 + nóżka opornika R1 + kabel do **A0**.
