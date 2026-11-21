@@ -22,6 +22,7 @@ import t0_counts as T0  # noqa: E402
 SRC = "/Users/admin/so101_fly_project/envs/flyvis/lib/python3.12/site-packages/flyvis/connectome/fib25-fib19_v2.2.json"
 HYB = ("R", "CT1", "Am")
 MASS = float(os.environ.get("P3_MASS", 0.8))     # 80 %: start stabilny i ~0,33 s/krok (95 %: 0,54 s)
+SHUF = np.random.default_rng(int(os.environ["P3_SHUFFLE"])) if os.environ.get("P3_SHUFFLE") else None   # ziarno 24 107 100 + model
 SHAPE = os.environ.get("P3_SHAPE", "1") == "1"   # suma pary = suma flyvis (siłę pary flyvis i tak uczy: edges_syn_strength na parę)
 
 
@@ -45,6 +46,8 @@ def build(J, M, shift):
         m = m[np.cumsum(m.n.values) - m.n.values < MASS * m.n.sum()]
         st, ss = shift.get(e["tar"], (0, 0)), shift.get(e["src"], (0, 0))
         k = sum(o[1] for o in e["offsets"]) / m.n.sum() if SHAPE else 1.0
+        if SHUF is not None:                                      # kontrola: liczby potasowane między przesunięciami pary
+            m = m.assign(n=SHUF.permutation(m.n.values))
         offs = [[[int(round(u - st[0] + ss[0])), int(round(v - st[1] + ss[1]))], float(n * k)] for u, v, n in zip(m.du, m.dv, m.n)]
         out["edges"].append(dict(e, offsets=offs))
         kept += 1
