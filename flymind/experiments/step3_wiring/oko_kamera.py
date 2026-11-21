@@ -106,9 +106,16 @@ if __name__ == "__main__":
         vid, plan, out = sys.argv[1:4]
         plan = json.load(open(os.path.expanduser(plan)))
         pts, F = frames(os.path.expanduser(vid))
-        ft = np.array(plan["frame_t"])                        # czas przyjścia każdej klatki (zegar komputera, nagraj_oko.py)
-        assert abs(len(ft) - len(F)) <= 3, ("klatki pliku vs znaczniki", len(F), len(ft))
-        n = min(len(ft), len(F))
-        r = evaluate(ft[:n], F[:n], plan)
+        ft = np.array(plan["frame_t"])
+        # 21 XI: wyjście do skryptu było stałe 120 kl./s (ffmpeg dublował klatki), plik ma prawdziwe ~78 kl./s ze zmiennym odstępem.
+        # Obie drogi zaczynają od tej samej pierwszej klatki → czas klatki k = czas przyjścia pierwszej + (pts_k − pts_0).
+        t = ft[0] + pts - pts[0]
+        r = evaluate(t, F, plan)
+        r["clock"] = dict(method="ft0 + pts", span_file=float(pts[-1] - pts[0]), span_pipe=float(ft[-1] - ft[0]))
+        lum = F.reshape(len(F), -1).mean(1)
+        sw = [w for w in plan["windows"] if w["kind"] == "sync"][0]
+        m = (t >= sw["t0"] - 2) & (t <= sw["t1"] + 2)
+        dark = t[m][lum[m] < 0.3 * np.median(lum[m])]
+        r["clock"]["dark_from_sync_t0_s"] = float(dark[0] - sw["t0"]) if len(dark) else None   # oczekuję 0–3 s (reakcja Adama)
         json.dump(r, open(out, "w"), indent=1, default=float)
         print(json.dumps({k: v for k, v in r.items() if k != "windows"}, default=float))
