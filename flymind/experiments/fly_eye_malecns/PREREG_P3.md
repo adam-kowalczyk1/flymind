@@ -40,3 +40,12 @@ Propozycja do decyzji Adama (spisana teraz, przed wynikami): ocena główna (K1�
 (≈ 4,2 doby), dalsze uczenie do 250 000 tylko jako rozszerzenie (raport osobno). Jeśli Adam nie zdecyduje — zostaje 250 000.
 **Decyzja Adama 21 XI wieczór: „Ocena po 100 000”.** Ocena główna K1–K3 na punkcie kontrolnym najbliższym 100 000 kroków
 (ten sam numer kroku dla wszystkich 4 modeli); potem uczenie zatrzymane, chyba że Adam zdecyduje inaczej.
+
+## Zmiana 22 XI rano, przed wynikami (Adam: „po tym zapisie zatrzymujesz, odpalasz jeden, żeby sprawdzić, czy działa”)
+Po 11 400 krokach strata wszystkich 4 spadła < 1 % (bez punktu odniesienia). Modele 001–003 wstrzymane zaraz po zapisie
+`chkpt_00005` (wznowienie od niego); 000 liczy dalej sam. Obok **kontrola K0: oryginalny konektom flyvis uczony od zera** tym
+samym przepisem (`task_name=p3_ctrl`, ziarno 24 107 010, domyślne n_syn_fill 1 i scale 0,01) — żeby wiedzieć, jak wygląda
+normalne uczenie na początku.
+**Szybki sprawdzian G0′** (gdy K0 przejdzie ≥ 20 000 kroków): spadek straty modelu 000 (średnia z kroków [k−1000, k] /
+średnia z [0, 1000], przy tym samym k) ≥ połowa spadku K0. Nie → zatrzymuję 000, P3 FAILED (nie uczy się). Tak → wznawiam
+001–003. G0 z 50 000 krokami na 000 zostaje bez zmian.
