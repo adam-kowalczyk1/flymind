@@ -51,3 +51,7 @@ normalne uczenie na początku.
 001–003. G0 z 50 000 krokami na 000 zostaje bez zmian.
 Odstępstwo 22 XI 12:55: skrypt wstrzymania czekał na folder `chkpt_00005`, a zapisy to pliki — nic nie wstrzymał. Poprawiony:
 czeka na plik `chkpt_00006` (~14:20), potem wstrzymuje 001–003 i uruchamia K0. Reszta bez zmian.
+Zmiana 22 XI ~13:10 (Adam: „odpal jeden teraz, żeby do 20 dało się ocenić”), przed wynikami: 001–003 wstrzymane od razu
+(wznowienie od `chkpt_00005` z 10:50 — tracą ~2 h), K0 ruszył od razu (4 wątki). **G0′ liczony dziś ~20:00** przy takim k,
+jakie K0 zdąży (≥ 10 000 kroków; to samo k dla 000), kryterium bez zmian (spadek 000 ≥ połowa spadku K0). Tylko raport:
+DSI T4/T5 modelu 000 z ostatniego punktu kontrolnego. Obok rusza strojenie CMA-ES (osobna sesja).
