@@ -49,3 +49,5 @@ normalne uczenie na początku.
 **Szybki sprawdzian G0′** (gdy K0 przejdzie ≥ 20 000 kroków): spadek straty modelu 000 (średnia z kroków [k−1000, k] /
 średnia z [0, 1000], przy tym samym k) ≥ połowa spadku K0. Nie → zatrzymuję 000, P3 FAILED (nie uczy się). Tak → wznawiam
 001–003. G0 z 50 000 krokami na 000 zostaje bez zmian.
+Odstępstwo 22 XI 12:55: skrypt wstrzymania czekał na folder `chkpt_00005`, a zapisy to pliki — nic nie wstrzymał. Poprawiony:
+czeka na plik `chkpt_00006` (~14:20), potem wstrzymuje 001–003 i uruchamia K0. Reszta bez zmian.
