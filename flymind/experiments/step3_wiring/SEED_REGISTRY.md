@@ -82,3 +82,7 @@ najwyższe wcześniej użyte 20 999 999). Wpis zawsze PRZED użyciem.
 | 21 949 001 – 21 949 005 (szum = nerwy); tasowania F 21 949 901 – 904, L 21 949 911 – 912 | NIE DAĆ SIĘ DOTKNĄĆ r1 TEST (`avoid.py`, cel `LOOP_TARGET_avoid_r1.md`, hash w `results/step3_20261115/avoid_r1/PRE_TEST_HASH.txt`) — RAZ | 2026-11-19 | ZUŻYTE (test wykonany 19 XI 07:23–08:13, 435 prób) |
 | 21 950 001 – 21 950 099 | DIAGNOZA „wzrok osłabia cofnięcie” (`diag_vision.py`, pary full/blind z tym samym szumem, zapis spików) + przegląd ręki (prędkość/wielkość, `hand_sweep/`) — ROZWÓJ, nie test; wyniki `results/step3_20261115/diag_vision/` | 2026-11-19 | w użyciu (rozwój) |
 | 21 954 001 – 21 954 005; losowanie kontroli 21 954 901 | TEST „HAMULEC” r1 (`diag_vision.py`, cel `LOOP_TARGET_brake_r1.md`, hash w `results/step3_20261115/brake_r1/PRE_TEST_HASH.txt`) — RAZ | 2026-11-19 | ZUŻYTE (test) |
+| 27 111 000 – 199 / 27 112 000 – 199 / 27 113 000 – 199 | TEST PLACEBO (`placebo.py`, `PREREG_PLACEBO.md`): sceny testowe, 6 póz — RAZ | 2026-11-22 | zarezerwowane |
+| 27 121 001 – 010 / 27 122 001 – 010 | TEST PLACEBO: tasowania F / L (nowe), kalibracja g bez robota | 2026-11-22 | zarezerwowane |
+| 27 131 000 – 199 | TEST PLACEBO: sceny treningowe P2 (4 pozy) | 2026-11-22 | zarezerwowane |
+| 27 199 000 – 199 | TEST PLACEBO: próba dymna kodu (1 poza, 1 sieć) | 2026-11-22 | ZUŻYTE (rozwój) |
